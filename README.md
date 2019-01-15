@@ -85,8 +85,18 @@ Deploy the cloudformation template:
 aws cloudformation create-stack --stack-name samhstn-base --template-body file://infra/base.yml --capabilities CAPABILITY_NAMED_IAM --parameters "Secret=$(cat .secret)"
 ```
 
-Once completed, use the output of the following command to configure a webhook in the github repository
+Once completed, we will need to configure a webhook in our github repository.
+
+The `Payload URL` can be obtained by running:
 
 ```bash
-echo "https://$(aws apigateway get-rest-apis --query 'items[?name==`github_webhook`] | [0].id' --output text).execute-api.eu-west-1.amazonaws.com/prod"
+echo "https://$(aws apigateway get-rest-apis --query 'items[?name==`github_webhook`] | [0].id' --output text).execute-api.eu-west-1.amazonaws.com/prod/github_webhook"
+```
+
+The `Content type` is `application/json`
+
+The Secret will be the output of:
+
+```bash
+cat .secret
 ```
