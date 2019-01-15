@@ -82,7 +82,7 @@ node -e "console.log(require('crypto').randomBytes(20).toString('base64'));" > .
 Deploy the cloudformation template:
 
 ```bash
-aws cloudformation create-stack --stack-name samhstn-base --template-body file://infra/base.yml --capabilities CAPABILITY_NAMED_IAM --parameters "Secret=$(cat .secret)"
+aws cloudformation create-stack --stack-name samhstn-base --template-body file://infra/base.yml --capabilities CAPABILITY_NAMED_IAM --parameters "ParameterKey=Secret,ParameterValue=$(cat .secret)"
 ```
 
 Once completed, we will need to configure a webhook in our github repository.
