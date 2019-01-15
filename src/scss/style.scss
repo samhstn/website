@@ -1,0 +1,62 @@
+@import 'mixins';
+@import 'reset';
+@import 'fadein';
+
+h1 {
+  /* font-family: Futura, Arial, sans-serif;*/
+  font-family: Helvetica, Arial, sans-serif;
+  font-weight: normal;
+  text-align: center;
+  color: #626CA3;
+  text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
+}
+
+body {
+  background-image: url(/static/bg.png);
+}
+
+body,
+.container,
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.container {
+  height: 70%;
+}
+
+.row {
+  opacity: 0;
+  height: 25%;
+  -webkit-animation: fadein ease-in 2s; /* Safari, Chrome and Opera > 12.1 */
+  -moz-animation: fadein ease-in 2s; /* Firefox < 16 */
+  -ms-animation: fadein ease-in 2s; /* Internet Explorer */
+  -o-animation: fadein ease-in 2s; /* Opera < 12.1 */
+  animation: fadein ease-in 2s;
+  animation-fill-mode: forwards;
+}
+
+.row1 {
+  animation-delay: 0.7s;
+}
+
+.row2 {
+  animation-delay: 1.2s;
+}
+
+.row3 {
+  animation-delay: 1.7s;
+}
+
+.row4 {
+  animation-delay: 2.2s;
+}
+
+.logo {
+  display: block;
+  margin: auto;
+  height: 100%;
+}
