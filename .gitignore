@@ -5,3 +5,4 @@ static/script*.js
 static/style*.css
 **/node_modules/**
 **/elm-stuff/**
+infra/**/*.zip

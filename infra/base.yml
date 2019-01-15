@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template for API Gateway and Lambda for github webhook
+
+Parameters:
+  Secret:
+    Type: String
+    Description: Github webhook secret
+
+Resources:
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: github_webhook
+      Handler: github_webhook.handler
+      Code:
+        S3Bucket: samhstn
+        S3Key: github_webhook.zip
+      Runtime: nodejs8.10
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          SECRET: !Ref Secret
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github_webhook
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: github_webhook
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  ApiGatewayApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: github_webhook
+
+  ApiGatewayResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGatewayApi
+      ParentId: !GetAtt
+        - ApiGatewayApi
+        - RootResourceId
+      PathPart: github_webhook
+
+  ApiGatewayMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGatewayApi
+      ResourceId: !Ref ApiGatewayResource
+      AuthorizationType: NONE
+      HttpMethod: POST
+      MethodResponses:
+        - StatusCode: 200
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: 200
+        RequestTemplates:
+          application/json: "{\"body\": $input.json('$')}"
+        PassthroughBehavior: WHEN_NO_TEMPLATES
+        Uri: !Join
+          - ''
+          - - arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/
+            - !GetAtt
+              - Lambda
+              - Arn
+            - /invocations
+
+  ApiGatewayLambdaPermssion:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt
+        - Lambda
+        - Arn
+      Action:
+        lambda:*
+      Principal:
+        apigateway.amazonaws.com
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref ApiGatewayApi
+
+  ApiGatewayStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId: !Ref ApiGatewayDeployment
+      RestApiId: !Ref ApiGatewayApi
+      StageName: prod
