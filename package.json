@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node dev-server.js",
     "build": "bash build.sh",
-    "_css": "node-sass src/scss/main.scss > static/style.css",
+    "_css": "node-sass src/scss/main.scss -o static/style.css",
     "build:css": "npm run _css -- --output-style compressed",
     "build:elm": "elm make src/elm/Main.elm --output src/js/elm.js",
     "watch": "npm run build:elm && concurrently \"npm:watch:*\"",
