@@ -1,0 +1,7 @@
+.secret
+src/js/elm.js
+static/index.html
+static/script*.js
+static/style*.css
+**/node_modules/**
+**/elm-stuff/**

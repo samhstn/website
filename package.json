@@ -1,0 +1,58 @@
+{
+  "name": "samhstn",
+  "version": "1.0.0",
+  "description": "My personal website",
+  "main": "dev-server.js",
+  "scripts": {
+    "start": "node dev-server.js",
+    "build": "bash build.sh",
+    "_css": "node-sass src/scss/main.scss > static/style.css",
+    "build:css": "npm run _css -- --output-style compressed",
+    "build:elm": "elm make src/elm/Main.elm --output src/js/elm.js",
+    "watch": "npm run build:elm && concurrently \"npm:watch:*\"",
+    "watch:css": "npm run _css -- -q && npm run _css -- -w -q",
+    "watch:elm": "elm-live src/elm/Main.elm -- --output src/js/elm.js",
+    "watch:js": "watchify src/js/app.js -o static/script.js",
+    "watch:server": "nodemon -e js -w dev-server.js dev-server.js -q",
+    "watch:html": "nodemon -e html -w src/index.html -x 'cp src/index.html static/index.html' -q",
+    "lint": "concurrently npm:lint:elm npm:lint:css npm:lint:js",
+    "lint:elm": "elm-format src/elm --validate",
+    "lint:css": "sass-lint src/scss/**/*.scss -v --max-warnings=0",
+    "lint:js": "npm run lint:js:browser && npm run lint:js:node",
+    "lint:js:browser": "eslint src/js/**/*.js -c .eslint-browser.js --ignore-path .gitignore",
+    "lint:js:node": "eslint dev-server.js -c .eslint-node.js --ignore-path .gitignore",
+    "lint:fix": "concurrently npm:lint:elm:fix npm:lint:js:fix:browser npm:lint:js:fix:node",
+    "lint:elm:fix": "elm-format src/elm --yes",
+    "lint:js:fix": "npm run lint:js:fix:browser && npm run lint:js:fix:node",
+    "lint:js:fix:browser": "npm run lint:js:browser -- --fix",
+    "lint:js:fix:node": "npm run lint:js:node -- --fix",
+    "test": "npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samhstn/samhstn.git"
+  },
+  "keywords": [],
+  "author": "samhstn",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/samhstn/samhstn/issues"
+  },
+  "homepage": "https://github.com/samhstn/samhstn#readme",
+  "devDependencies": {
+    "concurrently": "^4.1.0",
+    "elm-format": "^0.8.1",
+    "elm-live": "^3.4.0",
+    "eslint": "^5.12.0",
+    "express": "^4.16.4",
+    "nodemon": "^1.18.9",
+    "sass-lint": "^1.12.1",
+    "watchify": "^3.11.0"
+  },
+  "dependencies": {
+    "browserify": "^16.2.3",
+    "elm": "^0.19.0-bugfix2",
+    "node-sass": "^4.11.0",
+    "uglify-js": "^3.4.9"
+  }
+}

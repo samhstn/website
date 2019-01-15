@@ -1,19 +1,35 @@
-# shouston3.github.io
+# samhstn.com
 
-### Information displayed
+[samhstn.com](http://samhstn.com)
 
-##### Splash
+### What
 
-* SH logo
-* Tag line
-* Links to github and linkedin
-* Link to CV page
-* Link to projects page
+My personal website
 
-##### Projects
+### Quick start
 
-* Each project displayed with a description and links
+```bash
+# clone the repo
+git clone https://github.com/samhstn/samhstn.git && cd samhstn
+# install the dependencies
+npm install
+# start the development server and watch for changes to static assets
+npm run watch
+# your development server should be running on `http://localhost:3000`
+```
 
-##### CV
+### Building for production
 
-Readme format as a `.md` file in this repo
+```bash
+# clone the repo
+git clone https://github.com/samhstn/samhstn.git && cd samhstn
+# install the dependencies
+npm install --production
+# compile the static assets
+npm run build
+# you should have the following assets in your `static` directory
+# index.html
+# script-3b7339d0615bf67e6e7e16fd9e6f8e24.min.js
+# style-dae176ae1b143c9091ea3576c6b99546.min.css
+# (these can be served locally with `npm start`)
+```
