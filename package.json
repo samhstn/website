@@ -26,7 +26,8 @@
     "lint:js:fix": "npm run lint:js:fix:browser && npm run lint:js:fix:node",
     "lint:js:fix:browser": "npm run lint:js:browser -- --fix",
     "lint:js:fix:node": "npm run lint:js:node -- --fix",
-    "test": "npm run lint"
+    "test": "tape infra/*.test.js",
+    "watch:test": "nodemon -w infra -x 'npm test'"
   },
   "repository": {
     "type": "git",
@@ -47,6 +48,7 @@
     "express": "^4.16.4",
     "nodemon": "^1.18.9",
     "sass-lint": "^1.12.1",
+    "tape": "^4.9.2",
     "watchify": "^3.11.0"
   },
   "dependencies": {

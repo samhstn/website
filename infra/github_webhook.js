@@ -1,6 +1,13 @@
-exports.handler = (event, context, cb) => {
-  console.log('event', event);
-  console.log('context', context);
+const crypto = require('crypto');
 
-  cb(null, 'Hello world');
+exports.handler = (event, context, cb) => {
+  const shasum = crypto.createHmac('sha1', process.env.SECRET);
+  const digest = shasum.update(JSON.stringify(event.body)).digest('hex');
+
+  if (`sha1=${digest}` === event.headers['x-hub-signature']) {
+    cb(false, 'ok');
+  } else {
+    cb(true, 'signature does not match digest');
+  }
+
 }
