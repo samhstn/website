@@ -72,7 +72,7 @@ Resources:
         IntegrationResponses:
           - StatusCode: 200
         RequestTemplates:
-          application/json: "{\n \"header\": \"$input.params('x-hub-signature')\",\n \"body\": $input.json('$')\n}"
+          application/json: "{\n \"signature\": \"$input.params('x-hub-signature')\",\n \"body\": $input.json('$')\n}"
         PassthroughBehavior: WHEN_NO_TEMPLATES
         Uri: !Join
           - ''

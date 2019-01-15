@@ -1,7 +1,7 @@
 const payload = require('./payload.json');
-const headers = require('./headers.js');
+const { signature } = require('./headers.js');
 
 module.exports = {
   payload,
-  headers
+  signature
 }
