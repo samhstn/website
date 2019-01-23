@@ -1,107 +1,91 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  Template for API Gateway and Lambda for github webhook
+  Static website template using S3 and Route53
 
 Parameters:
-  Secret:
+  DomainName:
     Type: String
-    Description: Github webhook secret
+    Default: samhstn.com
+    Description: The domain name for the website
+  AcmCertArn:
+    Type: String
+    Default: arn:aws:acm:us-east-1:286475931185:certificate/8d0cfc3d-2016-453f-9b4e-93b190457633
+    Description: ARN of ACM certificate for the specified DomainName
+    AllowedPattern: "arn:aws:acm:.*"
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      S3HostedZoneId: Z3AQBSTGFYJSTF
+    us-west-1:
+      S3HostedZoneId: Z2F56UZL2M1ACD
+    us-west-2:
+      S3HostedZoneId: Z3BJ6K6RIION7M
+    eu-west-1:
+      S3HostedZoneId: Z1BKCTXD74EZPE
+    ap-southeast-1:
+      S3HostedZoneId: Z3O0J2DXBE1FTB
+    ap-southeast-2:
+      S3HostedZoneId: Z1WCIGYICN2BYD
+    ap-northeast-1:
+      S3HostedZoneId: Z2M4EHUR26P7ZW
+    sa-east-1:
+      S3HostedZoneId: Z31GFT0UA1I2HV
 
 Resources:
-  Lambda:
-    Type: AWS::Lambda::Function
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
     Properties:
-      FunctionName: github_webhook
-      Handler: github_webhook.handler
-      Code:
-        S3Bucket: samhstn
-        S3Key: github_webhook.zip
-      Runtime: nodejs8.10
-      Role: !GetAtt LambdaRole.Arn
-      Environment:
-        Variables:
-          SECRET: !Ref Secret
+      BucketName: !Ref DomainName
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: 404.html
+    DeletionPolicy: Retain
 
-  LambdaRole:
-    Type: AWS::IAM::Role
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
     Properties:
-      RoleName: github_webhook
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
+      Bucket: !Ref WebsiteBucket
+      PolicyDocument:
         Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: github_webhook
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: '*'
-                Resource: '*'
+        - Sid: PublicReadForGetBucketObjects
+          Effect: Allow
+          Principal: "*"
+          Action: s3:GetObject
+          Resource: !Join ["", ["arn:aws:s3:::", !Ref DomainName, "/*"]]
 
-  ApiGatewayApi:
-    Type: AWS::ApiGateway::RestApi
+  WebsiteCloudfront:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - WebsiteBucket
     Properties:
-      Name: github_webhook
-
-  ApiGatewayResource:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref ApiGatewayApi
-      ParentId: !GetAtt
-        - ApiGatewayApi
-        - RootResourceId
-      PathPart: github_webhook
-
-  ApiGatewayMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref ApiGatewayApi
-      ResourceId: !Ref ApiGatewayResource
-      AuthorizationType: NONE
-      HttpMethod: POST
-      MethodResponses:
-        - StatusCode: 200
-      Integration:
-        Type: AWS
-        IntegrationHttpMethod: POST
-        IntegrationResponses:
-          - StatusCode: 200
-        RequestTemplates:
-          application/json: "{\n \"signature\": \"$input.params('x-hub-signature')\",\n \"body\": $input.json('$')\n}"
-        PassthroughBehavior: WHEN_NO_TEMPLATES
-        Uri: !Join
-          - ''
-          - - arn:aws:apigateway:eu-west-1:lambda:path/2015-03-31/functions/
-            - !GetAtt
-              - Lambda
-              - Arn
-            - /invocations
-
-  ApiGatewayLambdaPermssion:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !GetAtt
-        - Lambda
-        - Arn
-      Action:
-        lambda:*
-      Principal:
-        apigateway.amazonaws.com
-
-  ApiGatewayDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: ApiGatewayMethod
-    Properties:
-      RestApiId: !Ref ApiGatewayApi
-
-  ApiGatewayStage:
-    Type: AWS::ApiGateway::Stage
-    Properties:
-      DeploymentId: !Ref ApiGatewayDeployment
-      RestApiId: !Ref ApiGatewayApi
-      StageName: prod
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to S3 bucket
+        Origins:
+          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+            Id: S3Origin
+            CustomOriginConfig:
+              HTTPPort: '80'
+              HTTPSPort: '443'
+              OriginProtocolPolicy: http-only
+        Enabled: true
+        HttpVersion: http2
+        DefaultRootObject: index.html
+        Aliases:
+          - !Ref DomainName
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertArn
+          SslSupportMethod: sni-only
