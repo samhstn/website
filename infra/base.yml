@@ -12,6 +12,10 @@ Parameters:
     Default: arn:aws:acm:us-east-1:286475931185:certificate/8d0cfc3d-2016-453f-9b4e-93b190457633
     Description: ARN of ACM certificate for the specified DomainName
     AllowedPattern: "arn:aws:acm:.*"
+  GithubRepoPaKey:
+    Type: String
+    Description: Token used to access the github api
+    NoEcho: True
 
 Mappings:
   RegionMap:

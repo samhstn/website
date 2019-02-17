@@ -68,6 +68,10 @@ You will need to grant repo access and generate a personal access token with the
 ###### Deploy the Cloudformation templates
 
 ```bash
-aws cloudformation create-stack --stack-name samhstn-base --template-body file://infra/base.yml --capabilities CAPABILITY_NAMED_IAM --parameters "ParameterKey=GITHUB_REPO_PA_KEY,ParameterValue=$GITHUB_REPO_PA_KEY"
+aws cloudformation create-stack \
+--stack-name samhstn-base \
+--template-body file://infra/base.yml \
+--capabilities CAPABILITY_NAMED_IAM \
+--parameters "ParameterKey=GithubRepoPaKey,ParameterValue=$GITHUB_REPO_PA_KEY"
 ```
 
