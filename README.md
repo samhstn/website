@@ -9,29 +9,10 @@ My personal website
 ### Quick start
 
 ```bash
-# clone the repo
 git clone https://github.com/samhstn/samhstn.git && cd samhstn
-# install the dependencies
 npm install
-# start the development server and watch for changes to static assets
-npm run watch
-# your development server should be running on `http://localhost:3000`
-```
-
-### Building locally for production
-
-```bash
-# clone the repo
-git clone https://github.com/samhstn/samhstn.git && cd samhstn
-# install the dependencies
-npm install --production
-# compile the static assets
-npm run build
-# you should have the following assets in your `static` directory
-# index.html
-# script-*.min.js
-# style-*.min.css
-# (these can be served locally with `npm start`)
+npm run dev
+# the dev server should be running on: http://localhost:3000
 ```
 
 ### Setup from scratch
