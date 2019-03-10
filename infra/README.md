@@ -6,51 +6,40 @@ We will create an `admin` user which we will use for programmatic access.
 
 In the [`IAM` web view](https://console.aws.amazon.com/iam):
 
-+ Create an `Admin` Group:
-  + Click `Groups`.
-  + `Create New Group`.
-  + Name the group `Admin`.
-  + Tick `AdministratorAccess`.
-  + `Next Step`.
-  + `Create Group`.
-+ Create an `Admin` User:
-  + Click `Users`.
-  + Click `Add user`.
-  + Name the user `admin`.
-  + For `Access type` select `Programmatic access`.
-  + Click `Next: Permission`.
-  + Tick our `Admin` group.
-  + Tick `Next: Tags`.
-  + No need to add any `tags` for now, so click `Next: Review`.
-  + Click `Create user`.
-  + Then download the `credentials.csv` file.
++ Create a group called `Admin` with `AdministratorAccess`
++ Create a user called `admin` with our `Admin` group permissions
++ Download the `credentials.csv` file.
 
 Now we will configure our `aws` `cli` to use our `admin` user.
 
-Find our `Access Key ID` and `Secret access key` in our downloaded `credentials.csv` file.
-
 + Run `aws configure`.
-+ Set our `Access Key ID` and `Secret access key` from our `credentials.csv`.
++ Set our `Access Key ID` and `Secret access key` from our downloaded `credentials.csv`.
 + Set our region to `us-east-1`.
 + Set output format to `json`.
 
 ### Domain
 
-Ensure you have purchased a domain in AWS using: https://console.aws.amazon.com/route53
+Ensure you have purchased your domain from [`Route53`](https://console.aws.amazon.com/route53)
 
-To check if you have purchased your domain, run:
+To see your purchased domains, run:
 
 ```bash
 aws route53 list-hosted-zones --query 'HostedZones[*].Name' --output text
 ```
 
-and check if your domain is in the list.
+(if your domain isn't in the list you'll have to purchase it from the [Route53 `Domain Registration` page](https://console.aws.amazon.com/route53/home#DomainRegistration:))
 
 ### Authorize github
 
-You will need to grant repo access and generate a personal access token with the scope of `repo`.
+We will need to create a GitHub personal access token for `aws` to use.
 
-(I have set this as the environment variable `GITHUB_REPO_PA_KEY` for the next step).
++ Go to your [GitHub personal access tokens](https://github.com/settings/tokens).
++ Click `Generate new token`.
++ Give the `token` a description of `Full repo access`.
++ Tick the `repo` scope.
++ Click Generate token.
+
+Now set this token as an environment variable called `GITHUB_PA_TOKEN`.
 
 ### Deploy the Cloudformation templates
 
