@@ -1,15 +1,38 @@
 # AWS Setup from scratch
 
-### Configure your AWS CLI
+### Configure our AWS CLI
+
+We will create an `admin` user which we will use for programmatic access.
 
 In the [`IAM` web view](https://console.aws.amazon.com/iam):
 
-+ Create a user called `admin` with programmatic access.
-+ Add it to a group called `Admin` with `AdministratorAccess`.
++ Create an `Admin` Group:
+  + Click `Groups`.
+  + `Create New Group`.
+  + Name the group `Admin`.
+  + Tick `AdministratorAccess`.
+  + `Next Step`.
+  + `Create Group`.
++ Create an `Admin` User:
+  + Click `Users`.
+  + Click `Add user`.
+  + Name the user `admin`.
+  + For `Access type` select `Programmatic access`.
+  + Click `Next: Permission`.
+  + Tick our `Admin` group.
+  + Tick `Next: Tags`.
+  + No need to add any `tags` for now, so click `Next: Review`.
+  + Click `Create user`.
+  + Then download the `credentials.csv` file.
 
-In your command line, run: `aws configure` and fill in the credentials which will have been given to you through Iam.
+Now we will configure our `aws` `cli` to use our `admin` user.
 
-Create a personal access token for aws to use.
+Find our `Access Key ID` and `Secret access key` in our downloaded `credentials.csv` file.
+
++ Run `aws configure`.
++ Set our `Access Key ID` and `Secret access key` from our `credentials.csv`.
++ Set our region to `us-east-1`.
++ Set output format to `json`.
 
 ### Domain
 
