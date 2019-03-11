@@ -76,6 +76,7 @@ Create these with the command:
 
 ```bash
 aws cloudformation create-stack --stack-name samhstn-s3 --template-body file://infra/s3.yml
+aws cloudformation wait stack-create-complete
 ```
 
 ### Create CloudFront distribution
@@ -91,6 +92,7 @@ aws cloudformation create-stack \
   --stack-name samhstn-cloudfront \
   --template-body file://infra/cloudfront.yml \
   --parameters "ParameterKey=Region,ParameterValue=$AWS_REGION" "ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN"
+aws cloudformation wait stack-create-complete
 ```
 
 The distribution will take up to half an hour to be created.
@@ -107,4 +109,5 @@ aws cloudformation create-stack \
   --stack-name samhstn-route53 \
   --template-body file://infra/route53.yml \
   --parameters "ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUD_FRONT_DOMAIN_NAME"
+aws cloudformation wait stack-create-complete
 ```
