@@ -86,12 +86,11 @@ This will be used as our cdn and we will also attach our ssl certificate here.
 Set this up with the following commands:
 
 ```bash
-AWS_REGION=$(aws configure get region)
 ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-cloudfront \
   --template-body file://infra/cloudfront.yml \
-  --parameters "ParameterKey=Region,ParameterValue=$AWS_REGION" "ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN"
+  --parameters "ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN"
 aws cloudformation wait stack-create-complete
 ```
 

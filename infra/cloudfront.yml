@@ -8,8 +8,6 @@ Parameters:
     Default: samhstn.com
   AcmCertArn:
     Type: String
-  Region:
-    Type: String
 
 Resources:
   WebsiteCloudfront:
@@ -17,7 +15,7 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Join ["", [!Ref DomainName, ".s3-website-", !Ref Region, ".amazonaws.com" ]]
+          - DomainName: !Join ["", [!Ref DomainName, ".s3-website-", !Ref "AWS::Region", ".amazonaws.com" ]]
             Id: S3Origin
             CustomOriginConfig:
               HTTPPort: '80'
