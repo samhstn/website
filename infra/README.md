@@ -111,3 +111,28 @@ aws cloudformation create-stack \
   --parameters "ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUD_FRONT_DOMAIN_NAME"
 aws cloudformation wait stack-create-complete
 ```
+
+### Configure our Codepipelines
+
+This will listen to chnages on Github and build our site.
+
+Run the following command to get this running:
+
+```bash
+aws cloudformation create-stack \
+ --stack-name samhstn-codepipeline \
+ --template-body file://infra/codepipeline.yml \
+ --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
+ --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete
+```
+
+We will also need to add a webhook in the Github [webhook interface](https://github.com/samhstn/samhstn/settings/hooks)
+
+For now call the secret `test`.
+
+The `url` to give to this `webhook` can be found with the command:
+
+```bash
+aws codepipeline list-webhooks
+```

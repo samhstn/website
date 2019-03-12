@@ -1,0 +1,166 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  CodePipeline configuration used to:
+    + Read our Github source
+    + Write these files to S3
+
+Parameters:
+  GithubOwner:
+    Type: String
+    Default: samhstn
+  GithubRepo:
+    Type: String
+    Default: samhstn
+  GithubPAToken:
+    NoEcho: true
+    Type: String
+  GithubSecret:
+    NoEcho: true
+    Type: String
+    Default: test
+  GithubBranch:
+    Type: String
+    Default: master
+  DomainName:
+    Type: String
+    Default: samhstn.com
+
+Resources:
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join ["-", [samhstn-artifact-store, !Ref "AWS::Region"]]
+      AccessControl: BucketOwnerFullControl
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: samhstn-pipeline-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: samhstn-pipeline-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Join ['', ['arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*']]
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource:
+                  !Join ['', ['arn:aws:codebuild:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':project/', !Ref Build]]
+
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Location:
+          Ref: PipelineArtifactBucket
+        Type: S3
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: !Ref GithubOwner
+                Repo: !Ref GithubRepo
+                Branch: !Ref GithubBranch
+                OAuthToken: !Ref GithubPAToken
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ProjectName: !Ref Build
+              RunOrder: 2
+
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: samhstn-build-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: samhstn-build-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource:
+                  - !Join [ '', [ 'arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*' ] ]
+                  - !Join ['', ['arn:aws:s3:::', !Ref DomainName, '/*']]
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource:
+                  !Join [ ':', [ 'arn:aws:logs', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'log-group', '/aws/codebuild/*' ] ]
+
+  Build:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: Build
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ubuntu-base:14.04
+        EnvironmentVariables:
+          - Name: DESTINATION_BUCKET
+            Type: PLAINTEXT
+            # Currently unable to reference this dynamically, see:
+            # https://stackoverflow.com/a/41727240/4699289
+            Value: samhstn.com
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infra/buildspec.yml
+
+  GithubWebhook:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Ref GithubSecret
+      Filters:
+        - JsonPath: "$.ref"
+          MatchEquals: !Join ["", ["refs/heads/", !Ref GithubBranch]]
+      TargetAction: Source
+      TargetPipeline: !Ref Pipeline
+      TargetPipelineVersion: !GetAtt Pipeline.Version
