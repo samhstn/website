@@ -2,9 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   CodePipeline configuration used to:
     + Read our Github source
-    + Compile our static files
-    # + Run our tests
-    # + Write these files to S3
+    + Write these files to S3
 
 Parameters:
   GithubOwner:
@@ -94,6 +92,7 @@ Resources:
                 Provider: CodeBuild
               InputArtifacts:
                 - Name: SourceOutput
+                  # todo: configure the output to use in the next step
                   # OutputArtifacts:
                   #   - Name: CompileOutput
               Configuration:
