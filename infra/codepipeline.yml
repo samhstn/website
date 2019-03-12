@@ -95,9 +95,6 @@ Resources:
                 Provider: CodeBuild
               InputArtifacts:
                 - Name: SourceOutput
-                  # todo: configure the output to use in the next step
-                  # OutputArtifacts:
-                  #   - Name: CompileOutput
               Configuration:
                 ProjectName: !Ref Build
               RunOrder: 2
@@ -124,7 +121,7 @@ Resources:
                   - s3:PutObject
                 Resource:
                   - !Join [ '', [ 'arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*' ] ]
-                  - 'arn:aws:s3:::samhstn.com/*'
+                  - !Join ['', ['arn:aws:s3:::', !Ref DomainName, '/*']]
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -147,7 +144,9 @@ Resources:
         EnvironmentVariables:
           - Name: DESTINATION_BUCKET
             Type: PLAINTEXT
-            Value: !Ref DomainName
+            # Currently unable to reference this dynamically, see:
+            # https://stackoverflow.com/a/41727240/4699289
+            Value: samhstn.com
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
