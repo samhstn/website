@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo "INSTALLING SAMHSTN"
+  build:
+    commands:
+      - ls
+      - echo "RUNNING BUILD"
