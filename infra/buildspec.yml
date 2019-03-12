@@ -3,4 +3,6 @@ version: 0.2
 phases:
   build:
     commands:
-      - echo "todo: copy files to S3 bucket here"
+      - echo "$DESTINATION_BUCKET"
+      - echo "${DESTINATION_BUCKET}"
+      - aws s3 cp static/index.html "s3://$DESTINATION_BUCKET/index.html"

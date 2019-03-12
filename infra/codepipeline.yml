@@ -21,6 +21,9 @@ Parameters:
   GithubBranch:
     Type: String
     Default: test
+  DomainName:
+    Type: String
+    Default: samhstn.com
 
 Resources:
   PipelineArtifactBucket:
@@ -82,9 +85,9 @@ Resources:
                 Branch: !Ref GithubBranch
                 OAuthToken: !Ref GithubPAToken
               RunOrder: 1
-        - Name: Compile
+        - Name: Deploy
           Actions:
-            - Name: Compile
+            - Name: Deploy
               ActionTypeId:
                 Category: Build
                 Owner: AWS
@@ -120,7 +123,8 @@ Resources:
                   - s3:GetObject
                   - s3:PutObject
                 Resource:
-                  !Join [ '', [ 'arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*' ] ]
+                  - !Join [ '', [ 'arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*' ] ]
+                  - 'arn:aws:s3:::samhstn.com/*'
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -140,6 +144,10 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/ubuntu-base:14.04
+        EnvironmentVariables:
+          - Name: DESTINATION_BUCKET
+            Type: PLAINTEXT
+            Value: !Ref DomainName
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
