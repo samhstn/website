@@ -5,6 +5,7 @@
   "main": "dev-server.js",
   "scripts": {
     "start": "node dev-server.js",
+    "test": "echo \"RUNNING TESTS! - todo: run real tests here\"",
     "dev": "nodemon dev-server.js"
   },
   "repository": {

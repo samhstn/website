@@ -85,10 +85,25 @@ Resources:
                 Branch: !Ref GithubBranch
                 OAuthToken: !Ref GithubPAToken
               RunOrder: 1
-        - Name: Build
+        - Name: Test
           Actions:
-            - Name: Build
+            - Name: Test
               ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ProjectName: !Ref Test
+              RunOrder: 2
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                # Category can't be of type Deploy because we need to use CodeBuild as our provider
+                # See provider table here: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#actions-valid-providers
                 Category: Build
                 Owner: AWS
                 Version: 1
@@ -97,7 +112,7 @@ Resources:
                 - Name: SourceOutput
               Configuration:
                 ProjectName: !Ref Build
-              RunOrder: 2
+              RunOrder: 3
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -130,6 +145,23 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   !Join [ ':', [ 'arn:aws:logs', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'log-group', '/aws/codebuild/*' ] ]
+
+  Test:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: Test
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        # See all options here:
+        # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
+        Image: ubuntu/nodejs/10.14.1
+      ServiceRole: !Ref BuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infra/testspec.yml
 
   Build:
     Type: AWS::CodeBuild::Project
