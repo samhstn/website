@@ -111,7 +111,7 @@ aws cloudformation create-stack \
 aws cloudformation wait stack-create-complete
 ```
 
-### Configure our Codepipelines
+### Configure our Codepipelines
 
 This will listen to chnages on Github and build our site.
 
