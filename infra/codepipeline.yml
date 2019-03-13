@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   CodePipeline configuration used to:
-    + Read our Github source
+    + Read from our Github source master branch
     + Write these files to S3
 
 Parameters:
@@ -85,11 +85,11 @@ Resources:
                 Branch: !Ref GithubBranch
                 OAuthToken: !Ref GithubPAToken
               RunOrder: 1
-        - Name: Deploy
+        - Name: Build
           Actions:
-            - Name: Deploy
+            - Name: Build
               ActionTypeId:
-                Category: Deploy
+                Category: Build
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
