@@ -36,7 +36,7 @@ Resources:
                 Resource:
                   !Join [ ':', [ 'arn:aws:logs', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'log-group', '/aws/codebuild/*' ] ]
 
-  Build:
+  Codebuild:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: CodeBuild
@@ -58,7 +58,7 @@ Resources:
         Auth:
           Type: OAUTH
         Location: !Join ["", ["https://github.com/", !Ref GithubOwner, "/", !Ref GithubRepo, ".git"]]
-        BuildSpec: infra/testspec.yaml
+        BuildSpec: infra/buildspecs/test.yaml
         ReportBuildStatus: true
       Triggers:
         Webhook: true
@@ -85,7 +85,7 @@ Resources:
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
-        BuildSpec: infra/testspec.yaml
+        BuildSpec: infra/buildspecs/test.yaml
 
   Build:
     Type: AWS::CodeBuild::Project
@@ -106,4 +106,4 @@ Resources:
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
-        BuildSpec: infra/buildspec.yaml
+        BuildSpec: infra/buildspecs/build.yaml
