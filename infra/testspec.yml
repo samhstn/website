@@ -3,6 +3,4 @@ version: 0.2
 phases:
   build:
     commands:
-      - ls -a
-      - env
       - npm test

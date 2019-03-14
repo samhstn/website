@@ -59,3 +59,13 @@ Resources:
           Type: OAUTH
         Location: !Join ["", ["https://github.com/", !Ref GithubOwner, "/", !Ref GithubRepo, ".git"]]
         BuildSpec: infra/testspec.yml
+        ReportBuildStatus: true
+      Triggers:
+        Webhook: true
+        FilterGroups:
+          - - ExcludeMatchedPattern: true
+              Pattern: ^refs/heads/master$
+              Type: HEAD_REF
+            - ExcludeMatchedPattern: false
+              Pattern: PUSH
+              Type: EVENT
