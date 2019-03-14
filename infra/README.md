@@ -75,7 +75,7 @@ This will create two buckets:
 Create these with the command:
 
 ```bash
-aws cloudformation create-stack --stack-name samhstn-s3 --template-body file://infra/s3.yml
+aws cloudformation create-stack --stack-name samhstn-s3 --template-body file://infra/s3.yaml
 aws cloudformation wait stack-create-complete
 ```
 
@@ -89,7 +89,7 @@ Set this up with the following commands:
 ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-cloudfront \
-  --template-body file://infra/cloudfront.yml \
+  --template-body file://infra/cloudfront.yaml \
   --parameters "ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN"
 aws cloudformation wait stack-create-complete
 ```
@@ -106,7 +106,7 @@ Do so by running the following command:
 CLOUD_FRONT_DOMAIN_NAME=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[0]=='samhstn.com'] | [0].DomainName" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-route53 \
-  --template-body file://infra/route53.yml \
+  --template-body file://infra/route53.yaml \
   --parameters "ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUD_FRONT_DOMAIN_NAME"
 aws cloudformation wait stack-create-complete
 ```
@@ -120,7 +120,7 @@ Run the following command to get this running:
 ```bash
 aws cloudformation create-stack \
  --stack-name samhstn-codepipeline \
- --template-body file://infra/codepipeline.yml \
+ --template-body file://infra/codepipeline.yaml \
  --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete
@@ -154,7 +154,7 @@ Now run deploy the cloudformation template:
 ```bash
 aws cloudformation create-stack \
  --stack-name samhstn-codebuild \
- --template-body file://infra/codebuild.yml \
+ --template-body file://infra/codebuild.yaml \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete
 ```

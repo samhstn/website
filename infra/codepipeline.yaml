@@ -162,7 +162,7 @@ Resources:
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
-        BuildSpec: infra/testspec.yml
+        BuildSpec: infra/testspec.yaml
 
   Build:
     Type: AWS::CodeBuild::Project
@@ -183,7 +183,7 @@ Resources:
       ServiceRole: !Ref BuildRole
       Source:
         Type: CODEPIPELINE
-        BuildSpec: infra/buildspec.yml
+        BuildSpec: infra/buildspec.yaml
 
   GithubWebhook:
     Type: AWS::CodePipeline::Webhook
