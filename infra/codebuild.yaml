@@ -58,7 +58,7 @@ Resources:
         Auth:
           Type: OAUTH
         Location: !Join ["", ["https://github.com/", !Ref GithubOwner, "/", !Ref GithubRepo, ".git"]]
-        BuildSpec: infra/testspec.yml
+        BuildSpec: infra/testspec.yaml
         ReportBuildStatus: true
       Triggers:
         Webhook: true
