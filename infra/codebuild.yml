@@ -9,19 +9,6 @@ Parameters:
   GithubRepo:
     Type: String
     Default: samhstn
-  GithubPAToken:
-    NoEcho: true
-    Type: String
-  GithubSecret:
-    NoEcho: true
-    Type: String
-    Default: test
-  GithubBranch:
-    Type: String
-    Default: master
-  DomainName:
-    Type: String
-    Default: samhstn.com
 
 Resources:
   BuildRole:
@@ -52,7 +39,7 @@ Resources:
   Build:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: Build
+      Name: CodeBuild
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -70,5 +57,5 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-        Location: "https://github.com/samhstn/samhstn.git"
+        Location: !Join ["", ["https://github.com/", !Ref GithubOwner, "/", !Ref GithubRepo, ".git"]]
         BuildSpec: infra/testspec.yml

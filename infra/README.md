@@ -135,3 +135,26 @@ The `url` to give to this `webhook` can be found with the command:
 ```bash
 aws codepipeline list-webhooks
 ```
+
+### Configure Github push CodeBuild
+
+We will run a `CodeBuild` job which will run our tests on every push to Github.
+To do this we need to authorize Github:
+
++ Visit https://console.aws.amazon.com/codesuite/codebuild/projects
++ If you see the message: 'You are connected to GitHub using OAuth` you can skip the next steps here.
++ Otherwise, click `Create build project`
++ In the `Source` section, select `GitHub` as the `Source provider`
++ Ensure `Connect using OAuth` is selected
++ Click Connect to `GitHub`
++ In the popup window, click `Authorize aws-codesuite`
+
+Now run deploy the cloudformation template:
+
+```bash
+aws cloudformation create-stack \
+ --stack-name samhstn-codebuild \
+ --template-body file://infra/codebuild.yml \
+ --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete
+```
