@@ -111,7 +111,7 @@ aws cloudformation create-stack \
 aws cloudformation wait stack-create-complete
 ```
 
-### Configure Github push CodeBuild
+### Configure builds to run on every Github push event
 
 We will run a `CodeBuild` job which will run our tests on every push to Github.
 To do this we need to authorize Github:
@@ -134,27 +134,42 @@ aws cloudformation create-stack \
 aws cloudformation wait stack-create-complete
 ```
 
-### Configure our master branch CodePipeline
+### Configure our Codepipeline pipeline
 
-This will listen to chnages on Github and build our site.
+This will listen to chnages on our Github `master` branch and build our site.
 
-Run the following command to get this running:
+We will need a secret to pass to our CodePipeline and our Github webhook.
+
+```bash
+GITHUB_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('base64'));")
+```
+
+Run the following command to build our pipeline stack:
 
 ```bash
 aws cloudformation create-stack \
- --stack-name samhstn-master-pipeline \
- --template-body file://infra/master_pipeline.yaml \
+ --stack-name samhstn-codepipeline \
+ --template-body file://infra/codepipeline.yaml \
  --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
+              "ParameterKey=GithubSecret,ParameterValue=$GITHUB_SECRET" \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete
 ```
 
-We will also need to add a webhook in the Github [webhook interface](https://github.com/samhstn/samhstn/settings/hooks)
+Now we will configure our Github webhook.
 
-For now call the secret `test`.
-
-The `url` to give to this `webhook` can be found with the command:
+To see all our current webhooks run:
 
 ```bash
-aws codepipeline list-webhooks
+curl --user "samhstn:$GITHUB_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks
 ```
+
+To add our webhook to trigger our CodePipeline build run:
+
+```bash
+WEBHOOK_URL=$(aws codepipeline list-webhooks --query "webhooks[*].url | [0]" --output text)
+curl --user "samhstn:$GITHUB_PA_TOKEN" -X POST \
+  --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \
+  https://api.github.com/repos/samhstn/samhstn/hooks
+```
+
