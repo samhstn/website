@@ -34,7 +34,7 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource:
-                  !Join [ ':', [ 'arn:aws:logs', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'log-group', '/aws/codebuild/*' ] ]
+                  !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
 
   Codebuild:
     Type: AWS::CodeBuild::Project
@@ -58,7 +58,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-        Location: !Join ["", ["https://github.com/", !Ref GithubOwner, "/", !Ref GithubRepo, ".git"]]
+        Location: !Sub "https://github.com/${GithubOwner}/${GithubRepo}.git"
         BuildSpec: infra/buildspecs/test.yaml
         ReportBuildStatus: true
       Triggers:
