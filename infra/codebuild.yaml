@@ -40,6 +40,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: CodeBuild
+      BadgeEnabled: true
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -63,10 +64,7 @@ Resources:
       Triggers:
         Webhook: true
         FilterGroups:
-          - - ExcludeMatchedPattern: true
-              Pattern: ^refs/heads/master$
-              Type: HEAD_REF
-            - ExcludeMatchedPattern: false
+          - - ExcludeMatchedPattern: false
               Pattern: PUSH
               Type: EVENT
 

@@ -142,7 +142,7 @@ Run the following command to get this running:
 
 ```bash
 aws cloudformation create-stack \
- --stack-name samhstn-master_pipeline \
+ --stack-name samhstn-master-pipeline \
  --template-body file://infra/master_pipeline.yaml \
  --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
  --capabilities CAPABILITY_NAMED_IAM
