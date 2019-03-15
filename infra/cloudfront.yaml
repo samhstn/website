@@ -15,7 +15,7 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Join ["", [!Ref DomainName, ".s3-website-", !Ref "AWS::Region", ".amazonaws.com" ]]
+          - DomainName: !Sub "${DomainName}.s3-website-${AWS::Region}.amazonaws.com"
             Id: S3Origin
             CustomOriginConfig:
               HTTPPort: '80'

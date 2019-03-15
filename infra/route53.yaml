@@ -20,7 +20,7 @@ Resources:
       Name: !Ref DomainName
       Comment: Points our domain name at our cloudfront distribution
       Type: A
-      HostedZoneName: !Join ["", [!Ref DomainName, "."]]
+      HostedZoneName: !Sub "${DomainName}."
       AliasTarget:
         DNSName: !Ref CloudFrontDomainName
         HostedZoneId: !Ref HostedZoneId

@@ -20,7 +20,7 @@ Resources:
   RedirectBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Join ["", ["www.", !Ref DomainName]]
+      BucketName: !Sub "www.${DomainName}"
       AccessControl: PublicRead
       WebsiteConfiguration:
         RedirectAllRequestsTo:
@@ -38,7 +38,7 @@ Resources:
           Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Join ["", ["arn:aws:s3:::", !Ref DomainName, "/*"]]
+          Resource: !Sub "arn:aws:s3:::${DomainName}/*"
 
   RedirectBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -50,4 +50,4 @@ Resources:
           Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Join ["", ["arn:aws:s3:::www.", !Ref DomainName, "/*"]]
+          Resource: !Sub "arn:aws:s3:::www.${DomainName}/*"
