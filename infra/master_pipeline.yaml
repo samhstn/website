@@ -21,9 +21,6 @@ Parameters:
   GithubBranch:
     Type: String
     Default: master
-  DomainName:
-    Type: String
-    Default: samhstn.com
 
 Resources:
   PipelineArtifactBucket:
@@ -57,9 +54,8 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
                 Resource:
-                  - !Join ['', ['arn:aws:codebuild:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':project/', !Ref Build]]
-                  - !Join ['', ['arn:aws:codebuild:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':project/', !Ref Test]]
-
+                  - !Join ['', ['arn:aws:codebuild:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':project/Build']]
+                  - !Join ['', ['arn:aws:codebuild:', !Ref 'AWS::Region', ':', !Ref 'AWS::AccountId', ':project/Test']]
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -97,7 +93,7 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
               Configuration:
-                ProjectName: !Ref Test
+                ProjectName: Test
               RunOrder: 2
         - Name: Deploy
           Actions:
@@ -112,78 +108,8 @@ Resources:
               InputArtifacts:
                 - Name: SourceOutput
               Configuration:
-                ProjectName: !Ref Build
+                ProjectName: Build
               RunOrder: 3
-
-  BuildRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: samhstn-build-role
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          Effect: Allow
-          Principal:
-            Service: codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-        - PolicyName: samhstn-build-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                Resource:
-                  - !Join [ '', [ 'arn:aws:s3:::', !Ref PipelineArtifactBucket, '/*' ] ]
-                  - !Join ['', ['arn:aws:s3:::', !Ref DomainName, '/*']]
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:DescribeLogStreams
-                  - logs:PutLogEvents
-                Resource:
-                  !Join [ ':', [ 'arn:aws:logs', !Ref 'AWS::Region', !Ref 'AWS::AccountId', 'log-group', '/aws/codebuild/*' ] ]
-
-  Test:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: Test
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        # See all options here:
-        # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
-        Image: aws/codebuild/nodejs:10.14.1
-      ServiceRole: !Ref BuildRole
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: infra/testspec.yaml
-
-  Build:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: Build
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/ubuntu-base:14.04
-        EnvironmentVariables:
-          - Name: DESTINATION_BUCKET
-            Type: PLAINTEXT
-            # Currently unable to reference this dynamically, see:
-            # https://stackoverflow.com/a/41727240/4699289
-            Value: samhstn.com
-      ServiceRole: !Ref BuildRole
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: infra/buildspec.yaml
 
   GithubWebhook:
     Type: AWS::CodePipeline::Webhook
