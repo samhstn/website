@@ -1,12 +1,8 @@
 [![Build Status](https://samhstn.com/badge)](https://console.aws.amazon.com/codesuite/codebuild/projects/Push)
 
-# samhstn.com
+# [samhstn.com](https://samhstn.com)
 
-[samhstn.com](http://samhstn.com)
-
-### What
-
-My personal website
+### My personal website
 
 ### Quick start
 
