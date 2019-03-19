@@ -148,8 +148,8 @@ Run the following command to build our pipeline stack:
 
 ```bash
 aws cloudformation create-stack \
- --stack-name samhstn-codepipeline \
- --template-body file://infra/codepipeline.yaml \
+ --stack-name samhstn-master-pipeline \
+ --template-body file://infra/master_pipeline.yaml \
  --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
               "ParameterKey=GithubSecret,ParameterValue=$GITHUB_SECRET" \
  --capabilities CAPABILITY_NAMED_IAM
