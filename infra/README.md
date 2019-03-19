@@ -37,6 +37,7 @@ We will need to create a Github personal access token for `aws` to use.
 + Click `Generate new token`.
 + Give the `token` a description of `Full repo access`.
 + Tick the `repo` scope.
++ Tick the `admin:repo_hook` scope.
 + Click Generate token.
 
 Now set this token as an environment variable called `GITHUB_PA_TOKEN`.
