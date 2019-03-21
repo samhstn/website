@@ -3,4 +3,10 @@ version: 0.2
 phases:
   build:
     commands:
+      - |
+        for FILE in $(find ./infra -name "*.yaml" -maxdepth 1);do
+          if ! aws cloudformation validate-template --template-body "file://$FILE";then
+            exit 1
+          fi
+        done
       - npm test

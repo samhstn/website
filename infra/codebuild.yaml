@@ -35,6 +35,10 @@ Resources:
                   - logs:PutLogEvents
                 Resource:
                   !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
+              - Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                Resource: "*"
 
   Codebuild:
     Type: AWS::CodeBuild::Project
@@ -50,7 +54,7 @@ Resources:
         EnvironmentVariables:
           - Name: DESTINATION_BUCKET
             Type: PLAINTEXT
-            # Currently unable to reference this dynamically, see:
+            # Currently unable to reference this dynamically, see:
             # https://stackoverflow.com/a/41727240/4699289
             Value: samhstn.com
       ServiceRole: !Ref BuildRole
@@ -77,7 +81,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        # See all options here:
+        # See all options here:
         # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
         Image: aws/codebuild/nodejs:10.14.1
       ServiceRole: !Ref BuildRole
@@ -98,7 +102,7 @@ Resources:
         EnvironmentVariables:
           - Name: DESTINATION_BUCKET
             Type: PLAINTEXT
-            # Currently unable to reference this dynamically, see:
+            # Currently unable to reference this dynamically, see:
             # https://stackoverflow.com/a/41727240/4699289
             Value: samhstn.com
       ServiceRole: !Ref BuildRole
