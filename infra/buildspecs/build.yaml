@@ -3,6 +3,22 @@ version: 0.2
 phases:
   build:
     commands:
+      - |
+      STACKS=(acm s3 cloudfront codebuild master-pipeline)
+      for stack in $STACKS;do
+        if diff --ignore-blank-lines $FILE <(
+          aws cloudformation get-template --stack-name $stack --query TemplateBody --output text
+        );then
+          aws cloudformation update-stack \
+            --stack-name $stack \
+            --template-body file://infra/$stack.yaml \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameters ParameterKey=GithubPAToken,UsePreviousValue=true
+          aws cloudformation wait stack-update-complete --stack-name $stack
+        else
+          echo "Template $stack is up to date!"
+        fi
+      done
       - aws s3 sync static s3://samhstn.com --delete --exclude badge
       - |
         CODEBUILD_BADGE_URL=$(\
