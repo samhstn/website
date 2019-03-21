@@ -1,0 +1,103 @@
+# CloudFormation doesn't support storing values in Parameter Store.
+# We can reference these instead using lambda-backed resources.
+# We can achieve writing to our parameter store with a 'SecureString' parameter,
+# taking inspiration from:
+# https://github.com/glassechidna/ssmcfn
+
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt Role.Arn
+      Runtime: nodejs8.10
+      Timeout: 60
+      Code:
+        ZipFile: >
+          var response = require('cfn-response');
+          var aws = require('aws-sdk');
+          exports.handler = function(event, context) {
+              console.log(event);
+              
+              var ssm = new aws.SSM();
+              var props = event.ResourceProperties;
+              var splitStackArn = event.StackId.split(':');
+              var region = splitStackArn[3];
+              var accountId = splitStackArn[4];
+              var stackName = splitStackArn[5].split("/")[1];
+              var paramName = props.Name || "cfn-" + stackName + "-" + event.LogicalResourceId; // TODO: add rand on end?
+              var paramArn = "arn:aws:ssm:" + region + ":" + accountId + ":parameter/" + paramName;
+              var cb = function(err, resp) {
+                  var cfnRespData = { Arn: paramArn, Name: paramName };
+                  if (err) {
+                      console.log(err);
+                      response.send(event, context, response.FAILED, cfnRespData, paramArn);            
+                  } else {
+                      console.log(resp);
+                      response.send(event, context, response.SUCCESS, cfnRespData, paramArn);            
+                  }
+              };
+              if (event.RequestType == "Create") {
+                  var params = {
+                      Name: paramName,
+                      Type: props.Type,
+                      Value: props.Value,
+                      KeyId: props.KeyId,
+                      Overwrite: false
+                  };
+                  if (props.Description) params.Description = props.Description;
+                  if (props.KeyId) params.KeyId = props.KeyId;
+                  
+                  ssm.putParameter(params, cb);
+              } else if (event.RequestType == "Update") {
+                  var params = {
+                      Name: paramName,
+                      Type: props.Type,
+                      Value: props.Value,
+                      KeyId: props.KeyId,
+                      Overwrite: true
+                  };
+                  if (props.Description) params.Description = props.Description;
+                  if (props.KeyId) params.KeyId = props.KeyId;
+                  ssm.putParameter(params, cb);
+              } else if (event.RequestType == "Delete") {
+                  ssm.deleteParameter({ Name: paramName }, cb);
+              }
+          };
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - ssm:PutParameter
+                  - ssm:DeleteParameter
+                  - kms:Encrypt
+                Resource: "*"
+
+Outputs:
+  Lambda:
+    Value: !GetAtt Lambda.Arn
+    Export:
+      Name: ParameterStore

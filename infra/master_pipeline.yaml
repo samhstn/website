@@ -32,7 +32,7 @@ Resources:
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: samhstn-pipeline-role
+      RoleName: samhstn-master-pipeline-role
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
