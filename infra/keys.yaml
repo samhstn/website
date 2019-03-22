@@ -68,28 +68,28 @@ Resources:
       Type: String
       Value: !Ref AcmCertArn
 
-  GithubOwner:
+  GithubOwnerParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "${SsmRoot}/GithubOwner"
       Type: String
       Value: !Ref GithubOwner
 
-  GithubRepo:
+  GithubRepoParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "${SsmRoot}/GithubRepo"
       Type: String
       Value: !Ref GithubRepo
 
-  GithubBranch:
+  GithubBranchParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "${SsmRoot}/GithubBranch"
       Type: String
       Value: !Ref GithubBranch
 
-  GithubPAToken:
+  GithubPATokenParameter:
     Type: Custom::ParameterStore
     Properties:
       ServiceToken: !ImportValue ParameterStore
@@ -97,7 +97,7 @@ Resources:
       Type: SecureString
       Value: !Ref GithubPAToken
 
-  GithubSecret:
+  GithubSecretParameter:
     Type: Custom::ParameterStore
     Properties:
       ServiceToken: !ImportValue ParameterStore
@@ -105,14 +105,14 @@ Resources:
       Type: SecureString
       Value: !Ref GithubSecret
 
-  Namespace:
+  NamespaceParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "${SsmRoot}/Namespace"
       Type: String
       Value: !Ref Namespace
 
-  DomainName:
+  DomainNameParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "${SsmRoot}/DomainName"
