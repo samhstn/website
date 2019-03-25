@@ -44,9 +44,6 @@ Resources:
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
       ArtifactStore:
-        EncryptionKey:
-          Id: !Sub "arn:aws:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/s3"
-          Type: KMS
         Location:
           Ref: PipelineArtifactBucket
         Type: S3

@@ -33,11 +33,8 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
-                  - "s3:*"
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - kms:Decrypt
+                  - "s3:GetObject" # todo: specify just codepipeline bucket
+                  - "s3:PutObject" # todo: specify samhstn.com bucket
                 Resource: "*"
 
   Codebuild:
