@@ -2,14 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Codebuild which runs on every push to github
 
-Parameters:
-  GithubOwner:
-    Type: String
-    Default: samhstn
-  GithubRepo:
-    Type: String
-    Default: samhstn
-
 Resources:
   BuildRole:
     Type: AWS::IAM::Role
@@ -62,7 +54,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-        Location: !Sub "https://github.com/${GithubOwner}/${GithubRepo}.git"
+        Location: https://github.com/{{resolve:ssm:/Samhstn/GithubOwner:1}}/{{resolve:ssm:/Samhstn/GithubRepo:1}}.git
         BuildSpec: infra/buildspecs/test.yaml
         ReportBuildStatus: true
       Triggers:

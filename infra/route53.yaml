@@ -3,11 +3,6 @@ Description: >-
   Point our domain name at our cloudfront distribution
 
 Parameters:
-  CloudFrontDomainName:
-    Type: String
-  DomainName:
-    Type: String
-    Default: samhstn.com
   HostedZoneId:
     Type: String
     Description: Default HostedZoneId for Cloudfront
@@ -17,10 +12,10 @@ Resources:
   Route53RecordSet:
     Type: AWS::Route53::RecordSet
     Properties: 
-      Name: !Ref DomainName
+      Name: "{{resolve:ssm:/Samhstn/DomainName:1}}"
       Comment: Points our domain name at our cloudfront distribution
       Type: A
-      HostedZoneName: !Sub "${DomainName}."
+      HostedZoneName: "{{resolve:ssm:/Samhstn/DomainName:1}}."
       AliasTarget:
-        DNSName: !Ref CloudFrontDomainName
+        DNSName: !ImportValue SamhstnCloudFrontDomainName
         HostedZoneId: !Ref HostedZoneId

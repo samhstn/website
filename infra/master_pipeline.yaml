@@ -4,24 +4,6 @@ Description: >-
     + Read from our Github source master branch
     + Write these files to S3
 
-Parameters:
-  GithubOwner:
-    Type: String
-    Default: samhstn
-  GithubRepo:
-    Type: String
-    Default: samhstn
-  GithubPAToken:
-    NoEcho: true
-    Type: String
-  GithubSecret:
-    NoEcho: true
-    Type: String
-    Default: test
-  GithubBranch:
-    Type: String
-    Default: master
-
 Resources:
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -77,10 +59,10 @@ Resources:
               OutputArtifacts:
                 - Name: SourceOutput
               Configuration:
-                Owner: !Ref GithubOwner
-                Repo: !Ref GithubRepo
-                Branch: !Ref GithubBranch
-                OAuthToken: !Ref GithubPAToken
+                Owner: "{{resolve:ssm:/Samhstn/GithubOwner:1}}"
+                Repo: "{{resolve:ssm:/Samhstn/GithubRepo:1}}"
+                Branch: "{{resolve:ssm:/Samhstn/GithubBranch:1}}"
+                OAuthToken: "{{resolve:secretsmanager:/Samhstn/GithubPAToken}}"
               RunOrder: 1
         - Name: Test
           Actions:
@@ -116,10 +98,10 @@ Resources:
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: !Ref GithubSecret
+        SecretToken: "{{resolve:secretsmanager:/Samhstn/GithubSecret}}"
       Filters:
         - JsonPath: "$.ref"
-          MatchEquals: !Sub "refs/heads/${GithubBranch}"
+          MatchEquals: refs/heads/{{resolve:ssm:/Samhstn/GithubBranch:1}}
       TargetAction: Source
       TargetPipeline: !Ref Pipeline
       TargetPipelineVersion: !GetAtt Pipeline.Version

@@ -67,6 +67,19 @@ ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?Domain
 aws acm wait certificate-validated --certificate-arn "$ACM_CERT_ARN"
 ```
 
+### Configure our parameters and keys
+
+```
+ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
+aws cloudformation create-stack \
+  --stack-name samhstn-keys \
+  --template-body file://infra/keys.yaml \
+  --parameters \
+    ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN \
+    ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN
+aws cloudformation wait stack-create-complete
+```
+
 ### Create our S3 buckets for our static files
 
 This will create two buckets:
@@ -76,7 +89,9 @@ This will create two buckets:
 Create these with the command:
 
 ```bash
-aws cloudformation create-stack --stack-name samhstn-s3 --template-body file://infra/s3.yaml
+aws cloudformation create-stack \
+  --stack-name samhstn-s3 \
+  --template-body file://infra/s3.yaml
 aws cloudformation wait stack-create-complete
 ```
 
@@ -87,11 +102,9 @@ This will be used as our cdn and we will also attach our ssl certificate here.
 Set this up with the following commands:
 
 ```bash
-ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-cloudfront \
-  --template-body file://infra/cloudfront.yaml \
-  --parameters "ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN"
+  --template-body file://infra/cloudfront.yaml
 aws cloudformation wait stack-create-complete
 ```
 
@@ -104,11 +117,9 @@ Now we will look to point our route53 domain at our CloudFront Domain name using
 Do so by running the following command:
 
 ```bash
-CLOUD_FRONT_DOMAIN_NAME=$(aws cloudfront list-distributions --query "DistributionList.Items[?Aliases.Items[0]=='samhstn.com'] | [0].DomainName" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-route53 \
-  --template-body file://infra/route53.yaml \
-  --parameters "ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUD_FRONT_DOMAIN_NAME"
+  --template-body file://infra/route53.yaml
 aws cloudformation wait stack-create-complete
 ```
 
@@ -139,20 +150,12 @@ aws cloudformation wait stack-create-complete
 
 This will listen to chnages on our Github `master` branch and build our site.
 
-We will need a secret to pass to our CodePipeline and our Github webhook.
-
-```bash
-GITHUB_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('base64'));")
-```
-
 Run the following command to build our pipeline stack:
 
 ```bash
 aws cloudformation create-stack \
  --stack-name samhstn-master-pipeline \
  --template-body file://infra/master_pipeline.yaml \
- --parameters "ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN" \
-              "ParameterKey=GithubSecret,ParameterValue=$GITHUB_SECRET" \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete
 ```
@@ -169,8 +172,9 @@ To add our webhook to trigger our CodePipeline build run:
 
 ```bash
 WEBHOOK_URL=$(aws codepipeline list-webhooks --query "webhooks[*].url | [0]" --output text)
-curl --user "samhstn:$GITHUB_PA_TOKEN" -X POST \
+GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /Samhstn/GithubSecret --query SecretString --output text)
+curl --user "samhstn:$GITHUB_PA_TOKEN" \
+  --request POST \
   --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \
   https://api.github.com/repos/samhstn/samhstn/hooks
 ```
-
