@@ -41,33 +41,7 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              # todo: add s3 role
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:DescribeLogStreams
-                  - logs:PutLogEvents
-                Resource:
-                  !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*"
-
-  UpdateInfraRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: samhstn-update-infra-role
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          Effect: Allow
-          Principal:
-            Service: codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      Policies:
-        - PolicyName: samhstn-codebuild-build-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              # todo: add s3 role
+              # todo: add separate test and build roles
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -162,21 +136,6 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/buildspecs/test.yaml
-
-  UpdateInfra:
-    type: AWS::CodeBuild::Project
-    Properties:
-      Name: UpdateInfra
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/nodejs:10.14.1
-      ServiceRole: !Ref UpdateInfraRole
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: infra/buildspecs/update_infra.yml
 
   Build:
     Type: AWS::CodeBuild::Project

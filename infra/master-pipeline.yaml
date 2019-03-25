@@ -45,7 +45,6 @@ Resources:
                   - codebuild:StartBuild
                 Resource:
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Test"
-                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/UpdateInfra"
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Build"
 
   GithubSecretParameter:
@@ -101,19 +100,6 @@ Resources:
               Configuration:
                 ProjectName: Test
               RunOrder: 2
-        - Name: UpdateInfra
-          Actions:
-            - Name: UpdateInfra
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-                InputArtifacts:
-                  - Name: SourceOutput
-                Configuration:
-                  ProjectName: UpdateInfra
-                RunOrder: 3
         - Name: Deploy
           Actions:
             - Name: Deploy
@@ -129,7 +115,7 @@ Resources:
                 - Name: SourceOutput
               Configuration:
                 ProjectName: Build
-              RunOrder: 4
+              RunOrder: 3
 
   GithubWebhook:
     Type: AWS::CodePipeline::Webhook
