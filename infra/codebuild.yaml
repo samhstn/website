@@ -31,6 +31,14 @@ Resources:
                 Action:
                   - cloudformation:ValidateTemplate
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: "*"
 
   Codebuild:
     Type: AWS::CodeBuild::Project
