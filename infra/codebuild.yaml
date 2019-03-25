@@ -31,6 +31,11 @@ Resources:
                 Action:
                   - cloudformation:ValidateTemplate
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "s3:GetObject" # todo: specify just codepipeline bucket
+                  - "s3:PutObject" # todo: specify samhstn.com bucket
+                Resource: "*"
 
   Codebuild:
     Type: AWS::CodeBuild::Project

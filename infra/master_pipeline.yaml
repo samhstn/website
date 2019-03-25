@@ -23,7 +23,7 @@ Resources:
             Service: codepipeline.amazonaws.com
           Action: sts:AssumeRole
       Policies:
-        - PolicyName: samhstn-pipeline-policy
+        - PolicyName: samhstn-master-pipeline-policy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
