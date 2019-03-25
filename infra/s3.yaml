@@ -2,16 +2,11 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Configuration for our S3 buckets
 
-Parameters:
-  DomainName:
-    Type: String
-    Default: samhstn.com
-
 Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref DomainName
+      BucketName: "{{resolve:ssm:/Samhstn/DomainName:1}}"
       AccessControl: PublicRead
       WebsiteConfiguration:
         IndexDocument: index.html
@@ -20,11 +15,11 @@ Resources:
   RedirectBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "www.${DomainName}"
+      BucketName: www.{{resolve:ssm:/Samhstn/DomainName:1}}
       AccessControl: PublicRead
       WebsiteConfiguration:
         RedirectAllRequestsTo:
-          HostName: !Ref DomainName
+          HostName: "{{resolve:ssm:/Samhstn/DomainName:1}}"
           Protocol: http
 
 
@@ -38,7 +33,7 @@ Resources:
           Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Sub "arn:aws:s3:::${DomainName}/*"
+          Resource: arn:aws:s3:::{{resolve:ssm:/Samhstn/DomainName:1}}/*
 
   RedirectBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -50,4 +45,4 @@ Resources:
           Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Sub "arn:aws:s3:::www.${DomainName}/*"
+          Resource: arn:aws:s3:::www.{{resolve:ssm:/Samhstn/DomainName:1}}/*

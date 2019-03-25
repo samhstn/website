@@ -1,31 +1,24 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  Cloudfront Distribution with ssl certificate pointing to S3 bucket
-
-Parameters:
-  DomainName:
-    Type: String
-    Default: samhstn.com
-  AcmCertArn:
-    Type: String
+  CloudFront Distribution with ssl certificate pointing to S3 bucket
 
 Resources:
-  WebsiteCloudfront:
+  CloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "${DomainName}.s3-website-${AWS::Region}.amazonaws.com"
+          - DomainName: !Sub "{{resolve:ssm:/Samhstn/DomainName:1}}.s3-website-${AWS::Region}.amazonaws.com"
             Id: S3Origin
             CustomOriginConfig:
-              HTTPPort: '80'
-              HTTPSPort: '443'
+              HTTPPort: 80
+              HTTPSPort: 443
               OriginProtocolPolicy: http-only
         Enabled: true
         HttpVersion: http2
         DefaultRootObject: index.html
         Aliases:
-          - !Ref DomainName
+          - "{{resolve:ssm:/Samhstn/DomainName:1}}"
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -39,5 +32,11 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn: !Ref AcmCertArn
+          AcmCertificateArn: "{{resolve:ssm:/Samhstn/AcmCertArn:1}}"
           SslSupportMethod: sni-only
+
+Outputs:
+  CloudFrontDomainName:
+    Value: !GetAtt CloudFront.DomainName
+    Export:
+      Name: SamhstnCloudFrontDomainName
