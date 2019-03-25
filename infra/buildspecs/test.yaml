@@ -1,6 +1,13 @@
 version: 0.2
 
 phases:
+  install:
+    commands:
+      - apt-get update
+      - apt-get install python-pip -y
+      - python setup.py clean --all
+      - python setup.py install
+      - pip install cfn-lint
   build:
     commands:
       - |
@@ -9,4 +16,5 @@ phases:
             exit 1
           fi
         done
+      - cfn-lint infra/*.yaml
       - npm test
