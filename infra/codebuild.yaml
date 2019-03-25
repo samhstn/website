@@ -92,6 +92,13 @@ Resources:
                   - s3:PutObject
                   - s3:DeleteObject
                 Resource: arn:aws:s3:::samhstn.com/*
+              - Effect: Allow
+                Action:
+                  - cloudformation:ValidateTemplate
+                  - cloudformation:GetTemplate
+                  - cloudformation:CreateStack
+                  - cloudformation:UpdateStack
+                Resource: "*"
 
   Push:
     Type: AWS::CodeBuild::Project

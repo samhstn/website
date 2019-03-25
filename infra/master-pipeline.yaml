@@ -44,8 +44,8 @@ Resources:
                   - codebuild:BatchGetBuilds
                   - codebuild:StartBuild
                 Resource:
-                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Test"
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Build"
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Test"
 
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
