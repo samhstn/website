@@ -17,9 +17,6 @@ Parameters:
   GithubPAToken:
     NoEcho: true
     Type: String
-  GithubSecret:
-    NoEcho: true
-    Type: String
   Namespace:
     Type: String
     Default: samhstn
@@ -27,55 +24,58 @@ Parameters:
     Type: String
     Default: samhstn.com
 
+Resources:
   AcmCertArnParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/AcmCertArn"
+      Name: /Samhstn/AcmCertArn
       Type: String
       Value: !Ref AcmCertArn
 
   GithubOwnerParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/GithubOwner"
+      Name: /Samhstn/GithubOwner
       Type: String
       Value: !Ref GithubOwner
 
   GithubRepoParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/GithubRepo"
+      Name: /Samhstn/GithubRepo
       Type: String
       Value: !Ref GithubRepo
 
   GithubBranchParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/GithubBranch"
+      Name: /Samhstn/GithubBranch
       Type: String
       Value: !Ref GithubBranch
 
   GithubPATokenParameter:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: GithubPAToken
+      Name: /Samhstn/GithubPAToken
       SecretString: !Ref GithubPAToken
 
   GithubSecretParameter:
-    Type: Custom::ParameterStore
+    Type: AWS::SecretsManager::Secret
     Properties:
-      Name: GithubSecret
+      Name: /Samhstn/GithubSecret
+      GenerateSecretString:
+        ExcludeCharacters: \
 
   NamespaceParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/Namespace"
+      Name: /Samhstn/Namespace
       Type: String
       Value: !Ref Namespace
 
   DomainNameParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/Samhstn/DomainName"
+      Name: /Samhstn/DomainName
       Type: String
       Value: !Ref DomainName
