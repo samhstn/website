@@ -2,11 +2,16 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Codebuild which runs on every push to github
 
+Parameters:
+  BuildRoleName:
+    Type: String
+    Default: samhstn-build-role
+
 Resources:
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: samhstn-build-role
+      RoleName: !Ref BuildRoleName
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -54,7 +59,7 @@ Resources:
             # Currently unable to reference this dynamically, see:
             # https://stackoverflow.com/a/41727240/4699289
             Value: samhstn.com
-      ServiceRole: !Ref BuildRole
+      ServiceRole: !Ref BuildRoleName
       Source:
         Type: GITHUB
         Auth:
@@ -81,7 +86,7 @@ Resources:
         # See all options here:
         # https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html
         Image: aws/codebuild/nodejs:10.14.1
-      ServiceRole: !Ref BuildRole
+      ServiceRole: !Ref BuildRoleName
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/buildspecs/test.yaml
@@ -102,7 +107,7 @@ Resources:
             # Currently unable to reference this dynamically, see:
             # https://stackoverflow.com/a/41727240/4699289
             Value: samhstn.com
-      ServiceRole: !Ref BuildRole
+      ServiceRole: !Ref BuildRoleName
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/buildspecs/build.yaml

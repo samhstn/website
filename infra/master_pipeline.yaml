@@ -54,7 +54,7 @@ Resources:
               ActionTypeId:
                 Category: Source
                 Owner: ThirdParty
-                Version: 1
+                Version: "1"
                 Provider: GitHub
               OutputArtifacts:
                 - Name: SourceOutput
@@ -70,7 +70,7 @@ Resources:
               ActionTypeId:
                 Category: Test
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               InputArtifacts:
                 - Name: SourceOutput
@@ -85,7 +85,7 @@ Resources:
                 # See provider table here: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#actions-valid-providers
                 Category: Build
                 Owner: AWS
-                Version: 1
+                Version: "1"
                 Provider: CodeBuild
               InputArtifacts:
                 - Name: SourceOutput
