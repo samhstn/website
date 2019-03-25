@@ -47,7 +47,6 @@ Resources:
                       Overwrite: false
                   };
                   if (props.Description) params.Description = props.Description;
-                  if (props.KeyId) params.KeyId = props.KeyId;
                   
                   ssm.putParameter(params, cb);
               } else if (event.RequestType == "Update") {
@@ -59,10 +58,12 @@ Resources:
                       Overwrite: true
                   };
                   if (props.Description) params.Description = props.Description;
-                  if (props.KeyId) params.KeyId = props.KeyId;
                   ssm.putParameter(params, cb);
               } else if (event.RequestType == "Delete") {
-                  ssm.deleteParameter({ Name: paramName }, cb);
+                  ssm.getParameter({ Name: paramName }, function (err) {
+                      if (err) cb(false)
+                      else ssm.deleteParameter({ Name: paramName }, cb);
+                  })
               }
           };
   Role:

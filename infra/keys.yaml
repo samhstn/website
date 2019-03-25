@@ -26,95 +26,56 @@ Parameters:
   DomainName:
     Type: String
     Default: samhstn.com
-  SsmRoot:
-    Type: String
-    Default: "/Samhstn"
-
-Resources:
-  MasterKey:
-    Type: AWS::KMS::Key
-    Properties: 
-      KeyUsage: ENCRYPT_DECRYPT
-      KeyPolicy:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              AWS:
-                - !Sub "${AWS::AccountId}"
-            Action:
-              - "kms:*"
-            Resource: "*"
-          - Effect: Allow
-            Principal:
-              AWS:
-                - !Sub "${Namespace}-master-pipeline-role"
-                - !Sub "${Namespace}-build-role"
-            Action:
-              - "kms:Decrypt"
-            # todo: specify resource
-            Resource: "*"
-
-  MasterKeyAlias:
-    Type: AWS::KMS::Alias
-    Properties:
-      AliasName: alias/MasterKey
-      TargetKeyId: !Ref MasterKey
 
   AcmCertArnParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/AcmCertArn"
+      Name: !Sub "/Samhstn/AcmCertArn"
       Type: String
       Value: !Ref AcmCertArn
 
   GithubOwnerParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/GithubOwner"
+      Name: !Sub "/Samhstn/GithubOwner"
       Type: String
       Value: !Ref GithubOwner
 
   GithubRepoParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/GithubRepo"
+      Name: !Sub "/Samhstn/GithubRepo"
       Type: String
       Value: !Ref GithubRepo
 
   GithubBranchParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/GithubBranch"
+      Name: !Sub "/Samhstn/GithubBranch"
       Type: String
       Value: !Ref GithubBranch
 
   GithubPATokenParameter:
-    Type: Custom::ParameterStore
+    Type: AWS::SecretsManager::Secret
     Properties:
-      ServiceToken: !ImportValue ParameterStore
-      Name: !Sub "${SsmRoot}/GithubPAToken"
-      Type: SecureString
-      Value: !Ref GithubPAToken
+      Name: GithubPAToken
+      SecretString: !Ref GithubPAToken
 
   GithubSecretParameter:
     Type: Custom::ParameterStore
     Properties:
-      ServiceToken: !ImportValue ParameterStore
-      Name: !Sub "${SsmRoot}/GithubSecret"
-      Type: SecureString
-      Value: !Ref GithubSecret
+      Name: GithubSecret
 
   NamespaceParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/Namespace"
+      Name: !Sub "/Samhstn/Namespace"
       Type: String
       Value: !Ref Namespace
 
   DomainNameParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "${SsmRoot}/DomainName"
+      Name: !Sub "/Samhstn/DomainName"
       Type: String
       Value: !Ref DomainName
