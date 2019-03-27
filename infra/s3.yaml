@@ -22,12 +22,6 @@ Resources:
           HostName: "{{resolve:ssm:/Samhstn/DomainName:1}}"
           Protocol: http
 
-  BadgeRedirectBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: samhstn-badge
-      AccessControl: PublicRead
-
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -49,14 +43,3 @@ Resources:
           Principal: "*"
           Action: s3:GetObject
           Resource: arn:aws:s3:::www.{{resolve:ssm:/Samhstn/DomainName:1}}/*
-
-  BadgeRedirectBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref BadgeRedirectBucket
-      PolicyDocument:
-        Statement:
-        - Effect: Allow
-          Principal: "*"
-          Action: s3:GetObject
-          Resource: arn:aws:s3:::samhstn-badge/*

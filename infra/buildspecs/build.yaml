@@ -1,13 +1,11 @@
 version: 0.2
 
+env:
+  variables:
+    CODEBUILD_BADGE: $(aws codebuild batch-get-projects --name CodeBuild --query "projects[0].badge.badgeRequestUrl" --output text)
+
 phases:
   build:
     commands:
-      - |
-        CODEBUILD_BADGE=$(aws codebuild batch-get-projects --name CodeBuild --query "projects[0].badge.badgeRequestUrl" --output text)
-        if ! BADGE_BUCKET_REDIRECT=$(aws s3api get-bucket-website --bucket samhstn-badge --query "RedirectAllRequestsTo.HostName" --output text) || [ $CODEBUILD_BADGE != $BADGE_BUCKET_REDIRECT ];then
-          aws s3api put-bucket-website \
-            --bucket samhstn-badge \
-            --website-configuration "{\"RedirectAllRequestsTo\":{\"HostName\":\"$CODEBUILD_BADGE\",\"Protocol\":\"https\"}}"
-        fi
-      - aws s3 cp static/index.html s3://$DESTINATION_BUCKET/index.html
+      - aws s3 sync static s3://samhstn.com
+      - aws s3 cp s3://samhstn.com/repo/samhstn.com/badge.svg s3://samhstn.com/repo/samhstn.com/badge.svg --metadata "Website-Redirect-Location=$CODEBUILD_BADGE"
