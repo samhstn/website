@@ -72,12 +72,6 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/nodejs:10.14.1
-        EnvironmentVariables:
-          - Name: DESTINATION_BUCKET
-            Type: PLAINTEXT
-            # Currently unable to reference this dynamically, see:
-            # https://stackoverflow.com/a/41727240/4699289
-            Value: samhstn.com
       ServiceRole: !Ref BuildRoleName
       Source:
         Type: GITHUB
@@ -120,12 +114,6 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/ubuntu-base:14.04
-        EnvironmentVariables:
-          - Name: DESTINATION_BUCKET
-            Type: PLAINTEXT
-            # Currently unable to reference this dynamically, see:
-            # https://stackoverflow.com/a/41727240/4699289
-            Value: samhstn.com
       ServiceRole: !Ref BuildRoleName
       Source:
         Type: CODEPIPELINE
