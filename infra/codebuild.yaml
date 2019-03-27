@@ -55,8 +55,14 @@ Resources:
                 Action:
                   - "s3:GetObject" # todo: specify just codepipeline bucket
                   - "s3:PutObject" # todo: specify samhstn.com bucket
+                  - "s3:GetBucketWebsite"
+                  - "s3:PutBucketWebsite"
                 # todo: specify resource
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetProjects
+                Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/CodeBuild"
 
   Codebuild:
     Type: AWS::CodeBuild::Project
