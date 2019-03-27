@@ -22,7 +22,6 @@ Resources:
           HostName: "{{resolve:ssm:/Samhstn/DomainName:1}}"
           Protocol: http
 
-
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
