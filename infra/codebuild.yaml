@@ -8,6 +8,21 @@ Parameters:
     Default: samhstn-build-role
 
 Resources:
+  Repository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: samhstn-baseimage
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              # todo: specify ecr resource
+              - "ecr:*"
+
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -40,6 +55,7 @@ Resources:
                 Action:
                   - "s3:GetObject" # todo: specify just codepipeline bucket
                   - "s3:PutObject" # todo: specify samhstn.com bucket
+                # todo: specify resource
                 Resource: "*"
 
   Codebuild:
