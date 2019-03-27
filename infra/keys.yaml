@@ -32,6 +32,16 @@ Resources:
       Type: String
       Value: !Ref AcmCertArn
 
+  DockerfileDigest:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Samhstn/DockerfileDigest
+      Description: >-
+        Reference to the currently deployed ecr image
+        https://github.com/samhstn/samhstn/issues/50
+      Type: String
+      Value: ""
+
   GithubOwnerParameter:
     Type: AWS::SSM::Parameter
     Properties:
