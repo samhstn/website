@@ -8,7 +8,7 @@ Resources:
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "samhstn-artifact-store-${AWS::Region}"
+      BucketName: samhstn-artifact-store
       AccessControl: BucketOwnerFullControl
 
   PipelineRole:
@@ -42,6 +42,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
+      Name: samhstn-master-pipeline
       RoleArn: !GetAtt PipelineRole.Arn
       ArtifactStore:
         Location:
