@@ -29,8 +29,7 @@ Resources:
       Bucket: !Ref WebsiteBucket
       PolicyDocument:
         Statement:
-        - Sid: PublicReadForGetBucketObjects
-          Effect: Allow
+        - Effect: Allow
           Principal: "*"
           Action: s3:GetObject
           Resource: arn:aws:s3:::{{resolve:ssm:/Samhstn/DomainName:1}}/*
@@ -41,8 +40,7 @@ Resources:
       Bucket: !Ref RedirectBucket
       PolicyDocument:
         Statement:
-        - Sid: PublicReadForGetBucketObjects
-          Effect: Allow
+        - Effect: Allow
           Principal: "*"
           Action: s3:GetObject
           Resource: arn:aws:s3:::www.{{resolve:ssm:/Samhstn/DomainName:1}}/*
