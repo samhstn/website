@@ -20,8 +20,7 @@ Resources:
               Service:
                 - codebuild.amazonaws.com
             Action:
-              # todo: specify ecr resource
-              - "ecr:*"
+              - ecr:GetLogin
 
   BuildRole:
     Type: AWS::IAM::Role
