@@ -178,3 +178,10 @@ curl --user "samhstn:$GITHUB_PA_TOKEN" \
   --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \
   https://api.github.com/repos/samhstn/samhstn/hooks
 ```
+
+### Dev environment
+
+We should be able to run and test everything on a `dev` environment before it is deployed to `master`.
+
+The `dev` enivironment should be almost idential to the `master` environment and can be deployed as follows:
+
