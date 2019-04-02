@@ -3,7 +3,22 @@ version: 0.2
 phases:
   build:
     commands:
-      - aws s3 sync static s3://samhstn.com
+      - aws s3 sync static s3://samhstn.com --delete --exclude badge
       - |
-        CODEBUILD_BADGE=$(aws codebuild batch-get-projects --name CodeBuild --query "projects[0].badge.badgeRequestUrl" --output text)
-        aws s3 cp s3://samhstn.com/repo/samhstn/badge.svg s3://samhstn.com/repo/samhstn/badge.svg --metadata "Website-Redirect-Location=$CODEBUILD_BADGE"
+        CODEBUILD_BADGE_URL=$(\
+          aws codebuild batch-get-projects \
+            --name CodeBuild \
+            --query "projects[0].badge.badgeRequestUrl" \
+            --output text \
+        )
+        if ! aws s3 ls s3://samhstn.com/badge || \
+          [ $(\
+            aws s3api head-object \
+              --bucket samhstn.com \
+              --key badge \
+              --query "Metadata.\"website-redirect-location\"" \
+              --output text\
+            ) != $CODEBUILD_BADGE_URL ];then
+            curl https://s3.amazonaws.com/codefactory-us-east-1-prod-default-build-badges/unknown.svg > ./badge.svg
+              aws s3 cp ./badge.svg s3://samhstn.com/badge --metadata "Website-Redirect-Location=$CODEBUILD_BADGE_URL"
+        fi
