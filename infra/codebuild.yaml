@@ -1,6 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Resources:
+  DockerfileDigest:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /Samhstn/DockerfileDigest
+      Description: >-
+        Reference to the currently deployed ecr image
+        https://github.com/samhstn/samhstn/issues/50
+      Type: String
+      Value: ""
+
   Repository:
     Type: AWS::ECR::Repository
     Properties:
@@ -46,12 +56,11 @@ Resources:
                   - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-master-pipeline/*"
                   - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-cloudfront/*"
                   - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-codebuild/*"
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-keys/*"
                   - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-s3/*"
                   - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-route53/*"
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: "arn:aws:s3:::samhstn-artifact-store/*"
+                Resource: arn:aws:s3:::samhstn-artifact-store/*
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -100,7 +109,7 @@ Resources:
         Type: GITHUB
         Auth:
           Type: OAUTH
-        Location: https://github.com/{{resolve:ssm:/Samhstn/GithubOwner:1}}/{{resolve:ssm:/Samhstn/GithubRepo:1}}.git
+        Location: https://github.com/samhstn/samhstn.git
         BuildSpec: infra/buildspecs/test.yaml
         ReportBuildStatus: true
       Triggers:

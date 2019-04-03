@@ -8,13 +8,18 @@ Metadata:
       ignore_checks:
         - E3013
 
+Parameters:
+  DomainName:
+    Type: String
+    Default: samhstn.com
+
 Resources:
   CloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "{{resolve:ssm:/Samhstn/DomainName:1}}.s3-website-${AWS::Region}.amazonaws.com"
+          - DomainName: !Sub "${DomainName}.s3-website-${AWS::Region}.amazonaws.com"
             Id: S3Origin
             CustomOriginConfig:
               HTTPPort: 80
@@ -24,7 +29,7 @@ Resources:
         HttpVersion: http2
         DefaultRootObject: index.html
         Aliases:
-          - "{{resolve:ssm:/Samhstn/DomainName:1}}"
+          - !Ref DomainName
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
