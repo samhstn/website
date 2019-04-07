@@ -77,7 +77,7 @@ We will need to create a Github personal access token for `aws` to use.
 
 + Go to your [Github personal access tokens](https://github.com/settings/tokens).
 + Click `Generate new token`.
-+ Give the `token` a description of `Full repo access`.
++ Give the `token` a description of `samhstn.com`.
 + Tick the `repo` scope.
 + Tick the `admin:repo_hook` scope.
 + Click Generate token.
