@@ -3,8 +3,6 @@ Description: >-
   Configuration for how we will manage our keys
 
 Parameters:
-  AcmCertArn:
-    Type: String
   GithubOwner:
     Type: String
     Default: samhstn
@@ -25,13 +23,6 @@ Parameters:
     Default: samhstn.com
 
 Resources:
-  AcmCertArnParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /Samhstn/AcmCertArn
-      Type: String
-      Value: !Ref AcmCertArn
-
   DockerfileDigest:
     Type: AWS::SSM::Parameter
     Properties:

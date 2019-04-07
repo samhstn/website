@@ -38,7 +38,7 @@ Resources:
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn: "{{resolve:ssm:/Samhstn/AcmCertArn:1}}"
+          AcmCertificateArn: !ImportValue SamhstnAcmCertArn
           SslSupportMethod: sni-only
 
 Outputs:
