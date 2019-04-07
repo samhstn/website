@@ -243,4 +243,20 @@ Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/h
 ```
 https://codebuild.us-east-1.amazonaws.com/webhooks  (pull_request and push)
 https://us-east-1.webhooks.aws/trigger  (push)
+
+# Delete stacks
+
+After the above stacks have been successfully built, to tear them all down run the following commands:
+
+```bash
+# empty buckets commands
+# empty ecr command
+aws cloudformation delete-stack --stack-name samhstn-master-pipeline
+aws cloudformation delete-stack --stack-name samhstn-codebuild
+aws cloudformation delete-stack --stack-name samhstn-s3
+aws cloudformation delete-stack --stack-name samhstn-route53
+aws cloudformation delete-stack --stack-name samhstn-keys
+aws cloudformation wait stack-delete-complete --stack-name samhstn-route53
+aws cloudformation delete-stack --stack-name samhstn-cloudfront
+# remove securestring ssm parameters commands
 ```
