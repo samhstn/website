@@ -44,39 +44,29 @@ Now set this token as an environment variable called `GITHUB_PA_TOKEN`.
 
 ### Configure our Ssl certificate
 
-(For the most up-to-date instructions see here: https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-validate-dns.html)
-
-You can request a ssl certificate for our domain with the following command:
-
 ```bash
-aws acm request-certificate --domain-name samhstn.com --validation-method DNS
+aws cloudformation create-stack \
+  --stack-name samhstn-acm \
+  --template-body file://infra/acm.yaml
 ```
 
-Then in the [`acm` view](https://console.aws.amazon.com/acm):
-+ Click our `samhstn.com` domain name.
-+ Click `samhstn.com` in the `Domain` section.
-+ Click `Create record in Route 53`.
-+ Confirm by clicking `Create`.
+Then visit https://console.aws.amazon.com/acm and click 'Create record in Route 53' and 'Create'.
+(You may have to wait one minute for this to show).
 
-Now we're going to wait for it to be validated (this takes around 30 minutes).
+You should now see the message:
 
-You can wait for this to be validated in the command line with the following command:
+'The status of this certificate request is "Pending validation". Further action is needed to validate and approve the certificate.'
 
-```bash
-ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
-aws acm wait certificate-validated --certificate-arn "$ACM_CERT_ARN"
-```
+This takes around 30 minutes to complete.
 
 ### Configure our parameters and keys
 
 ```
-ACM_CERT_ARN=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn | [0]" --output text)
 aws cloudformation create-stack \
   --stack-name samhstn-keys \
   --template-body file://infra/keys.yaml \
   --parameters \
-    ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN \
-    ParameterKey=AcmCertArn,ParameterValue=$ACM_CERT_ARN
+    ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN
 aws cloudformation wait stack-create-complete
 ```
 
