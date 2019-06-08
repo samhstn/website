@@ -9,7 +9,7 @@ Resources:
         Reference to the currently deployed ecr image
         https://github.com/samhstn/samhstn/issues/50
       Type: String
-      Value: ""
+      Value: nil
 
   Repository:
     Type: AWS::ECR::Repository
@@ -48,16 +48,16 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test"
-                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push"
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push
               - Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource:
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-master-pipeline/*"
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-cloudfront/*"
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-codebuild/*"
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-s3/*"
-                  - !Sub "arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-route53/*"
+                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-master-pipeline/*
+                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-cloudfront/*
+                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-codebuild/*
+                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-s3/*
+                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-route53/*
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: arn:aws:s3:::samhstn-artifact-store/*
@@ -84,7 +84,7 @@ Resources:
                   - logs:CreateLogStream
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
-                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build"
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: arn:aws:s3:::samhstn-artifact-store/*

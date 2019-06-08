@@ -1,6 +1,4 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  Configuration for our S3 buckets
 
 Parameters:
   DomainName:
@@ -20,7 +18,7 @@ Resources:
   RedirectBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub www.{DomainName}
+      BucketName: !Sub www.${DomainName}
       AccessControl: PublicRead
       WebsiteConfiguration:
         RedirectAllRequestsTo:
@@ -36,7 +34,7 @@ Resources:
         - Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Sub arn:aws:s3:::{DomainName}/*
+          Resource: !Sub ${WebsiteBucket.Arn}/*
 
   RedirectBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -47,4 +45,4 @@ Resources:
         - Effect: Allow
           Principal: "*"
           Action: s3:GetObject
-          Resource: !Sub arn:aws:s3:::www.{DomainName}/*
+          Resource: !Sub ${RedirectBucket.Arn}/*

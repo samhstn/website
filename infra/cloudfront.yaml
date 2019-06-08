@@ -1,6 +1,4 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  CloudFront Distribution with ssl certificate pointing to S3 bucket
 
 Metadata:
   cfn-lint:
@@ -19,7 +17,7 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "${DomainName}.s3-website-${AWS::Region}.amazonaws.com"
+          - DomainName: !Sub ${DomainName}.s3-website-${AWS::Region}.amazonaws.com
             Id: S3Origin
             CustomOriginConfig:
               HTTPPort: 80
@@ -38,12 +36,10 @@ Resources:
           TargetOriginId: S3Origin
           ForwardedValues:
             QueryString: true
-            Cookies:
-              Forward: none
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn: !ImportValue SamhstnAcmCertArn
+          AcmCertificateArn: !ImportValue SamhstnCertificateArn
           SslSupportMethod: sni-only
 
 Outputs:
