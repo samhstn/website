@@ -40,7 +40,7 @@ We will need to create a Github personal access token for `aws` to use.
 + Tick the `admin:repo_hook` scope.
 + Click Generate token.
 
-Now set this token as an environment variable called `GITHUB_PA_TOKEN`.
+Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 
 ### Configure our Ssl certificate
 
@@ -48,6 +48,7 @@ Now set this token as an environment variable called `GITHUB_PA_TOKEN`.
 aws cloudformation create-stack \
   --stack-name samhstn-acm \
   --template-body file://infra/acm.yaml
+aws cloudformation wait stack-create-complete --stack-name samhstn-acm
 ```
 
 Then visit https://console.aws.amazon.com/acm and click 'Create record in Route 53' and 'Create'.
@@ -58,17 +59,6 @@ You should now see the message:
 'The status of this certificate request is "Pending validation". Further action is needed to validate and approve the certificate.'
 
 This takes around 30 minutes to complete.
-
-### Configure our parameters and keys
-
-```
-aws cloudformation create-stack \
-  --stack-name samhstn-keys \
-  --template-body file://infra/keys.yaml \
-  --parameters \
-    ParameterKey=GithubPAToken,ParameterValue=$GITHUB_PA_TOKEN
-aws cloudformation wait stack-create-complete
-```
 
 ### Create our S3 buckets for our static files
 
@@ -82,7 +72,7 @@ Create these with the command:
 aws cloudformation create-stack \
   --stack-name samhstn-s3 \
   --template-body file://infra/s3.yaml
-aws cloudformation wait stack-create-complete
+aws cloudformation wait stack-create-complete --stack-name samhst-s3
 ```
 
 ### Create CloudFront distribution
@@ -95,7 +85,7 @@ Set this up with the following commands:
 aws cloudformation create-stack \
   --stack-name samhstn-cloudfront \
   --template-body file://infra/cloudfront.yaml
-aws cloudformation wait stack-create-complete
+aws cloudformation wait stack-create-complete --stack-name samhstn-cloudfront
 ```
 
 The distribution will take up to half an hour to be created.
@@ -110,7 +100,7 @@ Do so by running the following command:
 aws cloudformation create-stack \
   --stack-name samhstn-route53 \
   --template-body file://infra/route53.yaml
-aws cloudformation wait stack-create-complete
+aws cloudformation wait stack-create-complete --stack-name samhstn-route53
 ```
 
 ### Configure builds to run on every Github push event
@@ -133,7 +123,7 @@ aws cloudformation create-stack \
  --stack-name samhstn-codebuild \
  --template-body file://infra/codebuild.yaml \
  --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete
+aws cloudformation wait stack-create-complete --stack-name samhstn-codebuild
 ```
 
 ### Configure our Codepipeline pipeline
@@ -155,7 +145,7 @@ Now we will configure our Github webhook.
 To see all our current webhooks run:
 
 ```bash
-curl --user "samhstn:$GITHUB_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks
+curl --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks
 ```
 
 To add our webhook to trigger our CodePipeline build run:
@@ -163,7 +153,7 @@ To add our webhook to trigger our CodePipeline build run:
 ```bash
 WEBHOOK_URL=$(aws codepipeline list-webhooks --query "webhooks[*].url | [0]" --output text)
 GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /Samhstn/GithubSecret --query SecretString --output text)
-curl --user "samhstn:$GITHUB_PA_TOKEN" \
+curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
   --request POST \
   --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \
   https://api.github.com/repos/samhstn/samhstn/hooks

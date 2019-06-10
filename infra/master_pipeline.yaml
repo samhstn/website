@@ -4,6 +4,13 @@ Description: >-
     + Read from our Github source master branch
     + Write these files to S3
 
+Parameters:
+  AcmCertArn:
+    Type: String
+  GitubPAToken:
+    Type: String
+    NoEcho: true
+
 Resources:
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -39,6 +46,19 @@ Resources:
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Build"
                   - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/Test"
 
+  GithubSecretParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /Samhstn/GithubSecret
+      GenerateSecretString:
+        ExcludePunctuation: true
+
+  GithubPATokenParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /Samhstn/GithubPAToken
+      SecretString: !Ref GithubPAToken
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
@@ -60,9 +80,9 @@ Resources:
               OutputArtifacts:
                 - Name: SourceOutput
               Configuration:
-                Owner: "{{resolve:ssm:/Samhstn/GithubOwner:1}}"
-                Repo: "{{resolve:ssm:/Samhstn/GithubRepo:1}}"
-                Branch: "{{resolve:ssm:/Samhstn/GithubBranch:1}}"
+                Owner: samhstn
+                Repo: samhstn
+                Branch: !Ref GithubBranch
                 OAuthToken: "{{resolve:secretsmanager:/Samhstn/GithubPAToken}}"
               RunOrder: 1
         - Name: Test

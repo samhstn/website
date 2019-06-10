@@ -1,6 +1,4 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: >-
-  CloudFront Distribution with ssl certificate pointing to S3 bucket
 
 Metadata:
   cfn-lint:
@@ -8,13 +6,18 @@ Metadata:
       ignore_checks:
         - E3013
 
+Parameters:
+  DomainName:
+    Type: String
+    Default: samhstn.com
+
 Resources:
   CloudFront:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !Sub "{{resolve:ssm:/Samhstn/DomainName:1}}.s3-website-${AWS::Region}.amazonaws.com"
+          - DomainName: !Sub ${DomainName}.s3-website-${AWS::Region}.amazonaws.com
             Id: S3Origin
             CustomOriginConfig:
               HTTPPort: 80
@@ -24,7 +27,7 @@ Resources:
         HttpVersion: http2
         DefaultRootObject: index.html
         Aliases:
-          - "{{resolve:ssm:/Samhstn/DomainName:1}}"
+          - !Ref DomainName
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -33,12 +36,10 @@ Resources:
           TargetOriginId: S3Origin
           ForwardedValues:
             QueryString: true
-            Cookies:
-              Forward: none
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_All
         ViewerCertificate:
-          AcmCertificateArn: !ImportValue SamhstnAcmCertArn
+          AcmCertificateArn: !ImportValue SamhstnCertificateArn
           SslSupportMethod: sni-only
 
 Outputs:

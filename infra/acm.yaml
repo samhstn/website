@@ -3,12 +3,14 @@ AWSTemplateFormatVersion: 2010-09-09
 Resources:
   Certificate:
     Type: AWS::CertificateManager::Certificate
-    Properties: 
-      DomainName: "*.samhstn.com"
+    Properties:
+      DomainName: samhstn.com
+      SubjectAlternativeNames:
+        - "*.samhstn.com"
       ValidationMethod: DNS
 
 Outputs:
-  AcmCertArn:
+  CertificateArn:
     Value: !Ref Certificate
     Export:
-      Name: SamhstnAcmCertArn
+      Name: SamhstnCertificateArn
