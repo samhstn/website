@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ReceiveEmail
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: receive-email
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  Lambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: receive_email
+      Handler: index.handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: nodejs8.10
+      Code:
+        ZipFile: !Sub |
+          exports.handler = (event, context, callback) => {
+            try {
+              const messageId = event.Records[0].ses.mail.messageId;
+              const { from, to, subject } = event.Records[0].ses.mail.commonHeaders;
+
+              console.log('FROM: ', from);
+              console.log('TO: ', to);
+              console.log('SUBJECT: ', subject);
+              console.log('MESSAGE_ID: ', messageId);
+            } catch (e) {
+              console.log('ERROR: ', e);
+            }
+
+            callback(null);
+          }
+
+  SESLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: receive_email
+      Principal: ses.amazonaws.com
+      SourceAccount: !Sub ${AWS::AccountId}
+    DependsOn: Lambda
+
+  Route53RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: samhstn.com
+      Type: MX
+      HostedZoneName: samhstn.com.
+      TTL: 300
+      ResourceRecords:
+        - !Sub "10 inbound-smtp.${AWS::Region}.amazonaws.com"
+
+  EmailRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: TriggerLambdaRuleSet
+
+  EmailRule:
+    Type: AWS::SES::ReceiptRule
+    Properties:
+      RuleSetName: !Ref EmailRuleSet
+      Rule:
+        Name: TriggerLambdaRule
+        Enabled: true
+        Recipients:
+          - samhstn.com
+        ScanEnabled: true
+        Actions:
+          - LambdaAction:
+              FunctionArn: !GetAtt Lambda.Arn
