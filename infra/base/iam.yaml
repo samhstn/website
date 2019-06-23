@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  SamhstnHostedZoneId:
+    Type: String
+  SamhstnUserId:
+    Type: String
+
+Resources:
+  SamhstnRoute53Policy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref SamhstnRoute53Role
+      PolicyName: SamhstnRoute53Access
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Resource: !Sub arn:aws:route53:::hostedzone/${SamhstnHostedZoneId}
+            Action: route53:*
+          - Effect: Allow
+            Resource: '*'
+            Action: route53:ListHostedZones
+
+  SamhstnRoute53Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SamhstnRoute53Role
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${SamhstnUserId}:user/admin
+            Action: sts:AssumeRole

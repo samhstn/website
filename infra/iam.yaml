@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  SamhstnBaseAccountId:
+    Type: String
+  TempPassword:
+    Type: String
+
+Resources:
+  SamhstnAdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: admin
+      Groups:
+        - !Ref SamhstnAssumeRoleGroup
+      LoginProfile:
+        Password: !Ref TempPassword
+        PasswordResetRequired: true
+
+  SamhstnAssumeRoleGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AssumeRole
+
+  SamhstnAdminUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref SamhstnAdminUser
+
+  SamhstnAssumeRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Groups:
+        - !Ref SamhstnAssumeRoleGroup
+      PolicyName: AssumeRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Action: sts:AssumeRole
+          Resource:
+            - !Sub arn:aws:iam::${SamhstnBaseAccountId}:role/SamhstnRoute53Role
+
+  SamhstnAdminPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref SamhstnAdminRole
+      PolicyName: SamhstnAdminAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Resource: '*'
+          Action: '*'
+
+  SamhstnAdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SamhstnAdminRole
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt SamhstnAdminUser.Arn
+            Action: sts:AssumeRole
+
+Outputs:
+  SamhstnAdminUserAccessKeyId:
+    Value: !Ref SamhstnAdminUserAccessKey
+
+  SamhstnAdminUserSecretAccessKey:
+    Value: !GetAtt SamhstnAdminUserAccessKey.SecretAccessKey

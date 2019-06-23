@@ -1,5 +1,28 @@
 # AWS Setup from scratch
 
+Before deploying any of the following, ensure we have first followed the instructions from our [AWS base setup](./base/README.md)
+
+Once these steps have been followed. A new developer can sign up by visiting: http://samhstn.signin.aws.amazon.com
+
+Account ID: samhstn
+IAM user name: admin
+
+The password will be given to you by whoever ran the steps described in [AWS base setup](./base/README.md).
+
+This must be updated after the first login.
+
+To access our Route53 domain configuraion, we will need to switch roles. This can be done in the top right dropdown.
+
+Account: samhstn-base
+Role: Route53Role
+Display Name: route53 base
+
+For admin access to the `aws+samhstn@samhstn.com` account, we need to switch roles to:
+
+Account: samhstn
+Role: Admin
+Display Name: admin
+
 ### Configure our AWS CLI
 
 We will create an `admin` user which we will use for programmatic access.
