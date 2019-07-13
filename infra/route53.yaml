@@ -4,6 +4,8 @@ Parameters:
   DomainName:
     Type: String
     Default: samhstn.com
+  CloudFrontDomainName:
+    Type: String
 
 Resources:
   Route53RecordSet:
@@ -14,5 +16,5 @@ Resources:
       Type: A
       HostedZoneName: !Sub "${DomainName}."
       AliasTarget:
-        DNSName: !ImportValue SamhstnCloudFrontDomainName
+        DNSName: !Ref CloudFrontDomainName
         HostedZoneId: Z2FDTNDATAQYW2 # default HostedZoneId for Cloudfront

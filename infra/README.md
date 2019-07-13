@@ -14,8 +14,8 @@ This must be updated after the first login.
 To access our Route53 domain configuraion, we will need to switch roles. This can be done in the top right dropdown.
 
 Account: samhstn-base
-Role: Route53Role
-Display Name: route53 base
+Role: SamhstnBase
+Display Name: base
 
 For admin access to the `aws+samhstn@samhstn.com` account, we need to switch roles to:
 
@@ -25,32 +25,49 @@ Display Name: admin
 
 ### Configure our AWS CLI
 
-We will create an `admin` user which we will use for programmatic access.
+We can set up credentials for the above 2 roles by editing our `~/.aws/credentials` to include the following:
 
-In the [`IAM` web view](https://console.aws.amazon.com/iam):
+```bash
+[samhstn]
+aws_access_key_id = <ACCESS_KEY_ID>
+aws_secret_access_key = <SECRET_ACCESS_KEY>
+```
 
-+ Create a group called `Admin` with `AdministratorAccess`
-+ Create a user called `admin` with our `Admin` group permissions
-+ Download the `credentials.csv` file.
+We can configure role cli access by editing our `~/.aws/config` to look like the following:
 
-Now we will configure our `aws` `cli` to use our `admin` user.
+```bash
+[default]
+region = us-east-1
+output = json
 
-+ Run `aws configure`.
-+ Set our `Access Key ID` and `Secret access key` from our downloaded `credentials.csv`.
-+ Set our region to `us-east-1`.
-+ Set output format to `json`.
+[profile samhstn-base]
+role_arn = arn:aws:iam::<ACCOUNT_ID>:role/Admin
+source_profile = samhstn
+
+[profile samhstn-admin]
+role_arn = arn:aws:iam::<ACCOUNT_ID>:role/SamhstnBase
+source_profile = samhstn
+```
+
+We can choose which profile to use by setting the `AWS_DEFAULT_PROFILE` environment variable.
+
+For example, we could set in our `~/.bashrc` as the following:
+
+```bash
+export AWS_DEFAULT_PROFILE=samhstn-admin
+```
 
 ### Domain
 
-Ensure you have purchased your domain from [`Route53`](https://console.aws.amazon.com/route53)
+Ensure we have purchased your domain from [`Route53`](https://console.aws.amazon.com/route53) with the route account.
 
-To see your purchased domains, run:
+To see your purchased domains, with the `samhstn-base` profile, run:
 
 ```bash
 aws route53 list-hosted-zones --query 'HostedZones[*].Name' --output text
 ```
 
-(if your domain isn't in the list you'll have to purchase it from the [Route53 `Domain Registration` page](https://console.aws.amazon.com/route53/home#DomainRegistration:))
+(if your domain isn't in the list you'll have to purchase it from the [Route53 `Domain Registration` page](https://console.aws.amazon.com/route53/home#DomainRegistration:) as the root user)
 
 ### Authorize Github
 
@@ -67,19 +84,16 @@ Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 
 ### Configure our Ssl certificate
 
+Assuming the `samhstn-admin` role, run the following commands:
+
 ```bash
 aws cloudformation create-stack \
-  --stack-name samhstn-acm \
+  --stack-name acm \
   --template-body file://infra/acm.yaml
-aws cloudformation wait stack-create-complete --stack-name samhstn-acm
+aws cloudformation wait stack-create-complete --stack-name acm
 ```
 
-Then visit https://console.aws.amazon.com/acm and click 'Create record in Route 53' and 'Create'.
-(You may have to wait one minute for this to show).
-
-You should now see the message:
-
-'The status of this certificate request is "Pending validation". Further action is needed to validate and approve the certificate.'
+You will need to visit the `Route53` console as the samhstn-base `base` role and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
 
 This takes around 30 minutes to complete.
 
@@ -89,26 +103,26 @@ This will create two buckets:
 + `www.samhstn.com` (which will redirect to `samhstn.com`)
 + `samhstn.com` (which will be used for storing our static files)
 
-Create these with the command:
+Create these assuming the `samhstn-admin` role with the following commands:
 
 ```bash
 aws cloudformation create-stack \
-  --stack-name samhstn-s3 \
+  --stack-name s3 \
   --template-body file://infra/s3.yaml
-aws cloudformation wait stack-create-complete --stack-name samhst-s3
+aws cloudformation wait stack-create-complete --stack-name s3
 ```
 
 ### Create CloudFront distribution
 
 This will be used as our cdn and we will also attach our ssl certificate here.
 
-Set this up with the following commands:
+Set this up assuming the `samhstn-admin` role with the following commands:
 
 ```bash
 aws cloudformation create-stack \
-  --stack-name samhstn-cloudfront \
+  --stack-name cloudfront \
   --template-body file://infra/cloudfront.yaml
-aws cloudformation wait stack-create-complete --stack-name samhstn-cloudfront
+aws cloudformation wait stack-create-complete --stack-name cloudfront
 ```
 
 The distribution will take up to half an hour to be created.
@@ -117,12 +131,13 @@ The distribution will take up to half an hour to be created.
 
 Now we will look to point our route53 domain at our CloudFront Domain name using an `alias`.
 
-Do so by running the following command:
+Do so assuming the `samhstn-base` role, running the following commands:
 
 ```bash
 aws cloudformation create-stack \
   --stack-name samhstn-route53 \
   --template-body file://infra/route53.yaml
+  --parameters ParameterKey=CloudFrontDomainName,ParameterValue=<cloudfront-domain-name>
 aws cloudformation wait stack-create-complete --stack-name samhstn-route53
 ```
 
@@ -143,10 +158,10 @@ Now run deploy the cloudformation template:
 
 ```bash
 aws cloudformation create-stack \
- --stack-name samhstn-codebuild \
+ --stack-name codebuild \
  --template-body file://infra/codebuild.yaml \
  --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete --stack-name samhstn-codebuild
+aws cloudformation wait stack-create-complete --stack-name codebuild
 ```
 
 ### Configure our Codepipeline pipeline
@@ -157,10 +172,10 @@ Run the following command to build our pipeline stack:
 
 ```bash
 aws cloudformation create-stack \
- --stack-name samhstn-master-pipeline \
+ --stack-name master-pipeline \
  --template-body file://infra/master_pipeline.yaml \
  --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete
+aws cloudformation wait stack-create-complete --stack-name master-pipeline
 ```
 
 Now we will configure our Github webhook.
@@ -175,7 +190,7 @@ To add our webhook to trigger our CodePipeline build run:
 
 ```bash
 WEBHOOK_URL=$(aws codepipeline list-webhooks --query "webhooks[*].url | [0]" --output text)
-GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /Samhstn/GithubSecret --query SecretString --output text)
+GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /GithubSecret --query SecretString --output text)
 curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
   --request POST \
   --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \

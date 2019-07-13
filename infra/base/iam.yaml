@@ -3,16 +3,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   SamhstnHostedZoneId:
     Type: String
-  SamhstnUserId:
+    Default: Z2Z3JU4BX2KPG7
+  SamhstnAccountId:
     Type: String
+    Default: 741557730458
 
 Resources:
-  SamhstnRoute53Policy:
+  SamhstnBasePolicy:
     Type: AWS::IAM::Policy
     Properties:
       Roles:
-        - !Ref SamhstnRoute53Role
-      PolicyName: SamhstnRoute53Access
+        - !Ref SamhstnBaseRole
+      PolicyName: SamhstnBasePolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -22,16 +24,24 @@ Resources:
           - Effect: Allow
             Resource: '*'
             Action: route53:ListHostedZones
+          - Effect: Allow
+            Resource: arn:aws:s3:::samhstn-emails/*
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+          - Effect: Allow
+            Resource: '*'
+            Action: cloudformation:*
 
-  SamhstnRoute53Role:
+  SamhstnBaseRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: SamhstnRoute53Role
+      RoleName: SamhstnBase
       MaxSessionDuration: 43200
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !Sub arn:aws:iam::${SamhstnUserId}:user/admin
+              AWS: !Sub arn:aws:iam::${SamhstnAccountId}:user/admin
             Action: sts:AssumeRole

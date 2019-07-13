@@ -9,10 +9,22 @@ phases:
   build:
     commands:
       - |
-        for FILE in $(find ./infra -name "*.yaml" -maxdepth 1);do
+        FILES=(
+          ./infra/route53.yaml
+          ./infra/iam.yaml
+          ./infra/master_pipeline.yaml
+          ./infra/acm.yaml
+          ./infra/codebuild.yaml
+          ./infra/s3.yaml
+          ./infra/cloudfront.yaml
+          ./infra/base/iam.yaml
+          ./infra/base/email.yaml
+        )
+        for FILE in $FILES;do
           if ! aws cloudformation validate-template --template-body "file://$FILE";then
+            echo "ERR: INVALID TEMPLATE $FILE"
             exit 1
           fi
         done
-      - cfn-lint infra/*.yaml
+      - cfn-lint infra/*.yaml infra/base/*.yaml
       - npm test

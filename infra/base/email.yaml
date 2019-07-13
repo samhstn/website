@@ -3,10 +3,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   NotificationEmail:
     Type: String
-
   FromEmail:
     Type: String
-    Default: noreply@samhstn.com
+    Default: hello@samhstn.com
 
 Resources:
   Route53RecordSet:

@@ -20,5 +20,5 @@ phases:
               --output text\
             ) != $CODEBUILD_BADGE_URL ];then
             curl https://s3.amazonaws.com/codefactory-us-east-1-prod-default-build-badges/unknown.svg > ./badge.svg
-              aws s3 cp ./badge.svg s3://samhstn.com/badge --metadata "Website-Redirect-Location=$CODEBUILD_BADGE_URL"
+            aws s3 cp ./badge.svg s3://samhstn.com/badge --metadata "Website-Redirect-Location=$CODEBUILD_BADGE_URL"
         fi

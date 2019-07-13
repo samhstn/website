@@ -1,52 +1,51 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  SamhstnBaseAccountId:
+  BaseAccountId:
     Type: String
   TempPassword:
     Type: String
 
 Resources:
-  SamhstnAdminUser:
+  AdminUser:
     Type: AWS::IAM::User
     Properties:
       UserName: admin
       Groups:
-        - !Ref SamhstnAssumeRoleGroup
+        - !Ref AssumeRoleGroup
       LoginProfile:
         Password: !Ref TempPassword
         PasswordResetRequired: true
 
-  SamhstnAssumeRoleGroup:
+  AssumeRoleGroup:
     Type: AWS::IAM::Group
     Properties:
       GroupName: AssumeRole
 
-  SamhstnAdminUserAccessKey:
+  AdminUserAccessKey:
     Type: AWS::IAM::AccessKey
     Properties:
-      UserName: !Ref SamhstnAdminUser
+      UserName: !Ref AdminUser
 
-  SamhstnAssumeRolePolicy:
+  AssumeRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
       Groups:
-        - !Ref SamhstnAssumeRoleGroup
+        - !Ref AssumeRoleGroup
       PolicyName: AssumeRole
       PolicyDocument:
         Version: 2012-10-17
         Statement:
           Effect: Allow
           Action: sts:AssumeRole
-          Resource:
-            - !Sub arn:aws:iam::${SamhstnBaseAccountId}:role/SamhstnRoute53Role
+          Resource: !Sub arn:aws:iam::${BaseAccountId}:role/SamhstnBaseRole
 
-  SamhstnAdminPolicy:
+  AdminPolicy:
     Type: AWS::IAM::Policy
     Properties:
       Roles:
-        - !Ref SamhstnAdminRole
-      PolicyName: SamhstnAdminAccess
+        - !Ref AdminRole
+      PolicyName: AdminAccess
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -54,22 +53,22 @@ Resources:
           Resource: '*'
           Action: '*'
 
-  SamhstnAdminRole:
+  AdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: SamhstnAdminRole
+      RoleName: AdminRole
       MaxSessionDuration: 43200
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !GetAtt SamhstnAdminUser.Arn
+              AWS: !GetAtt AdminUser.Arn
             Action: sts:AssumeRole
 
 Outputs:
-  SamhstnAdminUserAccessKeyId:
+  AdminAccessKeyId:
     Value: !Ref SamhstnAdminUserAccessKey
 
-  SamhstnAdminUserSecretAccessKey:
+  AdminSecretAccessKey:
     Value: !GetAtt SamhstnAdminUserAccessKey.SecretAccessKey
