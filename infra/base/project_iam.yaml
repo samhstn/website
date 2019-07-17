@@ -38,7 +38,7 @@ Resources:
         Statement:
           Effect: Allow
           Action: sts:AssumeRole
-          Resource: !Sub arn:aws:iam::${BaseAccountId}:role/SamhstnBaseRole
+          Resource: !Sub arn:aws:iam::${BaseAccountId}:role/SamhstnBase
 
   AdminPolicy:
     Type: AWS::IAM::Policy
@@ -56,7 +56,7 @@ Resources:
   AdminRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: AdminRole
+      RoleName: Admin
       MaxSessionDuration: 43200
       AssumeRolePolicyDocument:
         Version: 2012-10-17
@@ -68,7 +68,7 @@ Resources:
 
 Outputs:
   AdminAccessKeyId:
-    Value: !Ref SamhstnAdminUserAccessKey
+    Value: !Ref AdminUserAccessKey
 
   AdminSecretAccessKey:
-    Value: !GetAtt SamhstnAdminUserAccessKey.SecretAccessKey
+    Value: !GetAtt AdminUserAccessKey.SecretAccessKey

@@ -2,7 +2,7 @@
 
 Before deploying any of the following, ensure we have first followed the instructions from our [AWS base setup](./base/README.md)
 
-Once these steps have been followed. A new developer can sign up by visiting: http://samhstn.signin.aws.amazon.com
+Once these steps have been followed. As our admin user (or new developer) we can sign in by visiting: http://samhstn.signin.aws.amazon.com
 
 Account ID: samhstn
 IAM user name: admin
