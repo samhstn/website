@@ -36,6 +36,11 @@ Resources:
               - cloudformation:Describe*
               - cloudformation:List*
               - cloudformation:Get*
+          - Effect: Allow
+            Resource: '*'
+            Action:
+              - ses:List*
+              - ses:GetIdentity*
 
   BaseRole:
     Type: AWS::IAM::Role

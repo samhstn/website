@@ -15,7 +15,9 @@ In the aws base root account, deploy the `infra/base/email.yaml` cloudformation 
 
 Provide an email to receive email notifications on as a template parameter.
 
-(It may take up to 5 minutes for the route53 MX changes to propegate after the stack is deployed).
+Next go to the ses console and in the domains identity management tab, click on the samhstn.com domain, then click to add the TXT record set in route53.
+
+(It may take up to 5 minutes for the route53 MX record set changes to propegate after the stack is deployed and 30 mins for the route53 TXT record set changes to propegate).
 
 Next, we need to set the SES ruleset to active, to do this, go to:
 
