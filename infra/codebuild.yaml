@@ -14,7 +14,7 @@ Resources:
   Repository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: baseimage
+      RepositoryName: samhstn-baseimage
       RepositoryPolicyText:
         Version: 2012-10-17
         Statement:
@@ -48,14 +48,14 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push*
               - Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource: '*'
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: arn:aws:s3:::artifact-store/*
+                Resource: arn:aws:s3:::samhstn-artifact-store/*
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -82,7 +82,7 @@ Resources:
                 Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: arn:aws:s3:::artifact-store/*
+                Resource: arn:aws:s3:::samhstn-artifact-store/*
               - Effect: Allow
                 Action: s3:PutObject
                 Resource: arn:aws:s3:::samhstn.com/*

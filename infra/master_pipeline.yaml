@@ -5,8 +5,6 @@ Description: >-
   + Write these files to S3
 
 Parameters:
-  AcmCertArn:
-    Type: String
   GithubPAToken:
     Type: String
     NoEcho: true
@@ -18,7 +16,7 @@ Resources:
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: artifact-store
+      BucketName: samhstn-artifact-store
       AccessControl: BucketOwnerFullControl
 
   PipelineRole:
@@ -64,6 +62,7 @@ Resources:
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
+    DependsOn: GithubPATokenParameter
     Properties:
       Name: master-pipeline
       RoleArn: !GetAtt PipelineRole.Arn
@@ -120,6 +119,7 @@ Resources:
 
   GithubWebhook:
     Type: AWS::CodePipeline::Webhook
+    DependsOn: GithubSecretParameter
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:

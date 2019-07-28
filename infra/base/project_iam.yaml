@@ -4,6 +4,7 @@ Parameters:
   BaseAccountId:
     Type: String
   TempPassword:
+    NoEcho: true
     Type: String
 
 Resources:

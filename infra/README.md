@@ -214,6 +214,7 @@ Run the following command to build our pipeline stack:
 aws cloudformation create-stack \
  --stack-name master-pipeline \
  --template-body file://infra/master_pipeline.yaml \
+ --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete --stack-name master-pipeline
 ```

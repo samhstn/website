@@ -9,18 +9,7 @@ phases:
   build:
     commands:
       - |
-        FILES=(
-          ./infra/route53.yaml
-          ./infra/iam.yaml
-          ./infra/master_pipeline.yaml
-          ./infra/acm.yaml
-          ./infra/codebuild.yaml
-          ./infra/s3.yaml
-          ./infra/cloudfront.yaml
-          ./infra/base/iam.yaml
-          ./infra/base/email.yaml
-        )
-        for FILE in $FILES;do
+        for FILE in $(ls infra/*.yaml infra/base/*.yaml);do
           if ! aws cloudformation validate-template --template-body "file://$FILE";then
             echo "ERR: INVALID TEMPLATE $FILE"
             exit 1
