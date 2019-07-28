@@ -237,3 +237,10 @@ curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
   --data "{\"name\": \"web\", \"active\": true, \"events\": [\"push\"], \"config\": {\"url\": \"$WEBHOOK_URL\", \"secret\": \"$GITHUB_SECRET\"}}" \
   https://api.github.com/repos/samhstn/samhstn/hooks
 ```
+
+Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks) should show:
+
+```
+https://codebuild.us-east-1.amazonaws.com/webhooks  (pull_request and push)
+https://us-east-1.webhooks.aws/trigger  (push)
+```
