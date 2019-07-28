@@ -48,8 +48,8 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test*
                   - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test*
               - Effect: Allow
                 Action: cloudformation:ValidateTemplate
                 Resource: '*'
@@ -74,12 +74,15 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
+                Action: codebuild:BatchGetProjects
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/CodeBuild
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
-                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build*
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: arn:aws:s3:::samhstn-artifact-store/*

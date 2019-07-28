@@ -7,7 +7,7 @@ phases:
       - |
         CODEBUILD_BADGE_URL=$(\
           aws codebuild batch-get-projects \
-            --name CodeBuild \
+            --name Push \
             --query "projects[0].badge.badgeRequestUrl" \
             --output text \
         )
