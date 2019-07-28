@@ -3,7 +3,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   DomainName:
     Type: String
-    Default: samhstn.com
   CloudFrontDomainName:
     Type: String
 

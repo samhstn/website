@@ -24,7 +24,9 @@ Resources:
             Action: route53:*
           - Effect: Allow
             Resource: '*'
-            Action: route53:ListHostedZones
+            Action:
+              - route53:List*
+              - route53:Get*
           - Effect: Allow
             Resource: arn:aws:s3:::samhstn-emails/*
             Action:
@@ -36,6 +38,9 @@ Resources:
               - cloudformation:Describe*
               - cloudformation:List*
               - cloudformation:Get*
+              - cloudformation:Create*
+              - cloudformation:Update*
+              - cloudformation:DeleteStack
           - Effect: Allow
             Resource: '*'
             Action:

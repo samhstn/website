@@ -97,14 +97,34 @@ aws cloudformation wait stack-create-complete --stack-name acm
 
 We will now need to add a `CNAME` record set as described in the acm console.
 
-This can be done with the command:
+This can be done with the commands:
 
 ```bash
-CERTIFICATE_ARN=$(aws acm list-certificates --query 'CertificateSummaryList[?DomainName == `samhstn.com`].CertificateArn | [0]' --output text)
-HOSTED_ZONE_ID=$(AWS_DEFAULT_PROFILE=samhstn-base aws route53 list-hosted-zones --query 'HostedZones[?Name == `samhstn.com.`].Id | [0]' --output text)
-RECORD_SET_NAME=$(aws acm describe-certificate --certificate-arn $CERTIFICATE_ARN --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' --output text)
-RECORD_SET_VALUE=$(aws acm describe-certificate --certificate-arn $CERTIFICATE_ARN --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' --output text)
-AWS_DEFAULT_PROFILE=samhstn-base aws route53 change-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --change-batch "{\"Changes\": [{\"Action\": \"CREATE\", \"ResourceRecordSet\": {\"Name\": \"$RECORD_SET_NAME\", \"Type\": \"CNAME\", \"TTL\": 300, \"ResourceRecords\": [{\"Value\": \"$RECORD_SET_VALUE\"}]}}]}"
+CERTIFICATE_ARN=$(\
+  aws acm list-certificates \
+    --query 'CertificateSummaryList[?DomainName == `samhstn.com`].CertificateArn | [0]' \
+    --output text\
+)
+HOSTED_ZONE_ID=$(\
+  AWS_DEFAULT_PROFILE=samhstn-base aws route53 list-hosted-zones \
+    --query 'HostedZones[?Name == `samhstn.com.`].Id | [0]' \
+    --output text\
+)
+RECORD_SET_NAME=$(\
+  aws acm describe-certificate \
+    --certificate-arn $CERTIFICATE_ARN \
+    --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' \
+    --output text\
+)
+RECORD_SET_VALUE=$(\
+  aws acm describe-certificate \
+    --certificate-arn $CERTIFICATE_ARN \
+    --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' \
+    --output text\
+)
+AWS_DEFAULT_PROFILE=samhstn-base aws route53 change-resource-record-sets \
+  --hosted-zone-id $HOSTED_ZONE_ID \
+  --change-batch "{\"Changes\": [{\"Action\": \"CREATE\", \"ResourceRecordSet\": {\"Name\": \"$RECORD_SET_NAME\", \"Type\": \"CNAME\", \"TTL\": 300, \"ResourceRecords\": [{\"Value\": \"$RECORD_SET_VALUE\"}]}}]}"
 ```
 
 Or we can visit the `Route53` console as the samhstn-base `base` role and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
@@ -143,16 +163,22 @@ The distribution will take up to half an hour to be created.
 
 ### Configure Route53 to point to CloudFront
 
-Now we will look to point our route53 domain at our CloudFront Domain name using an `alias`.
+Now we will look to point our route53 domain at our CloudFront Domain name using an `alias` record set.
 
-Do so assuming the `samhstn-base` role, running the following commands:
+Run the following commands to do so:
 
 ```bash
-aws cloudformation create-stack \
+CLOUDFRONT_DOMAIN_NAME=$(\
+  aws cloudfront list-distributions \
+    --query "DistributionList.Items[?contains(Aliases.Items, 'samhstn.com')].DomainName | [0]" \
+    --output text\
+)
+AWS_DEFAULT_PROFILE=samhstn-base aws cloudformation create-stack \
   --stack-name samhstn-route53 \
-  --template-body file://infra/route53.yaml
-  --parameters ParameterKey=CloudFrontDomainName,ParameterValue=<cloudfront-domain-name>
-aws cloudformation wait stack-create-complete --stack-name samhstn-route53
+  --template-body file://infra/base/route53.yaml \
+  --parameters ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUDFRONT_DOMAIN_NAME \
+               ParameterKey=DomainName,ParameterValue=samhstn.com
+AWS_DEFAULT_PROFILE=samhstn-base aws cloudformation wait stack-create-complete --stack-name samhstn-route53
 ```
 
 ### Configure builds to run on every Github push event
