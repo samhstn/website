@@ -28,7 +28,7 @@ Resources:
   TestRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: samhstn-codebuild-test-role
+      RoleName: CodebuildTestRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -37,7 +37,7 @@ Resources:
             Service: codebuild.amazonaws.com
           Action: sts:AssumeRole
       Policies:
-        - PolicyName: samhstn-codebuild-build-policy
+        - PolicyName: CodebuildBuildPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -48,16 +48,11 @@ Resources:
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
                 Resource:
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test
-                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Push*
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Test*
               - Effect: Allow
                 Action: cloudformation:ValidateTemplate
-                Resource:
-                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-master-pipeline/*
-                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-cloudfront/*
-                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-codebuild/*
-                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-s3/*
-                  - !Sub arn:aws:cloufromation:${AWS::Region}:${AWS::AccountId}:stack/samhstn-route53/*
+                Resource: '*'
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: arn:aws:s3:::samhstn-artifact-store/*
@@ -65,7 +60,7 @@ Resources:
   BuildRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: samhstn-codebuild-build-role
+      RoleName: CodebuildBuildRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -74,17 +69,20 @@ Resources:
             Service: codebuild.amazonaws.com
           Action: sts:AssumeRole
       Policies:
-        - PolicyName: samhstn-codebuild-build-policy
+        - PolicyName: CodebuildBuildPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
+              - Effect: Allow
+                Action: codebuild:BatchGetProjects
+                Resource: !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/CodeBuild
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:DescribeLogStreams
                   - logs:PutLogEvents
-                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build
+                Resource: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build*
               - Effect: Allow
                 Action: s3:GetObject
                 Resource: arn:aws:s3:::samhstn-artifact-store/*
@@ -94,6 +92,7 @@ Resources:
 
   Push:
     Type: AWS::CodeBuild::Project
+    DependsOn: TestRole
     Properties:
       Name: Push
       Description: Codebuild to run on every Github push event
@@ -104,7 +103,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/nodejs:10.14.1
-      ServiceRole: samhstn-codebuild-test-role
+      ServiceRole: CodebuildTestRole
       Source:
         Type: GITHUB
         Auth:
@@ -121,6 +120,7 @@ Resources:
 
   Test:
     Type: AWS::CodeBuild::Project
+    DependsOn: TestRole
     Properties:
       Name: Test
       Artifacts:
@@ -129,13 +129,14 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/nodejs:10.14.1
-      ServiceRole: samhstn-codebuild-test-role
+      ServiceRole: CodebuildTestRole
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/buildspecs/test.yaml
 
   Build:
     Type: AWS::CodeBuild::Project
+    DependsOn: BuildRole
     Properties:
       Name: Build
       Artifacts:
@@ -144,7 +145,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/ubuntu-base:14.04
-      ServiceRole: samhstn-codebuild-build-role
+      ServiceRole: CodebuildBuildRole
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/buildspecs/build.yaml

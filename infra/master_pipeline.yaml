@@ -1,15 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  CodePipeline configuration used to:
-    + Read from our Github source master branch
-    + Write these files to S3
+  CodePipeline configuration used to
+  + Read from our Github source master branch
+  + Write these files to S3
 
 Parameters:
-  AcmCertArn:
-    Type: String
-  GitubPAToken:
+  GithubPAToken:
     Type: String
     NoEcho: true
+  GithubBranch:
+    Type: String
+    Default: master
 
 Resources:
   PipelineArtifactBucket:
@@ -21,7 +22,7 @@ Resources:
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: samhstn-master-pipeline-role
+      RoleName: MasterPipelineRole
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -30,7 +31,7 @@ Resources:
             Service: codepipeline.amazonaws.com
           Action: sts:AssumeRole
       Policies:
-        - PolicyName: samhstn-master-pipeline-policy
+        - PolicyName: MasterPipelinePolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -49,20 +50,21 @@ Resources:
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: /Samhstn/GithubSecret
+      Name: /GithubSecret
       GenerateSecretString:
         ExcludePunctuation: true
 
   GithubPATokenParameter:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: /Samhstn/GithubPAToken
+      Name: /GithubPAToken
       SecretString: !Ref GithubPAToken
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
+    DependsOn: GithubPATokenParameter
     Properties:
-      Name: samhstn-master-pipeline
+      Name: master-pipeline
       RoleArn: !GetAtt PipelineRole.Arn
       ArtifactStore:
         Location:
@@ -83,7 +85,7 @@ Resources:
                 Owner: samhstn
                 Repo: samhstn
                 Branch: !Ref GithubBranch
-                OAuthToken: "{{resolve:secretsmanager:/Samhstn/GithubPAToken}}"
+                OAuthToken: "{{resolve:secretsmanager:/GithubPAToken}}"
               RunOrder: 1
         - Name: Test
           Actions:
@@ -103,7 +105,8 @@ Resources:
             - Name: Deploy
               ActionTypeId:
                 # Category can't be of type Deploy because we need to use CodeBuild as our provider
-                # See provider table here: https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#actions-valid-providers
+                # See provider table here:
+                # https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html#actions-valid-providers
                 Category: Build
                 Owner: AWS
                 Version: "1"
@@ -116,13 +119,14 @@ Resources:
 
   GithubWebhook:
     Type: AWS::CodePipeline::Webhook
+    DependsOn: GithubSecretParameter
     Properties:
       Authentication: GITHUB_HMAC
       AuthenticationConfiguration:
-        SecretToken: "{{resolve:secretsmanager:/Samhstn/GithubSecret}}"
+        SecretToken: "{{resolve:secretsmanager:/GithubSecret}}"
       Filters:
         - JsonPath: "$.ref"
-          MatchEquals: refs/heads/{{resolve:ssm:/Samhstn/GithubBranch:1}}
+          MatchEquals: !Sub refs/heads/${GithubBranch}
       TargetAction: Source
       TargetPipeline: !Ref Pipeline
       TargetPipelineVersion: !GetAtt Pipeline.Version

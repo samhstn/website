@@ -3,10 +3,9 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   NotificationEmail:
     Type: String
-
   FromEmail:
     Type: String
-    Default: noreply@samhstn.com
+    Default: hello@samhstn.com
 
 Resources:
   Route53RecordSet:
@@ -15,7 +14,7 @@ Resources:
       Name: samhstn.com
       Type: MX
       HostedZoneName: samhstn.com.
-      TTL: 300
+      TTL: "300"
       ResourceRecords:
         - !Sub "10 inbound-smtp.${AWS::Region}.amazonaws.com"
 

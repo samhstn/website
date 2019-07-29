@@ -45,5 +45,3 @@ Resources:
 Outputs:
   CloudFrontDomainName:
     Value: !GetAtt CloudFront.DomainName
-    Export:
-      Name: SamhstnCloudFrontDomainName
