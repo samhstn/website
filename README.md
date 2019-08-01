@@ -1,4 +1,4 @@
-[![Build Status](https://samhstn.com/badge)](https://console.aws.amazon.com/codesuite/codebuild/projects/CodeBuild)
+[![Build Status](https://samhstn.com/badge)](https://console.aws.amazon.com/codesuite/codebuild/projects/Push)
 
 # samhstn.com
 
