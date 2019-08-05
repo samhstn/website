@@ -1,25 +1,36 @@
 const path = require('path');
-const NODE_ENV = process.env.NODE_ENV;
+const CleanWebpackPlugin = require('clean-webpack-plugin').CleanWebpackPlugin;
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: 'development',
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'static'),
-    filename: 'script.js'
+    path: path.resolve(__dirname, 'static')
   },
   module: {
     rules: [
       {
-        test: /\.elm/,
+        test: /\.(html|css)$/,
+        exclude: /node_modules/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]'
+        }
+      },
+      {
+        test: /\.elm$/,
         exclude: [/elm-stuff/, /node_modules/],
-        use: {
-          loader: 'elm-webpack-loader',
-          options: {
-            optimize: NODE_ENV === 'production'
-          }
+        loader: 'elm-webpack-loader',
+        options: {
+          debug: true
         }
       }
     ]
-  }
+  },
+  plugins: [
+    new CleanWebpackPlugin(),
+    new CopyWebpackPlugin([{ from: 'assets/images', to: 'images' }])
+    // new CopyWebpackPlugin([{ from: 'assets/images', to: 'images/[name]-[contenthash].[ext]' }])
+  ]
 }
