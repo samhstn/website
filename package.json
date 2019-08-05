@@ -4,11 +4,8 @@
   "description": "My personal website",
   "main": "dev-server.js",
   "scripts": {
-    "start": "node dev-server.js",
-    "build": "NODE_ENV=production webpack && ./build.sh",
-    "watch": "webpack --watch",
-    "test": "echo \"RUNNING TESTS! - todo: run real tests here\"",
-    "dev": "nodemon dev-server.js -w static"
+    "dev": "node dev-server.js",
+    "prod": "webpack --config webpack.prod.js"
   },
   "repository": {
     "type": "git",
@@ -25,10 +22,12 @@
     "elm-webpack-loader": "^5.0.0",
     "express": "^4.16.4",
     "nodemon": "^1.18.9",
-    "webpack": "^4.39.0",
-    "webpack-cli": "^3.3.6"
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2",
+    "webpack-merge": "^4.2.1"
   },
   "dependencies": {
+    "webpack": "^4.39.0",
     "elm": "^0.19.0-no-deps"
   }
 }

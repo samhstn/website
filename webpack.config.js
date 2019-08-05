@@ -2,7 +2,7 @@ const path = require('path');
 const NODE_ENV = process.env.NODE_ENV;
 
 module.exports = {
-  mode: NODE_ENV || 'development',
+  mode: 'development',
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'static'),

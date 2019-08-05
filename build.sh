@@ -2,6 +2,8 @@
 
 set -e
 
+echo "Building for production..."
+
 PATH="$PATH:$(pwd)/node_modules/.bin"
 
 # taken from https://guide.elm-lang.org/optimization/asset_size.html
