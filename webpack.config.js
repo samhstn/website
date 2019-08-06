@@ -6,7 +6,9 @@ module.exports = {
   mode: 'development',
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'static')
+    path: path.resolve(__dirname, 'static'),
+    publicPath: '/static',
+    filename: 'script.js'
   },
   module: {
     rules: [
