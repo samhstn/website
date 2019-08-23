@@ -1,5 +1,4 @@
 node_modules
 elm-stuff
-static/script.js
-static/images
+static/*
 badge.svg

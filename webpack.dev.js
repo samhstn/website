@@ -1,6 +1,7 @@
 const path = require('path');
 const CleanWebpackPlugin = require('clean-webpack-plugin').CleanWebpackPlugin;
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
 module.exports = {
@@ -11,13 +12,12 @@ module.exports = {
   ],
   output: {
     path: path.resolve(__dirname, 'static'),
-    publicPath: '/static',
     filename: 'script.js'
   },
   module: {
     rules: [
       {
-        test: /\.(html|css)$/,
+        test: /\.css$/,
         exclude: /node_modules/,
         loader: 'file-loader',
         options: {
@@ -46,7 +46,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin([{ from: 'assets/images', to: 'images' }]),
+    new HtmlWebpackPlugin({ template: 'src/index.ejs', inject: false }),
     new webpack.HotModuleReplacementPlugin()
-    // new CopyWebpackPlugin([{ from: 'assets/images', to: 'images/[name]-[contenthash].[ext]' }])
   ]
 }
