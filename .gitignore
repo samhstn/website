@@ -1,4 +1,5 @@
 node_modules
 elm-stuff
 static/*
+dist
 badge.svg

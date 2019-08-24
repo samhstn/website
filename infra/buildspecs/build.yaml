@@ -3,7 +3,12 @@ version: 0.2
 phases:
   build:
     commands:
-      - aws s3 sync static s3://samhstn.com --delete --exclude badge
+      - mkdir dist
+      - npm install
+      - npm run build
+      - mv static dist
+      - mv dist/static/index.html dist
+      - aws s3 sync dist s3://samhstn.com --delete --exclude badge
       - |
         CODEBUILD_BADGE_URL=$(\
           aws codebuild batch-get-projects \
