@@ -97,37 +97,7 @@ aws cloudformation wait stack-create-complete --stack-name acm
 
 We will now need to add a `CNAME` record set as described in the acm console.
 
-This can be done with the commands:
-
-```bash
-CERTIFICATE_ARN=$(\
-  aws acm list-certificates \
-    --query 'CertificateSummaryList[?DomainName == `samhstn.com`].CertificateArn | [0]' \
-    --output text\
-)
-HOSTED_ZONE_ID=$(\
-  AWS_DEFAULT_PROFILE=samhstn-base aws route53 list-hosted-zones \
-    --query 'HostedZones[?Name == `samhstn.com.`].Id | [0]' \
-    --output text\
-)
-RECORD_SET_NAME=$(\
-  aws acm describe-certificate \
-    --certificate-arn $CERTIFICATE_ARN \
-    --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Name' \
-    --output text\
-)
-RECORD_SET_VALUE=$(\
-  aws acm describe-certificate \
-    --certificate-arn $CERTIFICATE_ARN \
-    --query 'Certificate.DomainValidationOptions[0].ResourceRecord.Value' \
-    --output text\
-)
-AWS_DEFAULT_PROFILE=samhstn-base aws route53 change-resource-record-sets \
-  --hosted-zone-id $HOSTED_ZONE_ID \
-  --change-batch "{\"Changes\": [{\"Action\": \"CREATE\", \"ResourceRecordSet\": {\"Name\": \"$RECORD_SET_NAME\", \"Type\": \"CNAME\", \"TTL\": 300, \"ResourceRecords\": [{\"Value\": \"$RECORD_SET_VALUE\"}]}}]}"
-```
-
-Or we can visit the `Route53` console as the samhstn-base `base` role and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
+This can be done by visiting the `Route53` console as the `samhstn-base` role and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
 
 This takes around 30 minutes to complete.
 
