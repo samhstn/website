@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: 2010-09-09
 
+Description: >
+  Specifies which resources we would like this project to access
+  in our root account.
+  The root account is where the domain has been purchased from
+  and also where it needs to be configured from.
+  This template sets up cross account access to this root account.
+
 Parameters:
   Project:
     Type: String
@@ -27,11 +34,6 @@ Resources:
             Action:
               - route53:List*
               - route53:Get*
-          - Effect: Allow
-            Resource: arn:aws:s3:::samhstn-emails/*
-            Action:
-              - s3:ListBucket
-              - s3:GetObject
           - Effect: Allow
             Resource: '*'
             Action:

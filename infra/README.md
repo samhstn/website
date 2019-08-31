@@ -1,21 +1,21 @@
 # AWS Setup from scratch
 
-Before deploying any of the following, ensure we have first followed the instructions from our [AWS base setup](./base/README.md)
+Before deploying any of the following, ensure we have first followed the instructions from our [AWS root setup](./root/README.md)
 
 Once these steps have been followed. As our admin user (or new developer) we can sign in by visiting: http://samhstn.signin.aws.amazon.com
 
 Account ID: samhstn
 IAM user name: admin
 
-The password will be given to you by whoever ran the steps described in [AWS base setup](./base/README.md).
+The password will be given to you by whoever ran the steps described in [AWS root setup](./root/README.md).
 
 This must be updated after the first login.
 
 To access our Route53 domain configuraion, we will need to switch roles. This can be done in the top right dropdown.
 
-Account: samhstn-base
-Role: SamhstnBase
-Display Name: base
+Account: samhstn-root
+Role: SamhstnRoot
+Display Name: root
 
 For admin access to the `aws+samhstn@samhstn.com` account, we need to switch roles to:
 
@@ -36,10 +36,10 @@ aws_secret_access_key = <SECRET_ACCESS_KEY>
 We can configure role cli access by editing our `~/.aws/config` to look like the following:
 
 ```bash
-[profile samhstn-base]
+[profile samhstn-root]
 region = us-east-1
 output = json
-role_arn = arn:aws:iam::<ACCOUNT_ID>:role/SamhstnBase
+role_arn = arn:aws:iam::<ACCOUNT_ID>:role/SamhstnRoot
 source_profile = samhstn
 
 [profile samhstn-admin]
@@ -63,7 +63,7 @@ For the next steps we will assume that this environment variable will have been 
 
 Ensure we have purchased your domain from [`Route53`](https://console.aws.amazon.com/route53) with the route account.
 
-To see your purchased domains, with the `samhstn-base` profile, run:
+To see your purchased domains, with the `samhstn-root` profile, run:
 
 ```bash
 aws route53 list-hosted-zones --query 'HostedZones[*].Name' --output text
@@ -143,12 +143,12 @@ CLOUDFRONT_DOMAIN_NAME=$(\
     --query "DistributionList.Items[?contains(Aliases.Items, 'samhstn.com')].DomainName | [0]" \
     --output text\
 )
-AWS_DEFAULT_PROFILE=samhstn-base aws cloudformation create-stack \
+AWS_DEFAULT_PROFILE=samhstn-root aws cloudformation create-stack \
   --stack-name samhstn-route53 \
-  --template-body file://infra/base/route53.yaml \
+  --template-body file://infra/root/route53.yaml \
   --parameters ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUDFRONT_DOMAIN_NAME \
                ParameterKey=DomainName,ParameterValue=samhstn.com
-AWS_DEFAULT_PROFILE=samhstn-base aws cloudformation wait stack-create-complete --stack-name samhstn-route53
+AWS_DEFAULT_PROFILE=samhstn-root aws cloudformation wait stack-create-complete --stack-name samhstn-route53
 ```
 
 ### Configure builds to run on every Github push event
@@ -183,7 +183,7 @@ Run the following command to build our pipeline stack:
 ```bash
 aws cloudformation create-stack \
  --stack-name master-pipeline \
- --template-body file://infra/master_pipeline.yaml \
+ --template-body file://infra/master-pipeline.yaml \
  --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
  --capabilities CAPABILITY_NAMED_IAM
 aws cloudformation wait stack-create-complete --stack-name master-pipeline

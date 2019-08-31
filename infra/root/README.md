@@ -1,8 +1,8 @@
-# Base
+# Root
 
-We have one base root user who delegates permissions to all other project root users and is in charge of the billing for all projects.
+We have one root user who delegates permissions to all other project root users and is in charge of the billing for all projects.
 
-This base root user will deploy 2 cloudformation templates:
+This root user will deploy 2 cloudformation templates:
 
 1. To configure `@samhstn.com` email addresses which will be used as the root user for each project.
 2. Configure the different iam permissions for each project root user.
@@ -11,7 +11,7 @@ This base root user will deploy 2 cloudformation templates:
 
 We will set up receiving emails for the `@samhstn.com` domain.
 
-In the aws base root account, deploy the `infra/base/email.yaml` cloudformation template.
+In the aws root account, deploy the `infra/root/email.yaml` cloudformation template.
 
 Provide an email to receive email notifications on as a template parameter.
 
@@ -33,19 +33,19 @@ Now in the `samhstn-emails` s3 bucket, there will be a new email, download the o
 
 ### Organisation
 
-We want to create an AWS Organisation to allow all projects to be billed under our one base root account and for ease of delegating users to different projects.
+We want to create an AWS Organisation to allow all projects to be billed under our one root account and for ease of delegating users to different projects.
 
 ### IAM
 
 We will configure an IAM Role and an IAM Policy which will allow cross account access to our Route53 Hosted Zones and to access emails.
 
-In the aws root account, we will deploy the `infra/base/iam.yaml` cloudformation template specifying parameters depending on the projects needs.
+In the aws root account, we will deploy the `infra/root/iam.yaml` cloudformation template specifying parameters depending on the projects needs.
 
 We will need to provide the `HostedZoneId` and `AccountId` for each of our different projects.
 
 These can be gotten from the Organisation and Route53 interfaces.
 
-#### Deleting our cloudformation base stacks
+#### Deleting our cloudformation root stacks
 
 Before deleting the email cloudformation stack, you will need to:
 + empty the samhstn-email s3 bucket.
@@ -55,7 +55,7 @@ Now you should be able to delete the cloudformation templates without errors.
 
 ### New project
 
-In the following steps we will create 2 new AWS users from our base root account:
+In the following steps we will create 2 new AWS users from our root account:
 
 + the project root account, which can create project users
 + the admin account for that project which can assume roles accross accounts.
@@ -67,9 +67,9 @@ Say we would like to create a new project called `project_name`, we should do th
 1. Create an aws account under the email address: `aws+project_name@samhstn.com`, this will be our project root account.
 2. Look in the root account S3 bucket for email address valiation when signing up.
 3. Add an `Organisational unit` for the project and add our newly created `aws+project_name@samhstn.com` user.
-4. Create our admin user under `aws+project_name@samhstn.com` by deploying the stack `infra/base/project_iam.yaml`, name this stack `iam`
-5. As our root account, we deploy our `infra/base/root_iam.yaml` cloudformation template which creates a role for our project admin users to assume, name this stack `project_name`
+4. Create our admin user under `aws+project_name@samhstn.com` by deploying the stack `infra/root/project-iam.yaml`, name this stack `iam`
+5. As our root account, we deploy our `infra/root/root-iam.yaml` cloudformation template which creates a role for our project admin users to assume, name this stack `project_name`
   Name this template as the name of the associated project.
-6. For each infrastructure change to our project, we should operate under this `admin` user and assume either of the roles `Base` (for DNS configuration changes) or `Admin` (for project specific changes).
+6. For each infrastructure change to our project, we should operate under this `admin` user and assume either of the roles `Root` (for DNS configuration changes) or `Admin` (for project specific changes).
 
 For the next steps, follow the instructions [here](../README.md)
