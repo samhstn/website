@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  TODO
+
+Parameters:
+  GithubPAToken:
+    Type: String
+    NoEcho: true
+  GithubBranch:
+    Type: String
+    Default: master
+
+Resources:
+

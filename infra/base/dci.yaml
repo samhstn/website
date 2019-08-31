@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  GithubBranch:
+    Type: String
+
+Resources:
+  Codebuild:
+    Type: AWS::CloudFormation::Stack
+    Parameters:
+      GithubBranch: !Ref GithubBranch
+    Properties: 
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/dci/codebuild.yaml
+
+  CodePipeline:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/dci/codepipeline.yaml
+
+  Webhook:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/dci/webhook.yaml

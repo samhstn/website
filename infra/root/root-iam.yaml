@@ -35,6 +35,11 @@ Resources:
               - route53:List*
               - route53:Get*
           - Effect: Allow
+            Resource: arn:aws:s3:::samhstn-emails/*
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+          - Effect: Allow
             Resource: '*'
             Action:
               - cloudformation:Describe*

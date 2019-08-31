@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  WebACL:
+    Type: AWS::WAF::WebACL
+    Properties:
+      Name: SamhstnWebACL
+      DefaultAction:
+        Type: ALLOW
+      MetricName: WebACL
+      Rules: []

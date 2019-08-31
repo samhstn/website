@@ -1,8 +1,4 @@
-[![Build Status](https://samhstn.com/badge)](https://console.aws.amazon.com/codesuite/codebuild/projects/Push)
-
-# samhstn.com
-
-[samhstn.com](http://samhstn.com)
+# [samhstn.com](http://samhstn.com)
 
 ### What
 

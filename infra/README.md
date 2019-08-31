@@ -15,13 +15,13 @@ To access our Route53 domain configuraion, we will need to switch roles. This ca
 
 Account: samhstn-root
 Role: SamhstnRoot
-Display Name: root
+Display Name: samhstn-root
 
 For admin access to the `aws+samhstn@samhstn.com` account, we need to switch roles to:
 
 Account: samhstn
 Role: Admin
-Display Name: admin
+Display Name: samhstn-admin
 
 ### Configure our AWS CLI
 
@@ -49,15 +49,11 @@ role_arn = arn:aws:iam::<ACCOUNT_ID>:role/Admin
 source_profile = samhstn
 ```
 
-We can choose which profile to use by setting the `AWS_DEFAULT_PROFILE` environment variable.
-
-For example, we could set in our `~/.bashrc` as the following:
+For the next steps we will assume that this environment variable will have been set as:
 
 ```bash
 export AWS_DEFAULT_PROFILE=samhstn-admin
 ```
-
-For the next steps we will assume that this environment variable will have been set.
 
 ### Domain
 
@@ -84,112 +80,45 @@ We will need to create a Github personal access token for `aws` to use.
 
 Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 
-### Configure our Ssl certificate
+### Upload our cloudformation templates to our s3 bucket
 
-Assuming the `samhstn-admin` role, run the following commands:
+We will upload our cloudformation templates to an s3 bucket with the commands:
+
+```bash
+aws s3api create-bucket \
+  --bucket samhstn-cfn-templates \
+  --acl private
+
+aws s3 sync infra s3://samhstn-cfn-templates --exclude "*" --include "*.yaml"
+
+aws cloudformation create-stack \
+  --stack-name base \
+  --template-url https://samhstn-cfn-templates.s3.amazonaws.com/base.yaml \
+  --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
+  --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name base
+```
+
+### Deploy our base stack
+
+Assuming the `samhstn-admin` profile, run the following commands:
 
 ```bash
 aws cloudformation create-stack \
-  --stack-name acm \
+  --stack-name base \
   --template-body file://infra/acm.yaml
 aws cloudformation wait stack-create-complete --stack-name acm
 ```
 
 We will now need to add a `CNAME` record set as described in the acm console.
 
-This can be done by visiting the `Route53` console as the `samhstn-base` role and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
+This can be done by visiting the `Route53` console as the `samhstn-base` profile and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
 
-This takes around 30 minutes to complete.
+This takes over 30 minutes to complete.
 
-### Create our S3 buckets for our static files
+### Triggering build
 
-This will create two buckets:
-+ `www.samhstn.com` (which will redirect to `samhstn.com`)
-+ `samhstn.com` (which will be used for storing our static files)
-
-Create these assuming the `samhstn-admin` role with the following commands:
-
-```bash
-aws cloudformation create-stack \
-  --stack-name s3 \
-  --template-body file://infra/s3.yaml
-aws cloudformation wait stack-create-complete --stack-name s3
-```
-
-### Create CloudFront distribution
-
-This will be used as our cdn and we will also attach our ssl certificate here.
-
-Set this up assuming the `samhstn-admin` role with the following commands:
-
-```bash
-aws cloudformation create-stack \
-  --stack-name cloudfront \
-  --template-body file://infra/cloudfront.yaml
-aws cloudformation wait stack-create-complete --stack-name cloudfront
-```
-
-The distribution will take up to half an hour to be created.
-
-### Configure Route53 to point to CloudFront
-
-Now we will look to point our route53 domain at our CloudFront Domain name using an `alias` record set.
-
-Run the following commands to do so:
-
-```bash
-CLOUDFRONT_DOMAIN_NAME=$(\
-  aws cloudfront list-distributions \
-    --query "DistributionList.Items[?contains(Aliases.Items, 'samhstn.com')].DomainName | [0]" \
-    --output text\
-)
-AWS_DEFAULT_PROFILE=samhstn-root aws cloudformation create-stack \
-  --stack-name samhstn-route53 \
-  --template-body file://infra/root/route53.yaml \
-  --parameters ParameterKey=CloudFrontDomainName,ParameterValue=$CLOUDFRONT_DOMAIN_NAME \
-               ParameterKey=DomainName,ParameterValue=samhstn.com
-AWS_DEFAULT_PROFILE=samhstn-root aws cloudformation wait stack-create-complete --stack-name samhstn-route53
-```
-
-### Configure builds to run on every Github push event
-
-We will run a `CodeBuild` job which will run our tests on every push to Github.
-To do this we need to authorize Github:
-
-+ Visit https://console.aws.amazon.com/codesuite/codebuild/projects
-+ If you see the message: 'You are connected to GitHub using OAuth` you can skip the next steps here.
-+ Otherwise, click `Create build project`
-+ In the `Source` section, select `GitHub` as the `Source provider`
-+ Ensure `Connect using OAuth` is selected
-+ Click Connect to `GitHub`
-+ In the popup window, click `Authorize aws-codesuite`
-
-Now run deploy the cloudformation template:
-
-```bash
-aws cloudformation create-stack \
- --stack-name codebuild \
- --template-body file://infra/codebuild.yaml \
- --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete --stack-name codebuild
-```
-
-### Configure our Codepipeline pipeline
-
-This will listen to chnages on our Github `master` branch and build our site.
-
-Run the following command to build our pipeline stack:
-
-```bash
-aws cloudformation create-stack \
- --stack-name master-pipeline \
- --template-body file://infra/master-pipeline.yaml \
- --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
- --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete --stack-name master-pipeline
-```
-
-Now we will configure our Github webhook.
+### Github Webhook configuration
 
 To see all our current webhooks run:
 
@@ -210,7 +139,7 @@ curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
 
 Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks) should show:
 
+TODO: check this is correct
 ```
-https://codebuild.us-east-1.amazonaws.com/webhooks  (pull_request and push)
 https://us-east-1.webhooks.aws/trigger  (push)
 ```
