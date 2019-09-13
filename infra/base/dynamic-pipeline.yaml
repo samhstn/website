@@ -1,0 +1,138 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Pipeline to run on every webhook event.
+
+Resources:
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: samhstn-dynamic-pipeline-artifact-store
+      AccessControl: BucketOwnerFullControl
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DynamicPipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamicPipelinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub arn:aws:s3:::${PipelineArtifactBucket}/*
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource:
+                  - !Sub arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*
+
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DynamicBuildRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamicBuildPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/Build*
+              - Effect: Allow
+                Action: cloudformation:ValidateTemplate
+                Resource: '*'
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: arn:aws:s3:::samhstn-dynamic-pipeline-artifact-store/*
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: pipeline
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Location:
+          Ref: PipelineArtifactBucket
+        Type: S3
+      Stages:
+        - Name: DynamicSource
+          Actions:
+            - Name: DynamicSource
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: "1"
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                Owner: samhstn
+                Repo: samhstn
+                Branch: !Ref GithubBranch
+                OAuthToken: "{{resolve:secretsmanager:/GithubPAToken}}"
+              RunOrder: 1
+        - Name: DynamicBuild
+          Actions:
+            - Name: DynamicBuild
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: DynamicBuild
+              RunOrder: 1
+
+  Build:
+    Type: AWS::CodeBuild::Project
+    DependsOn: BuildRole
+    Properties:
+      Name: DynamicBuild
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ubuntu-base:14.04
+      ServiceRole: DynamicBuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infra/buildspecs/dynamic-build.yaml
+
+  GithubWebhook:
+    Type: AWS::CodePipeline::Webhook
+    Properties:
+      Name: GithubWebhook
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: "{{resolve:secretsmanager:/GithubSecret}}"
+      TargetAction: DynamicBuild
+      TargetPipeline: !Ref Pipeline
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+
+Outputs:
+  WebhookURL:
+    Description: Webhook to be added to our Github repo
+    Value: !GetAtt GithubWebhook.Url

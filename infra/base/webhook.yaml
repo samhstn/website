@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  GithubWebhook:
+    Type: AWS::CodePipeline::Webhook
+    DependsOn: GithubSecretParameter
+    Properties:
+      Name: GithubWebhook
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: "{{resolve:secretsmanager:/GithubSecret}}"
+    # Filters:
+    #   - JsonPath: "$.ref"
+    #     MatchEquals: !Sub refs/heads/${GithubBranch}
+      TargetAction: 
+      TargetPipeline: !Ref Pipeline
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+
+Outputs:
+  WebhookURL:
+    Description: Webhook to be added to our Github repo
+    Value: !GetAtt GithubWebhook.Url

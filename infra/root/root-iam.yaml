@@ -35,9 +35,15 @@ Resources:
               - route53:List*
               - route53:Get*
           - Effect: Allow
-            Resource: arn:aws:s3:::samhstn-emails/*
+            Resource: '*'
             Action:
               - s3:ListBucket
+              - s3:ListAllMyBuckets
+              - s3:CreateBucket
+              - s3:PutObject
+              - s3:DeleteBucket
+              - s3:DeleteObject
+              - s3:PutBucket
               - s3:GetObject
           - Effect: Allow
             Resource: '*'
@@ -53,6 +59,12 @@ Resources:
             Action:
               - ses:List*
               - ses:GetIdentity*
+          - Effect: Allow
+            Resource: '*'
+            Action: sns:ListTopics
+          - Effect: Allow
+            Resource: '*'
+            Action: iam:PutRolePolicy
 
   BaseRole:
     Type: AWS::IAM::Role

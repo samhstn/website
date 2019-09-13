@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-Paramters:
+Parameters:
   GithubPAToken:
     Type: String
     NoEcho: true

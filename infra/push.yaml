@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+  Pipelines to be built and run for each push event.
+
+Parameters:
+  GithubBranch:
+    Type: String
+
+Resources:

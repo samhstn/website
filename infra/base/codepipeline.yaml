@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Deploys resources for the branch spefic push pipeline to run
+
+Resources:
+  PipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: samhstn-push-artifact-store
+      AccessControl: BucketOwnerFullControl
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: PushPipelineRole
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PushPipelinePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource:
+                  - !Sub "arn:aws:s3:::${PipelineArtifactBucket}/*"
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource:
+                  - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/*"
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    DependsOn: GithubPATokenParameter
+    Properties:
+      Name: master-pipeline
+      RoleArn: !GetAtt PipelineRole.Arn
+      ArtifactStore:
+        Location:
+          Ref: PipelineArtifactBucket
+        Type: S3
+      Stages:
+        - Name: Push
+          Actions:
+            - Name: Push
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: Push
+              RunOrder: 1
+
+  DeployPush:
+    Type: AWS::CodeBuild::Project
+    DependsOn: BuildRole
+    Properties:
+      Name: Build
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ubuntu-base:14.04
+      ServiceRole: CodebuildBuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infra/buildspecs/build.yaml

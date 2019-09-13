@@ -5,7 +5,7 @@ Parameters:
     Type: String
 
 Resources:
-  WebsiteBucketPolicy:
+  PublicBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
       Bucket: !Ref Bucket

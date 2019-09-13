@@ -37,7 +37,7 @@ We can configure role cli access by editing our `~/.aws/config` to look like the
 
 ```bash
 [profile samhstn-root]
-region = us-east-1
+region = eu-west-1
 output = json
 role_arn = arn:aws:iam::<ACCOUNT_ID>:role/SamhstnRoot
 source_profile = samhstn
@@ -85,18 +85,37 @@ Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 We will upload our cloudformation templates to an s3 bucket with the commands:
 
 ```bash
+BASE_CANONICAL_ID=$(
+  AWS_DEFAULT_PROFILE=samhstn-base aws s3api list-buckets \
+    --query Owner.ID \
+    --output text
+)
+
+ADMIN_CANONICAL_ID=$(
+  AWS_DEFAULT_PROFILE=samhstn-admin aws s3api list-buckets \
+    --query Owner.ID \
+    --output text
+)
+
 aws s3api create-bucket \
   --bucket samhstn-cfn-templates \
   --acl private
 
-aws s3 sync infra s3://samhstn-cfn-templates --exclude "*" --include "*.yaml"
+aws s3api put-public-access-block \
+  --bucket samhstn-cfn-templates \
+  --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 
-aws cloudformation create-stack \
-  --stack-name base \
-  --template-url https://samhstn-cfn-templates.s3.amazonaws.com/base.yaml \
-  --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
-  --capabilities CAPABILITY_NAMED_IAM
-aws cloudformation wait stack-create-complete --stack-name base
+aws s3api put-bucket-acl \
+  --bucket samhstn-cfn-templates \
+  --grant-full-control id=$ADMIN_CANONICAL_ID \
+  --grant-read id=$BASE_CANONICAL_ID
+
+aws s3 sync infra s3://samhstn-cfn-templates \
+  --exclude "*" \
+  --include "*.yaml" \
+  --include "*.js" \
+  --delete
 ```
 
 ### Deploy our base stack
@@ -106,8 +125,10 @@ Assuming the `samhstn-admin` profile, run the following commands:
 ```bash
 aws cloudformation create-stack \
   --stack-name base \
-  --template-body file://infra/acm.yaml
-aws cloudformation wait stack-create-complete --stack-name acm
+  --template-url https://samhstn-cfn-templates.s3.amazonaws.com/base.yaml \
+  --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
+  --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation wait stack-create-complete --stack-name base
 ```
 
 We will now need to add a `CNAME` record set as described in the acm console.

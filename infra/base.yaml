@@ -1,14 +1,43 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  TODO
+  Resources which will configure and support the push event codebuild.
 
 Parameters:
   GithubPAToken:
     Type: String
     NoEcho: true
-  GithubBranch:
-    Type: String
-    Default: master
 
 Resources:
+  Certificate:
+    Type: AWS::CloudFormation::Stack
+    Description: Certificate to be attached to each dynamically created CDN.
+    Properties:
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/acm.yaml
 
+  CfnBucketPolicy:
+    Type: AWS::CloudFormation::Stack
+    Description: >-
+      Enables cross account access to our cloudformation templates bucket.
+      Bucket where we store all our infra/*.yaml and infra/*.js files.
+    Properties:
+      Parameters:
+        Bucket: samhstn-cfn-templates
+        RootAccountId: 286475931185
+        AdminAccountId: 741557730458
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/private-bucket-policy.yaml
+
+  Keys:
+    Type: AWS::CloudFormation::Stack
+    Description: Keys to be shared across templates.
+    Properties:
+      Parameters:
+        GithubPAToken: !Ref GithubPAToken
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/keys.yaml
+
+  DynamicPipeline:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: Keys
+    Description: >-
+      Configuration for our Pipeline which will run on every event which our CodePipeline Webhook is triggered.
+    Properties:
+      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/dynamic-pipeline.yaml
