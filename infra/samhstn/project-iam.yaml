@@ -66,10 +66,3 @@ Resources:
             Principal:
               AWS: !GetAtt AdminUser.Arn
             Action: sts:AssumeRole
-
-Outputs:
-  AdminAccessKeyId:
-    Value: !Ref AdminUserAccessKey
-
-  AdminSecretAccessKey:
-    Value: !GetAtt AdminUserAccessKey.SecretAccessKey

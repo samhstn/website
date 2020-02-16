@@ -1,28 +1,27 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >
-  Specifies which resources we would like this project to access
-  in our root account.
-  The root account is where the domain has been purchased from
-  and also where it needs to be configured from.
-  This template sets up cross account access to this root account.
+  Creates a cross account, root access role for a project admin to assume.
+  Specifies the resources for this role to access in our root (master billing) account.
 
 Parameters:
   Project:
     Type: String
-    Description: "Project name in Pascal case"
+    Description: "Project name in pascal case, e.g. Samhstn"
   HostedZoneId:
     Type: String
+    Description: "Route53 hosted zone ref for our domain name, e.g. "
   AccountId:
     Type: String
+    Description: "Account to grant root access"
 
 Resources:
-  BasePolicy:
+  RootPolicy:
     Type: AWS::IAM::Policy
     Properties:
       Roles:
-        - !Ref BaseRole
-      PolicyName: BasePolicy
+        - !Ref RootRole
+      PolicyName: RootPolicy
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -66,10 +65,10 @@ Resources:
             Resource: '*'
             Action: iam:PutRolePolicy
 
-  BaseRole:
+  RootRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${Project}Base
+      RoleName: !Sub ${Project}Root
       MaxSessionDuration: 43200
       AssumeRolePolicyDocument:
         Version: 2012-10-17

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Description: >
-  TODO
+  Sets up notifying our NotificationEmail email address whenever an email is sent to any @samhstn.com email address and writes the content of this email to an samhstn-emails S3 bucket
 
 Parameters:
   NotificationEmail:
@@ -184,7 +184,7 @@ Resources:
       FunctionName: receive_email
       Handler: index.handler
       Role: !GetAtt EmailRole.Arn
-      Runtime: nodejs8.10
+      Runtime: nodejs12.x
       Environment:
         Variables:
           NOTIFICATION_EMAIL: !Ref NotificationEmail

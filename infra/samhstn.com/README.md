@@ -1,8 +1,8 @@
 # AWS Setup from scratch
 
-Before deploying any of the following, ensure we have first followed the instructions from our [AWS root setup](./root/README.md)
+Before deploying any of the following, ensure we have first followed the instructions from our [AWS root setup](../samhstn/README.md)
 
-Once these steps have been followed. As our admin user (or new developer) we can sign in by visiting: http://samhstn.signin.aws.amazon.com
+We can sign in by visiting: http://samhstn.signin.aws.amazon.com
 
 Account ID: samhstn
 IAM user name: admin
