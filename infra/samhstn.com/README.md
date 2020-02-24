@@ -2,58 +2,28 @@
 
 Before deploying any of the following, ensure we have first followed the instructions from our [AWS root setup](../samhstn/README.md)
 
-We can sign in by visiting: http://samhstn.signin.aws.amazon.com
+We can sign in by visiting: https://samhstn.signin.aws.amazon.com/console
 
 Account ID: samhstn
 IAM user name: admin
 
-The password will be given to you by whoever ran the steps described in [AWS root setup](./root/README.md).
+The password will be generated from the steps described in [AWS root setup](./root/README.md).
 
 This must be updated after the first login.
 
-To access our Route53 domain configuraion, we will need to switch roles. This can be done in the top right dropdown.
+To access our root account services (e.g. Route53), we will need to switch roles.
 
-Account: samhstn-root
-Role: SamhstnRoot
-Display Name: samhstn-root
+This can be done with this link:
 
-For admin access to the `aws+samhstn@samhstn.com` account, we need to switch roles to:
+https://signin.aws.amazon.com/switchrole?roleName=SamhstnRoot&account=samhstnroot
 
-Account: samhstn
-Role: Admin
-Display Name: samhstn-admin
+For admin access to the project specific account (`aws+samhstn@samhstn.com`), we need to switch roles.
 
-### Configure our AWS CLI
+This can be done with this link:
 
-We can set up credentials for the above 2 roles by editing our `~/.aws/credentials` to include the following:
+https://signin.aws.amazon.com/switchrole?roleName=Admin&account=samhstn
 
-```bash
-[samhstn]
-aws_access_key_id = <ACCESS_KEY_ID>
-aws_secret_access_key = <SECRET_ACCESS_KEY>
-```
-
-We can configure role cli access by editing our `~/.aws/config` to look like the following:
-
-```bash
-[profile samhstn-root]
-region = eu-west-1
-output = json
-role_arn = arn:aws:iam::<ACCOUNT_ID>:role/SamhstnRoot
-source_profile = samhstn
-
-[profile samhstn-admin]
-region = us-east-1
-output = json
-role_arn = arn:aws:iam::<ACCOUNT_ID>:role/Admin
-source_profile = samhstn
-```
-
-For the next steps we will assume that this environment variable will have been set as:
-
-```bash
-export AWS_DEFAULT_PROFILE=samhstn-admin
-```
+Check out how to configure our CLI here: [CLI.md](../docs/CLI.md)
 
 ### Domain
 

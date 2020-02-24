@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  BaseAccountId:
+  RootAccountId:
     Type: String
   TempPassword:
     NoEcho: true
@@ -39,7 +39,7 @@ Resources:
         Statement:
           Effect: Allow
           Action: sts:AssumeRole
-          Resource: !Sub arn:aws:iam::${BaseAccountId}:role/SamhstnBase
+          Resource: !Sub arn:aws:iam::${RootAccountId}:role/SamhstnRoot
 
   AdminPolicy:
     Type: AWS::IAM::Policy
