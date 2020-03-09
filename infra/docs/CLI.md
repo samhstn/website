@@ -24,24 +24,24 @@ We can configure role cli access by editing our `~/.aws/config` to look like the
 [profile samhstn-root]
 role_arn = arn:aws:iam::<ROOT_ACCOUNT_ID>:role/SamhstnRoot
 source_profile = samhstn
+region = eu-west-1
+output = json
 
 [profile samhstn-admin]
 role_arn = arn:aws:iam::<PROJECT_ACCOUNT_ID>:role/Admin
 source_profile = samhstn
-```
-
-[default]
 region = eu-west-1
 output = json
+```
 
 We will mostly want to run commands with the admin role, so we should configure this:
 
 ```bash
-export AWS_DEFAULT_PROFILE=samhstn-admin
+export AWS_PROFILE=samhstn-admin
 ```
 
 To change profile, simply change this before the `aws` command:
 
 ```bash
-AWS_DEFAULT_PROFILE=samhstn-root aws ...
+AWS_PROFILE=samhstn-root aws ...
 ```

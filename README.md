@@ -22,6 +22,6 @@ npm start
 + [The different accounts we will be working](./infra/docs/ACCOUNTS.md).
 + [Infrastructure decisions](./infra/docs/DECISIONS.md).
 + [root setup](./infra/samhstn/README.md) - aws configuration to be used by multiple projects.
-+ [samhstn.com setup](./infra/samhstn.com/README.md).
 + [AWS CLI setup](./infra/docs/CLI.md).
++ [samhstn.com setup](./infra/samhstn.com/README.md).
 + [Teardown of all infrastructure setup](./infra/docs/TEARDOWN.md).

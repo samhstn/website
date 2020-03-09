@@ -9,8 +9,8 @@ We have the following users:
 (Used very rarely, only when we need to configure settings in our master billing account (change iam permissions for instance) or add a new project).
 
 ```
-Account alias: samhstn-root
-IAM user name: root
+Account: samhstnroot
+Role: SamhstnRoot
 ```
 
 3. **Project specific root account**
@@ -22,12 +22,19 @@ IAM user name: root
 (Used frequently to view and update project infrastructure).
 
 ```
-Account alias: projectname
+Account: projectname
 IAM user name: admin
 
 # E.g.
-Account alias: samhstn
+Account: samhstn
 IAM user name: admin
+```
+
+We will need to switch roles to access anything.
+
+```
+Account: samhstn
+Role: Admin
 ```
 
 View full list in [organization view](https://console.aws.amazon.com/organization) using Account #2.

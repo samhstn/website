@@ -2,6 +2,10 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   Pipeline to run on every webhook event.
 
+Parameters:
+  GithubBranch:
+    Type: String
+
 Resources:
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket

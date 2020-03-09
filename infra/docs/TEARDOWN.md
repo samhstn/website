@@ -4,7 +4,8 @@
 
 ##### Clear setup as admin user
 
-TODO
+Empty all buckets.
+Delete all cloudformation templates.
 
 ##### Clear admin user
 
@@ -24,4 +25,4 @@ This will delete
 
 ##### IAM
 
-Delete project specific stack
+Delete project specific cloudformation stack.

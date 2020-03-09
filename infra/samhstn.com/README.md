@@ -52,40 +52,46 @@ Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 
 ### Upload our cloudformation templates to our s3 bucket
 
-We will upload our cloudformation templates to an s3 bucket with the commands:
+We will upload our cloudformation templates to a secure s3 bucket with the commands:
 
 ```bash
-BASE_CANONICAL_ID=$(
-  AWS_DEFAULT_PROFILE=samhstn-base aws s3api list-buckets \
-    --query Owner.ID \
-    --output text
-)
-
-ADMIN_CANONICAL_ID=$(
-  AWS_DEFAULT_PROFILE=samhstn-admin aws s3api list-buckets \
-    --query Owner.ID \
-    --output text
-)
-
-aws s3api create-bucket \
-  --bucket samhstn-cfn-templates \
-  --acl private
-
-aws s3api put-public-access-block \
-  --bucket samhstn-cfn-templates \
-  --public-access-block-configuration \
-    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-
-aws s3api put-bucket-acl \
-  --bucket samhstn-cfn-templates \
-  --grant-full-control id=$ADMIN_CANONICAL_ID \
-  --grant-read id=$BASE_CANONICAL_ID
+aws s3 mb s3://samhstn-cfn-templates
 
 aws s3 sync infra s3://samhstn-cfn-templates \
   --exclude "*" \
   --include "*.yaml" \
   --include "*.js" \
   --delete
+
+ROOT_CANONICAL_ID=$(
+  AWS_PROFILE=samhstn-root aws s3api list-buckets \
+    --query Owner.ID \
+    --output text
+)
+
+ADMIN_CANONICAL_ID=$(
+  AWS_PROFILE=samhstn-admin aws s3api list-buckets \
+    --query Owner.ID \
+    --output text
+)
+
+aws s3api put-bucket-acl \
+  --bucket samhstn-cfn-templates \
+  --acl private \
+  --grant-full-control id=$ADMIN_CANONICAL_ID \
+  --grant-read id=$ROOT_CANONICAL_ID
+
+# update the `cfn-bucket-policy.json` file to be the values of:
+# ROOT_ACCOUNT_ID=$(AWS_PROFILE=samhstn-root aws sts get-caller-identity --query Account --output text)
+# ADMIN_ACCOUNT_ID=$(AWS_PROFILE=samhstn-admin aws sts get-caller-identity --query Account --output text)
+aws s3api put-bucket-policy \
+  --bucket samhstn-cfn-templates \
+  --policy file://infra/samhstn.com/cfn-bucket-policy.json
+
+aws s3api put-public-access-block \
+  --bucket samhstn-cfn-templates \
+  --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
 ```
 
 ### Deploy our base stack
@@ -101,9 +107,9 @@ aws cloudformation create-stack \
 aws cloudformation wait stack-create-complete --stack-name base
 ```
 
-We will now need to add a `CNAME` record set as described in the acm console.
+We will now need to add a `CNAME` record set as described in the [acm console](http://console.aws.amazon.com/acm).
 
-This can be done by visiting the `Route53` console as the `samhstn-base` profile and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
+This can be done by visiting the `Route53` console as the `samhstn-root` profile and add a `CNAME` record set as described in the acm console for the samhstn `admin` role.
 
 This takes over 30 minutes to complete.
 
@@ -111,10 +117,16 @@ This takes over 30 minutes to complete.
 
 ### Github Webhook configuration
 
-To see all our current webhooks run:
+To see all our current webhooks, run:
 
 ```bash
 curl --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks
+```
+
+To delete any old webhooks, run:
+
+```bash
+curl -X "DELETE" --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks/<hook_id>
 ```
 
 To add our webhook to trigger our CodePipeline build run:

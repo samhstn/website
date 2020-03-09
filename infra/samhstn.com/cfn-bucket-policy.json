@@ -1,0 +1,20 @@
+{
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ROOT_ACCOUNT_ID:role/SamhstnRoot"
+      },
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::samhstn-cfn-templates/*"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ADMIN_ACCOUNT_ID:role/Admin"
+      },
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::samhstn-cfn-templates/*"
+    }
+  ]
+}
