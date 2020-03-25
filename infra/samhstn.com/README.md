@@ -7,7 +7,7 @@ We can sign in by visiting: https://samhstn.signin.aws.amazon.com/console
 Account ID: samhstn
 IAM user name: admin
 
-The password will be generated from the steps described in [AWS root setup](./root/README.md).
+The password will be generated from the steps described in [AWS root setup](../samhstn/README.md).
 
 This must be updated after the first login.
 
