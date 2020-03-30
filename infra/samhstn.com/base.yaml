@@ -1,36 +1,86 @@
 AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
 Description: >-
-  Resources which will configure and support the push event codebuild.
+  + creates a certificate to use on each build
+  + creates and stores secrets
+  + creates and exposes lambda function to be triggered by Github webhook
 
 Parameters:
   GithubPAToken:
     Type: String
     NoEcho: true
-  GithubBranch:
+
+  GithubMasterBranch:
     Type: String
     Default: master
 
 Resources:
   Certificate:
-    Type: AWS::CloudFormation::Stack
-    Description: Certificate to be attached to each dynamically created CDN.
+    Type: AWS::CertificateManager::Certificate
     Properties:
-      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/acm.yaml
+      DomainName: samhstn.com
+      SubjectAlternativeNames:
+        - "*.samhstn.com"
+      ValidationMethod: DNS
 
-  Keys:
-    Type: AWS::CloudFormation::Stack
-    Description: Keys to be shared across templates.
+  GithubSecretParameter:
+    Type: AWS::SecretsManager::Secret
     Properties:
-      Parameters:
-        GithubPAToken: !Ref GithubPAToken
-      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/keys.yaml
+      Name: /GithubSecret
+      GenerateSecretString:
+        ExcludePunctuation: true
 
-  DynamicPipeline:
-    Type: AWS::CloudFormation::Stack
-    DependsOn: Keys
-    Description: >-
-      Configuration for our Pipeline which will run on every event which our CodePipeline Webhook is triggered.
+  GithubPATokenParameter:
+    Type: AWS::SecretsManager::Secret
     Properties:
-      Parameters:
-        GithubBranch: !Ref GithubBranch
-      TemplateURL: https://samhstn-cfn-templates.s3.amazonaws.com/base/dynamic-pipeline.yaml
+      Name: /GithubPAToken
+      SecretString: !Ref GithubPAToken
+
+  WebhookFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: GithubSecretParameter
+    Properties:
+      FunctionName: Webhook
+      Runtime: nodejs12.x
+      Role: !GetAtt WebhookLambdaRole.Arn
+      Handler: webhook.handler
+      Environment:
+        Variables:
+          GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
+      CodeUri: s3://samhstn-cfn-templates/webhook/webhook.zip
+      Events:
+        Webhook:
+          Type: HttpApi
+          Properties:
+            Method: POST
+            Path: /webhook
+
+  WebhookLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ExecuteWebhook
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: execute-webhook
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+Outputs:
+  CertificateArn:
+    Value: !Ref Certificate
+    Export:
+      Name: SamhstnCertificateArn
+
+  WebhookEndpoint:
+    Value: !Sub https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook

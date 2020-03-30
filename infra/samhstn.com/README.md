@@ -55,12 +55,14 @@ Now set this token as an environment variable called `SAMHSTN_PA_TOKEN`.
 We will upload our cloudformation templates to a secure s3 bucket with the commands:
 
 ```bash
+(cd infra/samhstn.com/webhook && zip -r webhook.zip .)
+
 aws s3 mb s3://samhstn-cfn-templates
 
-aws s3 sync infra s3://samhstn-cfn-templates \
+aws s3 sync infra/samhstn.com s3://samhstn-cfn-templates \
   --exclude "*" \
   --include "*.yaml" \
-  --include "*.js" \
+  --include "*.zip" \
   --delete
 
 ROOT_CANONICAL_ID=$(
@@ -103,7 +105,7 @@ aws cloudformation create-stack \
   --stack-name base \
   --template-url https://samhstn-cfn-templates.s3.amazonaws.com/base.yaml \
   --parameters ParameterKey=GithubPAToken,ParameterValue=$SAMHSTN_PA_TOKEN \
-  --capabilities CAPABILITY_NAMED_IAM
+  --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
 aws cloudformation wait stack-create-complete --stack-name base
 ```
 
@@ -132,7 +134,7 @@ curl -X "DELETE" --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos
 To add our webhook to trigger our CodePipeline build run:
 
 ```bash
-WEBHOOK_URL=$(aws codepipeline list-webhooks --query "webhooks[*].url | [0]" --output text)
+WEBHOOK_URL=$(aws cloudformation describe-stacks --stack-name base --query "Stacks[0].Outputs[?OutputKey=='WebhookEndpoint'].OutputValue" --output text)
 GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /GithubSecret --query SecretString --output text)
 curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
   --request POST \
@@ -142,7 +144,7 @@ curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
 
 Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks) should show:
 
-TODO: check this is correct
+TODO: fix this
 ```
 https://us-east-1.webhooks.aws/trigger  (push)
 ```
