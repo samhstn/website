@@ -142,9 +142,10 @@ curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
   https://api.github.com/repos/samhstn/samhstn/hooks
 ```
 
-Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks) should show:
+Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks).
 
-TODO: fix this
-```
-https://us-east-1.webhooks.aws/trigger  (push)
+To update our s3 bucket code, we can run the `zip` and `aws s3 sync` commands from above, then run:
+
+```bash
+aws lambda update-function-code --function-name Webhook --s3-bucket samhstn-cfn-templates --s3-key webhook/webhook.zip
 ```
