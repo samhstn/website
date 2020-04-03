@@ -144,8 +144,14 @@ curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
 
 Our repository webhooks (found at: https://github.com/samhstn/samhstn/settings/hooks).
 
-To update our s3 bucket code, we can run the `zip` and `aws s3 sync` commands from above, then run:
+To update our s3 bucket code, we run:
 
 ```bash
+(cd infra/samhstn.com/webhook && zip -r webhook.zip .)
+aws s3 sync infra/samhstn.com s3://samhstn-cfn-templates \
+  --exclude "*" \
+  --include "*.yaml" \
+  --include "*.zip" \
+  --delete
 aws lambda update-function-code --function-name Webhook --s3-bucket samhstn-cfn-templates --s3-key webhook/webhook.zip
 ```

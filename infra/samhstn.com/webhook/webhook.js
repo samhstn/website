@@ -1,14 +1,12 @@
 'use strict';
 
 const crypto = require('crypto');
-const AWS = require('./aws.js');
+const {AWS} = require('./config.js');
 const AWS_REGION = process.env.AWS_REGION || 'eu-west-1';
 
 const secretsManager = new AWS.SecretsManager({region: AWS_REGION, apiVersion: '2017-10-17'});
 
 exports.handler = async (event) => {
-  console.log('event', event);
-
   let response;
 
   try {
@@ -22,13 +20,11 @@ exports.handler = async (event) => {
     if (`sha1=${digest}` === event.headers['x-hub-signature']) {
       const payload = JSON.parse(decodeURIComponent(body).replace(/^payload=/, ''));
 
-      console.log('payload', payload);
-
-      // TODO handle process.env.GITHUB_MASTER_BRANCH
+      // TODO: handle process.env.GITHUB_MASTER_BRANCH
 
       response = {
         statusCode: 200,
-        body: `Push from branch: ${event.ref}, commit: ${event.head_commit.id}`
+        body: `Push from branch: ${payload.ref}, commit: ${payload.head_commit.id}`
       }
     } else {
       response = {
