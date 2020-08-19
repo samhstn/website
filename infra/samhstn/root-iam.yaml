@@ -8,9 +8,6 @@ Parameters:
   Project:
     Type: String
     Description: "Project name in pascal case, e.g. Samhstn"
-  HostedZoneId:
-    Type: String
-    Description: "Route53 hosted zone ref for our domain name, e.g. "
   AccountId:
     Type: String
     Description: "Account to grant root access"
@@ -26,44 +23,14 @@ Resources:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
-            Resource: !Sub arn:aws:route53:::hostedzone/${HostedZoneId}
-            Action: route53:*
-          - Effect: Allow
             Resource: '*'
             Action:
-              - route53:List*
-              - route53:Get*
-          - Effect: Allow
-            Resource: '*'
-            Action:
-              - s3:ListBucket
-              - s3:ListAllMyBuckets
-              - s3:CreateBucket
-              - s3:PutObject
-              - s3:DeleteBucket
-              - s3:DeleteObject
-              - s3:PutBucket
-              - s3:GetObject
-          - Effect: Allow
-            Resource: '*'
-            Action:
-              - cloudformation:Describe*
-              - cloudformation:List*
-              - cloudformation:Get*
-              - cloudformation:Create*
-              - cloudformation:Update*
-              - cloudformation:DeleteStack
-          - Effect: Allow
-            Resource: '*'
-            Action:
-              - ses:List*
-              - ses:GetIdentity*
-          - Effect: Allow
-            Resource: '*'
-            Action: sns:ListTopics
-          - Effect: Allow
-            Resource: '*'
-            Action: iam:PutRolePolicy
+              - route53:*
+              - s3:*
+              - cloudformation:*
+              - ses:*
+              - iam:*
+              - acm:*
 
   RootRole:
     Type: AWS::IAM::Role
