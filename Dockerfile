@@ -1,37 +1,17 @@
-FROM debian:buster
+FROM samhstn_base:latest
 
-# Install essential build packages
-RUN apt-get update 
-RUN apt-get install -y wget git locales curl
+COPY mix.exs mix.lock config.exs ./
+COPY lib lib
+COPY assets assets
 
-# Set locale
-RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
-    dpkg-reconfigure --frontend=noninteractive locales && \
-    update-locale LANG=en_US.UTF-8
-ENV LANG en_US.UTF-8
+RUN mkdir -p "$HOME/certs"
+RUN openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 \
+                -subj "/C=/ST=/L=/O=/CN=localhost" -keyout $HOME/certs/key.pem -out $HOME/certs/cert.pem
 
-# Install python3
-RUN apt-get -y install python3 python3-pip
-RUN pip3 install -vU setuptools
+ENV PORT=4001
+ENV CERT_DIR="$HOME/certs"
+EXPOSE 4001
 
-# Install python packages
-RUN pip3 install cfn-lint awscli
+RUN mix do deps.get, compile
 
-# Install nodejs
-RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-get install -y nodejs
-
-# Install erlang and elixir
-RUN wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-RUN dpkg -i erlang-solutions_2.0_all.deb
-RUN apt-get update
-RUN apt-get install -y esl-erlang
-RUN apt-get install -y elixir
-
-# Install hex and rebar
-RUN mix do local.hex --force, local.rebar --force
-
-# Install phoenix
-RUN mix archive.install hex phx_new 1.5.4 --force
-
-WORKDIR /opt/app
+CMD mix phx.server

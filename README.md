@@ -21,6 +21,12 @@ $ elixir --version
 Erlang/OTP 23 [erts-11.0.3] [source] [64-bit] [smp:12:12] [ds:12:12:10] [async-threads:1] [hipe] [dtrace]
 
 Elixir 1.10.4 (compiled with Erlang/OTP 23)
+
+$ mix --version
+Mix 1.10.4
+
+$ mix phx.new --version
+Phoenix v1.5.4
 ```
 
 ### Local Setup
@@ -33,7 +39,7 @@ git clone git@github.com:samhstn/samhstn.git && cd samhstn
 ./bootstrap.sh
 ```
 
-##### Running Docker
+### Running Docker
 
 ```bash
 # build the base image
