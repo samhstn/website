@@ -1,0 +1,19 @@
+{
+  "name": "webhook",
+  "private": true,
+  "version": "1.0.0",
+  "main": "webhook.js",
+  "scripts": {
+    "test:without-mock": "AWS_PROFILE=samhstn-admin AWS_SDK_LOAD_CONFIG=true NODE_ENV=test GITHUB_MASTER_BRANCH=master tape test/**/*.test.js",
+    "test": "NODE_ENV=test GITHUB_MASTER_BRANCH=master tape test/**/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tape": "^4.13.2"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.649.0"
+  }
+}

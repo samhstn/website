@@ -3,6 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >
   Creates a cross account, root access role for a project admin to assume.
   Specifies the resources for this role to access in our root (master billing) account.
+
 Parameters:
   Project:
     Type: String

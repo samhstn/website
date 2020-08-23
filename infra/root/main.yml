@@ -94,9 +94,7 @@ Resources:
         Variables:
           NOTIFICATION_EMAIL: !Ref NotificationEmail
           FROM_EMAIL: !Ref FromEmail
-      Code:
-        S3Bucket: !ImportValue CloudformationBucketName
-        S3Key: receive_email.zip
+      Code: receive_email
 
   EmailTemplate:
     Type: AWS::SES::Template

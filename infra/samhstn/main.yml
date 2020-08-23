@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  + Creates and stores secrets
+  + Sets up a lambda webhook for dynamic builds
+
+Parameters:
+  GithubPAToken:
+    Type: String
+    NoEcho: true
+
+  GithubMasterBranch:
+    Type: String
+    Default: master
+
+Resources:
+  GithubSecretParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /GithubSecret
+      GenerateSecretString:
+        ExcludePunctuation: true
+
+  GithubPATokenParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /GithubPAToken
+      SecretString: !Ref GithubPAToken
+
+  WebhookFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: GithubSecretParameter
+    Properties:
+      FunctionName: Webhook
+      Runtime: nodejs12.x
+      Role: !GetAtt WebhookRole.Arn
+      Handler: webhook.handler
+      Environment:
+        Variables:
+          GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
+      CodeUri: webhook
+      Events:
+        Webhook:
+          Type: HttpApi
+          Properties:
+            Method: POST
+            Path: /webhook
+
+  WebhookRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ExecuteWebhook
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+      Policies:
+        - PolicyName: execute-webhook
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              # TODO: restrict this to least privilege
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+Outputs:
+  WebhookEndpoint:
+    Value: !Sub https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook
+    Export:
+      Name: WebhookEndpoint

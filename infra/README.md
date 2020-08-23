@@ -90,6 +90,12 @@ We will need a Github personal access token `SAMHSTN_PA_TOKEN` for aws to access
 
 Now set this token locally as an environment variable called `SAMHSTN_PA_TOKEN`.
 
+We also need to set a `SAMHSTN_FROM_EMAIL` environment variable for the email address to notify
+
+when we receive an email to `@samhstn.com`.
+
+### Deploying
+
 We can now look to deploy our entire stack by running:
 
 ```bash

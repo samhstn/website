@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Creates an IAM user to be used across this account and the root account.
+  It is the admin for general use, and has root privilege.
+
+Parameters:
+  RootAccountId:
+    Type: String
+  TempPassword:
+    NoEcho: true
+    Type: String
+
+Resources:
+  AdminUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: admin
+      Groups:
+        - !Ref AssumeRoleGroup
+      LoginProfile:
+        Password: !Ref TempPassword
+        PasswordResetRequired: true
+
+  AssumeRoleGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: AssumeRole
+
+  AdminUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref AdminUser
+
+  AssumeRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Groups:
+        - !Ref AssumeRoleGroup
+      PolicyName: AssumeRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Action: sts:AssumeRole
+          Resource: !Sub arn:aws:iam::${RootAccountId}:role/SamhstnRoot
+
+  AdminPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AdminRole
+      PolicyName: AdminAccess
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Resource: '*'
+          Action: '*'
+
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: Admin
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt AdminUser.Arn
+            Action: sts:AssumeRole

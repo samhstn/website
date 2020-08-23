@@ -1,8 +1,7 @@
 #!/bin/bash
 
-set -e
-
 ENV_FILE=".env"
+GITHUB_MASTER_BRANCH=master
 
 touch $ENV_FILE
 source $ENV_FILE
@@ -12,8 +11,8 @@ if [[ -z "$SAMHSTN_PA_TOKEN" ]]; then
   exit 1
 fi
 
-if [[ -z "$SAMHSTN_FROM_EMAIL" ]]; then
-  echo "Required environment variable SAMHSTN_FROM_EMAIL is not defined"
+if [[ -z "$SAMHSTN_NOTIFICATION_EMAIL" ]]; then
+  echo "Required environment variable SAMHSTN_NOTIFICATION_EMAIL is not defined"
   exit 1
 fi
 
@@ -47,20 +46,81 @@ aws cloudformation deploy \
     EmailBucket=samhstn-mail-$AWS_ROOT_ACCOUNT_ID \
     CloudformationBucket=samhstn-cfn-$AWS_ROOT_ACCOUNT_ID
 
-(cd infra/root/receive_email && zip -r receive_email.zip .)
-aws s3 sync --profile samhstn-root infra/root/receive_email s3://samhstn-cfn-$AWS_ROOT_ACCOUNT_ID --exclude '*' --include '*.zip'
+mkdir -p infra/cfn_output/root
+
+PACKAGE_ERR="$(aws cloudformation package \
+  --profile samhstn-root \
+  --template ./infra/root/main.yml \
+  --s3-bucket samhstn-cfn-$AWS_ROOT_ACCOUNT_ID \
+  --output-template-file infra/cfn_output/root/main.yml 2>&1)"
+
+if ! [[ $PACKAGE_ERR =~ "Successfully packaged artifacts" ]]; then
+  echo "ERROR while running 'aws cloudformation package' command:"
+  echo $PACKAGE_ERR
+  exit 1
+fi
 
 aws cloudformation deploy \
   --profile samhstn-root \
   --stack-name samhstn-main \
-  --template-file ./infra/root/main.yml \
+  --template-file ./infra/cfn_output/root/main.yml \
   --no-fail-on-empty-changeset \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     FromEmail=hello@samhstn.com \
-    NotificationEmail=contact.samhstn@gmail.com
+    NotificationEmail=$SAMHSTN_NOTIFICATION_EMAIL
 
 if [[ -z $(aws ses --profile samhstn-root describe-active-receipt-rule-set) ]]; then
-  echo setting rule set
+  echo "setting rule set"
   aws ses --profile samhstn-root set-active-receipt-rule-set --rule-set-name SamhstnRuleSet
 fi
+
+if [[ -z $TEMP_PASSWORD ]]; then
+  TEMP_PASSWORD=$(node -e "console.log(Math.random().toString(36).slice(2))")
+  echo "TEMP_PASSWORD=$TEMP_PASSWORD" >> $ENV_FILE
+fi
+
+aws cloudformation deploy \
+  --profile samhstn-admin \
+  --stack-name project-iam \
+  --template-file ./infra/samhstn/project-iam.yml \
+  --no-fail-on-empty-changeset \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    TempPassword=$TEMP_PASSWORD \
+    RootAccountId=$AWS_ROOT_ACCOUNT_ID
+
+aws cloudformation deploy \
+  --profile samhstn-admin \
+  --stack-name setup \
+  --template-file ./infra/samhstn/setup.yml \
+  --no-fail-on-empty-changeset \
+  --parameter-overrides \
+    CloudformationBucket=samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID
+
+mkdir -p infra/cfn_output/samhstn
+
+PACKAGE_ERR="$(aws cloudformation package \
+  --profile samhstn-admin \
+  --template ./infra/samhstn/main.yml \
+  --s3-bucket samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID \
+  --output-template-file infra/cfn_output/samhstn/main.yml 2>&1)"
+
+if ! [[ $PACKAGE_ERR =~ "Successfully packaged artifacts" ]]; then
+  echo "ERROR while running 'aws cloudformation package' command:"
+  echo $PACKAGE_ERR
+  exit 1
+fi
+
+aws cloudformation deploy \
+  --profile samhstn-admin \
+  --stack-name main \
+  --template-file ./infra/cfn_output/samhstn/main.yml \
+  --no-fail-on-empty-changeset \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    GithubPAToken=$SAMHSTN_PA_TOKEN \
+    GithubMasterBranch=$GITHUB_MASTER_BRANCH
+
+WEBHOOK_URL=$(aws cloudformation list-exports --profile samhstn-admin | jp -u "Exports[?Name=='WebhookEndpoint'].Value|[0]")
+
