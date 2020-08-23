@@ -123,4 +123,12 @@ aws cloudformation deploy \
     GithubMasterBranch=$GITHUB_MASTER_BRANCH
 
 WEBHOOK_URL=$(aws cloudformation list-exports --profile samhstn-admin | jp -u "Exports[?Name=='WebhookEndpoint'].Value|[0]")
+GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /GithubSecret --query SecretString --output text)
 
+if [ $(curl -s --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks | jp -u "[?config.url=='$WEBHOOK_URL']") == "[]" ]; then
+  echo "creating webhook"
+  curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
+    --request POST \
+    --data $(node -e "console.log(JSON.stringify({name: 'web', active: true, events: ['push', 'create', 'delete'], config: {url: '$WEBHOOK_URL', secret: '$GITHUB_SECRET'}}))") \
+    https://api.github.com/repos/samhstn/samhstn/hooks
+fi
