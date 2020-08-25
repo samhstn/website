@@ -35,7 +35,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     Project=Samhstn \
-    AccountId=$AWS_ADMIN_ACCOUNT_ID
+    AccountId=$AWS_ADMIN_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 printf 'Deploying root setup.yml '
 aws cloudformation deploy \
@@ -46,7 +46,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     EmailBucket=samhstn-mail-$AWS_ROOT_ACCOUNT_ID \
-    CloudformationBucket=samhstn-cfn-$AWS_ROOT_ACCOUNT_ID
+    CloudformationBucket=samhstn-cfn-$AWS_ROOT_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 mkdir -p infra/cfn_output/root
 
@@ -72,7 +72,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     FromEmail=hello@samhstn.com \
-    NotificationEmail=$SAMHSTN_NOTIFICATION_EMAIL
+    NotificationEmail=$SAMHSTN_NOTIFICATION_EMAIL | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 if [[ -z $(aws ses --profile samhstn-root describe-active-receipt-rule-set) ]]; then
   echo "setting rule set"
@@ -92,7 +92,7 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     TempPassword=$TEMP_PASSWORD \
-    RootAccountId=$AWS_ROOT_ACCOUNT_ID
+    RootAccountId=$AWS_ROOT_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 aws cloudformation deploy \
   --profile samhstn-admin \
@@ -100,7 +100,7 @@ aws cloudformation deploy \
   --template-file ./infra/samhstn/setup.yml \
   --no-fail-on-empty-changeset \
   --parameter-overrides \
-    CloudformationBucket=samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID
+    CloudformationBucket=samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 mkdir -p infra/cfn_output/samhstn
 
@@ -124,12 +124,12 @@ aws cloudformation deploy \
   --capabilities CAPABILITY_NAMED_IAM \
   --parameter-overrides \
     GithubPAToken=$SAMHSTN_PA_TOKEN \
-    GithubMasterBranch=$GITHUB_MASTER_BRANCH
+    GithubMasterBranch=$GITHUB_MASTER_BRANCH | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 WEBHOOK_URL=$(aws cloudformation list-exports --profile samhstn-admin | jp -u "Exports[?Name=='WebhookEndpoint'].Value|[0]")
 GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /GithubSecret --query SecretString --output text)
 
-if [ $(curl -s --user "samhstn:$SAMHSTN_PA_TOKEN" https://api.github.com/repos/samhstn/samhstn/hooks | jp -u "[?config.url=='$WEBHOOK_URL']") == "[]" ]; then
+if [ "$(curl -s --user \"samhstn:$SAMHSTN_PA_TOKEN\" https://api.github.com/repos/samhstn/samhstn/hooks | jp -u \"[?config.url=='$WEBHOOK_URL']\")" = "[]" ]; then
   echo "creating webhook"
   curl --user "samhstn:$SAMHSTN_PA_TOKEN" \
     --request POST \
