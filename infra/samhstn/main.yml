@@ -71,10 +71,15 @@ Resources:
           PolicyDocument:
             Version: 2012-10-17
             Statement:
-              # TODO: restrict this to least privilege
               - Effect: Allow
-                Action: '*'
-                Resource: '*'
+                Action: logs:PutLogEvents
+                Resource: !GetAtt WebhookLogGroup.Arn
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref GithubSecretParameter
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/ExecuteWebhook
 
 Outputs:
   WebhookEndpoint:
