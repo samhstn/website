@@ -2,25 +2,11 @@
 
 const test = require('tape');
 
+const genEvent = require('../genEvent.js');
 const {handler} = require('../webhook.js');
 const {AWS, AWS_REGION, API_VERSION} = require('../config.js');
 const sampleEvent = require('./sampleEvent.js');
 const rawEvent = require('./rawEvent.js');
-
-const genEvent = (secret) => (event) => {
-  const crypto = require('crypto');
-  const bodyEncoded = encodeURIComponent(`payload=${JSON.stringify(event.body)}`);
-
-  const body = Buffer.from(bodyEncoded, 'utf-8').toString('base64')
-
-  const hmac = crypto.createHmac('sha1', secret);
-  hmac.update(bodyEncoded, 'utf-8');
-  const sha1 = hmac.digest('hex');
-
-  const headers = Object.assign(event.headers, {'x-hub-signature': `sha1=${sha1}`});
-
-  return Object.assign(event, {body, headers});
-}
 
 test('ping event with correct secret string', async (t) => {
   t.plan(2);
