@@ -28,9 +28,17 @@ Resources:
       Name: /GithubPAToken
       SecretString: !Ref GithubPAToken
 
+  WebhookLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/Webhook
+      RetentionInDays: 14
+
   WebhookFunction:
     Type: AWS::Serverless::Function
-    DependsOn: GithubSecretParameter
+    DependsOn:
+      - GithubSecretParameter
+      - WebhookLogGroup
     Properties:
       FunctionName: Webhook
       Runtime: nodejs12.x
