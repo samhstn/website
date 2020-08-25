@@ -12,18 +12,25 @@ exports.handler = async (event) => {
     const secretValueReq = secretsManager.getSecretValue({SecretId: '/GithubSecret'});
     const {SecretString: githubSecret} = await secretValueReq.promise();
     const hmac = crypto.createHmac('sha1', githubSecret);
-    const body = Buffer.from(event.body, 'base64').toString();
-    hmac.update(body, 'utf-8');
+    const bodyString = Buffer.from(event.body, 'base64').toString();
+    hmac.update(bodyString, 'utf-8');
     const digest = hmac.digest('hex');
 
     if (`sha1=${digest}` === event.headers['x-hub-signature']) {
-      const payload = JSON.parse(decodeURIComponent(body).replace(/^payload=/, ''));
+      if (event.headers['x-github-event'] === 'push') {
+        const body = JSON.parse(decodeURIComponent(bodyString).replace(/^payload=/, ''));
 
-      // TODO: handle process.env.GITHUB_MASTER_BRANCH
+        // TODO: handle process.env.GITHUB_MASTER_BRANCH
 
-      response = {
-        statusCode: 200,
-        body: `Push from branch: ${payload.ref}, commit: ${payload.head_commit.id}`
+        response = {
+          statusCode: 200,
+          body: `Push from branch: ${body.ref}, commit: ${body.head_commit.id}`
+        }
+      } else if (event.headers['x-github-event'] === 'ping') {
+        response = {
+          statusCode: 200,
+          body: 'OK'
+        }
       }
     } else {
       response = {
