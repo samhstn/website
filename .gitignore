@@ -5,3 +5,4 @@ erl_crash.dump
 .env
 infra/**/*.zip
 infra/cfn_output/**
+/venv/
