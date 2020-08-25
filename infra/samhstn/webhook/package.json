@@ -5,7 +5,8 @@
   "main": "webhook.js",
   "scripts": {
     "test:without-mock": "AWS_PROFILE=samhstn-admin AWS_SDK_LOAD_CONFIG=true NODE_ENV=test GITHUB_MASTER_BRANCH=master tape test/**/*.test.js",
-    "test": "NODE_ENV=test GITHUB_MASTER_BRANCH=master tape test/**/*.test.js"
+    "test": "NODE_ENV=test GITHUB_MASTER_BRANCH=master tape test/**/*.test.js",
+    "test.sh": "./test.sh"
   },
   "keywords": [],
   "author": "",
