@@ -26,6 +26,7 @@ if [[ -z "$AWS_ROOT_ACCOUNT_ID" ]]; then
   echo "AWS_ROOT_ACCOUNT_ID=$AWS_ROOT_ACCOUNT_ID" >> $ENV_FILE
 fi
 
+printf 'Deploying root iam.yml '
 aws cloudformation deploy \
   --profile samhstn-root \
   --stack-name samhstn \
@@ -36,6 +37,7 @@ aws cloudformation deploy \
     Project=Samhstn \
     AccountId=$AWS_ADMIN_ACCOUNT_ID
 
+printf 'Deploying root setup.yml '
 aws cloudformation deploy \
   --profile samhstn-root \
   --stack-name samhstn-setup \
@@ -48,6 +50,7 @@ aws cloudformation deploy \
 
 mkdir -p infra/cfn_output/root
 
+echo 'Packaging root main.yml'
 PACKAGE_ERR="$(aws cloudformation package \
   --profile samhstn-root \
   --template ./infra/root/main.yml \
@@ -60,6 +63,7 @@ if ! [[ $PACKAGE_ERR =~ "Successfully packaged artifacts" ]]; then
   exit 1
 fi
 
+printf 'Deploying root main.yml '
 aws cloudformation deploy \
   --profile samhstn-root \
   --stack-name samhstn-main \
