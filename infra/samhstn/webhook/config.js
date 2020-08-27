@@ -11,6 +11,11 @@ class SecretsManagerMock {
   }
 }
 
+exports.logger =
+  NODE_ENV === 'test'
+    ? { write: function () {} }
+    : { write: console.log }
+
 exports.AWS =
   NODE_ENV === 'test' && AWS_SDK_LOAD_CONFIG !== 'true'
     ? { SecretsManager: SecretsManagerMock }

@@ -1,6 +1,7 @@
 'use strict';
 
 const ping = {
+  sample: true,
   headers: {
     'x-github-event': 'ping'
   },
@@ -10,6 +11,7 @@ const ping = {
 };
 
 const push = {
+  sample: true,
   headers: {
     'x-github-event': 'push'
   },
