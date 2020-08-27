@@ -99,5 +99,5 @@ when we receive an email to `@samhstn.com`.
 We can now look to deploy our entire stack by running:
 
 ```bash
-./deploy-infra.sh
+./infra/deploy.sh
 ```
