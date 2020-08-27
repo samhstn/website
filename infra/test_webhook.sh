@@ -2,9 +2,10 @@
 
 set -e
 
+WEBHOOK_DIR="infra/samhstn/webhook"
 GITHUB_SECRET=$(aws secretsmanager get-secret-value --secret-id /GithubSecret | jp -u SecretString)
-PING_PAYLOAD=$(node -e "console.log(JSON.stringify(require('./genEvent.js')('$GITHUB_SECRET')(require('./test/sampleEvent.js').ping)))")
-PUSH_PAYLOAD=$(node -e "console.log(JSON.stringify(require('./genEvent.js')('$GITHUB_SECRET')(require('./test/sampleEvent.js').push)))")
+PING_PAYLOAD=$(node -e "console.log(JSON.stringify(require('./$WEBHOOK_DIR/genEvent.js')('$GITHUB_SECRET')(require('./$WEBHOOK_DIR/test/sampleEvent.js').ping)))")
+PUSH_PAYLOAD=$(node -e "console.log(JSON.stringify(require('./$WEBHOOK_DIR/genEvent.js')('$GITHUB_SECRET')(require('./$WEBHOOK_DIR/test/sampleEvent.js').push)))")
 
 echo "==== ping ===="
 aws lambda invoke --function-name Webhook \
