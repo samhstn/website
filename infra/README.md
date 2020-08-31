@@ -99,5 +99,14 @@ when we receive an email to `@samhstn.com`.
 We can now look to deploy our entire stack by running:
 
 ```bash
-./infra/deploy.sh
+# set up python environment, check or add environment variables
+./infra/run.sh setup
+
+# deploy stack
+./infra/run.sh deploy
+
+# tears down, leaving any setup.yml stacks (mainly s3 buckets)
+./infra/run.sh teardown
+
+# see infra/run.sh for all scripts
 ```

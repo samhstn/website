@@ -41,13 +41,13 @@ Resources:
       - WebhookLogGroup
     Properties:
       FunctionName: Webhook
-      Runtime: nodejs12.x
+      Runtime: python3.8
       Role: !GetAtt WebhookRole.Arn
       Handler: webhook.handler
       Environment:
         Variables:
           GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
-      CodeUri: webhook
+      CodeUri: ../webhook/function
       Events:
         Webhook:
           Type: HttpApi

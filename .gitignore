@@ -1,8 +1,10 @@
 /_build/
 /deps/
-**/node_modules/**/*
+**/node_modules/
 erl_crash.dump
-.env
-infra/**/*.zip
-infra/cfn_output/**
-/venv/
+**/.env
+infra/cfn_output
+infra/venv/
+__pycache__/
+.coverage
+htmlcov/
