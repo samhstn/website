@@ -100,13 +100,16 @@ We can now look to deploy our entire stack by running:
 
 ```bash
 # set up python environment, check or add environment variables
-./infra/run.sh setup
+./infra/scripts/setup.sh
 
 # deploy stack
-./infra/run.sh deploy
+./infra/scripts/deploy.sh
 
 # tears down, leaving any setup.yml stacks (mainly s3 buckets)
-./infra/run.sh teardown
+./infra/scripts/teardown.sh
 
 # see infra/run.sh for all scripts
+
+# .py scripts should be run with:
+infra/venv/bin/python ./infra/scripts/get_webhook_logs.py
 ```
