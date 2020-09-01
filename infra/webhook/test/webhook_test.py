@@ -29,9 +29,9 @@ def test_gen_event(events):
       'sample': True,
       'headers': {
         'x-github-event': 'ping',
-        'x-hub-signature': 'sha1=65c39e67c45a90243c1d8c97efd002cb46298f3d'
+        'x-hub-signature': 'sha1=bd02e793115c17f9ce51941d5e29a0d1ffb9c6d3'
       },
-      'body': 'cGF5bG9hZCUzRCU3QiUyMnplbiUyMiUzQSUyMlByYWN0aWNhbGl0eSUyQmJlYXRzJTJCcHVyaXR5LiUyMiU3RA=='
+      'body': '{"zen":"Practicality+beats+purity."}'
     }
 
     assert gen_event(secret, events['sample_ping']) == expected_event
@@ -56,7 +56,7 @@ def test_push_event_with_correct_secret(events, client, environ):
             'projectName': 'push',
             'sourceVersion': 'dci#84',
             'artifactsOverride': {'type': 'NO_ARTIFACTS'},
-            'environmentVariableOverride': [{
+            'environmentVariablesOverride': [{
                 'name': 'ISSUE_NUMBER',
                 'type': 'PLAINTEXT',
                 'value': '84'

@@ -34,7 +34,8 @@ def isValid(webhook):
   return all([
     w['active'],
     w['events'] == ['delete', 'push'],
-    w['config']['url'] == WEBHOOK_URL
+    w['config']['url'] == WEBHOOK_URL,
+    w['config']['content_type'] == 'json'
   ])
 
 for w in webhooks:
@@ -48,7 +49,7 @@ if not any(map(isValid, webhooks)):
   data = json.dumps({
     'active': True,
     'events': ['push', 'delete'],
-    'config': {'url': WEBHOOK_URL, 'secret': GITHUB_SECRET}
+    'config': {'url': WEBHOOK_URL, 'secret': GITHUB_SECRET, 'content_type': 'json'}
   })
   resp = requests.post(hookUrl, data = data, auth = auth)
   resp.raise_for_status()

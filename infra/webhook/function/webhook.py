@@ -1,4 +1,4 @@
-import boto3, hmac, hashlib, base64, json, urllib.parse, re, os
+import boto3, hmac, hashlib, json, re, os
 from botocore.exceptions import ClientError
 
 def handler(event, _context): # pragma: no cover
@@ -24,15 +24,13 @@ def handler(event, _context): # pragma: no cover
 def handle_event(event, secret, client, environ):
     signature = event['headers']['x-hub-signature']
     github_event = event['headers']['x-github-event']
-    body_encoded = base64.b64decode(event['body'])
 
-    sha1 = hmac.new(secret.encode(), body_encoded, hashlib.sha1).hexdigest()
+    sha1 = hmac.new(secret.encode(), event['body'].encode(), hashlib.sha1).hexdigest()
 
     if not hmac.compare_digest('sha1=%s' % sha1, signature):
         return response(403, 'x-hub-signature mismatch')
 
-    body_unquoted = urllib.parse.unquote(body_encoded.decode())
-    body = json.loads(re.sub('^payload=', '', body_unquoted))
+    body = json.loads(event['body'])
 
     if github_event == 'ping':
         return response(200, 'OK')
@@ -52,7 +50,7 @@ def handle_event(event, secret, client, environ):
                 projectName=environ[github_event],
                 sourceVersion=branch,
                 artifactsOverride={'type': 'NO_ARTIFACTS'},
-                environmentVariableOverride=[
+                environmentVariablesOverride=[
                     {
                         'name': 'ISSUE_NUMBER',
                         'value': branch.split('#')[-1],

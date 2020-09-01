@@ -1,13 +1,11 @@
-import hmac, hashlib, urllib.parse, json, copy, base64, os
+import hmac, hashlib, json, copy, os
 
 def gen_event(secret, event):
     new_event = copy.deepcopy(event)
 
-    body_json = json.dumps(event['body'], separators = (',', ':'))
-    body_encoded = urllib.parse.quote('payload=%s' % body_json).encode()
-    new_event['body'] = base64.b64encode(body_encoded).decode()
+    new_event['body'] = json.dumps(event['body'], separators = (',', ':'))
 
-    sha1 = hmac.new(secret.encode(), body_encoded, hashlib.sha1).hexdigest()
+    sha1 = hmac.new(secret.encode(), new_event['body'].encode(), hashlib.sha1).hexdigest()
     new_event['headers']['x-hub-signature'] = 'sha1=%s' % sha1
 
     return new_event
