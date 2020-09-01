@@ -33,7 +33,7 @@ webhooks = r.json()
 def isValid(webhook):
   return all([
     w['active'],
-    w['events'] == ['create', 'delete', 'push'],
+    w['events'] == ['delete', 'push'],
     w['config']['url'] == WEBHOOK_URL
   ])
 
