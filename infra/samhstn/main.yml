@@ -48,6 +48,8 @@ Resources:
       Environment:
         Variables:
           GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
+          BUILD_PROJECT: !Ref BuildProject
+          DELETE_PROJECT: !Ref DeleteProject
       CodeUri: ../webhook/function
       Events:
         Webhook:
@@ -84,6 +86,58 @@ Resources:
               - Effect: Allow
                 Action: sts:AssumeRole
                 Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/ExecuteWebhook
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: build-project
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:latest
+      ServiceRole: !Ref DeploymentRole
+      Source:
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+        Location: https://github.com/samhstn/samhstn.git
+        BuildSpec: ./infra/samhstn/buildspec.yml
+
+  DeleteProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: delete-project
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/docker:latest
+      ServiceRole: !Ref DeploymentRole
+      Source:
+        Type: GITHUB
+        Auth:
+          Type: OAUTH
+        Location: https://github.com/samhstn/samhstn.git
+        BuildSpec: ./infra/samhstn/deletespec.yml
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+               - codepipeline.amazonaws.com
+               - codedeploy.amazonaws.com
+               - codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
 
   EcrRepo:
     Type: AWS::ECR::Repository

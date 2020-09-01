@@ -12,19 +12,27 @@ def gen_event(secret, event):
 
     return new_event
 
-class MockCodebuild:
+class MockClient:
     def __init__(self):
-        self.builds = []
+        self.cmds = []
 
+    def get_cmds(self):
+        return self.cmds
+
+    def reset(self):
+        self.cmds = []
+
+class MockCodebuild(MockClient):
     def start_build(self, **kwargs):
-        self.builds.append(kwargs)
+        self.cmds.append(kwargs)
 
-    def get_builds(self):
-        return self.builds
+class MockCodepipeline(MockClient):
+    def start_pipeline_execution(self, **kwargs):
+        self.cmds.append(kwargs)
 
 def source_event(event_name):
     file_dir = os.path.dirname(__file__)
     event_path = os.path.join(file_dir, '../events/%s.json' % event_name)
-    with open(event_path) as event_string:
+    with open(event_path, 'r') as event_string:
         return json.load(event_string)
 

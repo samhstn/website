@@ -2,20 +2,26 @@ import boto3, hmac, hashlib, base64, json, urllib.parse, re, os
 from botocore.exceptions import ClientError
 
 def handler(event, _context): # pragma: no cover
-    build_project = os.environ['BUILD_PROJECT']
-    delete_project = os.environ['DELETE_PROJECT']
-
-    codebuild = boto3.client('codebuild')
-    secretsmanager = boto3.client('secretsmanager')
-
     print('event', event)
 
-    github_secret = secretsmanager.get_secret_value(SecretId = '/GithubSecret')['SecretString']
+    environ = {
+        'github_master_branch': os.environ['GITHUB_MASTER_BRANCH'],
+        'build_project': os.environ['BUILD_PROJECT'],
+        'delete_project': os.environ['DELETE_PROJECT']
+    }
 
-    return handle_event(event, github_secret, codebuild,
-                        push=create_project, delete=delete_project)
+    client = {
+        'codepipeline': boto3.client('codepipeline'),
+        'codebuild': boto3.client('codebuild')
+    }
 
-def handle_event(event, secret, codebuild, **projects):
+    secretsmanager = boto3.client('secretsmanager')
+
+    github_secret = secretsmanager.get_secret_value(SecretId='/GithubSecret')['SecretString']
+
+    return handle_event(event, github_secret, client, environ)
+
+def handle_event(event, secret, client, environ):
     signature = event['headers']['x-hub-signature']
     github_event = event['headers']['x-github-event']
     body_encoded = base64.b64decode(event['body'])
@@ -30,27 +36,30 @@ def handle_event(event, secret, codebuild, **projects):
 
     if github_event == 'ping':
         return response(200, 'OK')
-    elif github_event in ['push', 'delete']:
-        branch = re.sub('^refs/heads/', '', body['ref'])
 
+    branch = re.sub('^refs/heads/', '', body['ref'])
+
+    if github_event == 'push' and branch == environ['github_master_branch']:
+        # client['codepipeline'].start_pipeline_execution(name=branch)
+        return response(200, 'Running codepipeline')
+
+    if github_event in ['push', 'delete']:
         if '#' not in branch:
             return response(200, 'Not buildable branch: %s' % branch)
 
-        issue_number = branch.split('#')[-1]
         try:
-            print('codebuild.start_build')
-            # codebuild.start_build(
-            #     projectName=projects[github_event],
-            #     sourceVersion=branch,
-            #     artifactsOverride={'type': 'NO_ARTIFACTS'},
-            #     environmentVariableOverride=[
-            #         {
-            #             'name': 'ISSUE_NUMBER',
-            #             'value': issue_number,
-            #             'type': 'PLAINTEXT'
-            #         }
-            #     ]
-            # )
+            client['codebuild'].start_build(
+                projectName=environ[github_event],
+                sourceVersion=branch,
+                artifactsOverride={'type': 'NO_ARTIFACTS'},
+                environmentVariableOverride=[
+                    {
+                        'name': 'ISSUE_NUMBER',
+                        'value': branch.split('#')[-1],
+                        'type': 'PLAINTEXT'
+                    }
+                ]
+            )
         except ClientError as err:
             return response(500, 'Build failed for branch %s. Err: %s' % (branch, err))
 

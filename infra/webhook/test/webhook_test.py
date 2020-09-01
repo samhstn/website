@@ -1,6 +1,6 @@
 import pytest
 from ..function.webhook import handle_event
-from .helpers import gen_event, MockCodebuild, source_event
+from .helpers import gen_event, MockCodebuild, MockCodepipeline, source_event
 
 secret = 'S8UVDlEXAMPLE'
 
@@ -14,6 +14,16 @@ def events():
 
     return events_dict
 
+@pytest.fixture
+def client():
+    codebuild, codepipeline = MockCodebuild(), MockCodepipeline()
+
+    return {'codebuild': codebuild, 'codepipeline': codepipeline}
+
+@pytest.fixture
+def environ():
+    return {'github_master_branch': 'master', 'push': 'push', 'delete': 'delete'}
+
 def test_gen_event(events):
     expected_event = {
       'sample': True,
@@ -26,27 +36,23 @@ def test_gen_event(events):
 
     assert gen_event(secret, events['sample_ping']) == expected_event
 
-def test_ping_event_with_correct_secret(events):
+def test_ping_event_with_correct_secret(events, client):
     for e in ('sample_ping', 'raw_ping'):
-        mock_codebuild = MockCodebuild()
-
         event = gen_event(secret, events[e])
 
-        res = handle_event(event, secret, mock_codebuild, push='push', delete='delete')
+        res = handle_event(event, secret, client, environ)
 
         assert res == {'statusCode': 200, 'body': 'OK'}
-        assert mock_codebuild.get_builds() == []
+        assert client['codebuild'].get_cmds() == []
 
-def test_push_event_with_correct_secret(events):
+def test_push_event_with_correct_secret(events, client, environ):
     for e in ('sample_push', 'raw_push'):
-        mock_codebuild = MockCodebuild()
-
         event = gen_event(secret, events[e])
 
-        res = handle_event(event, secret, mock_codebuild, push='push', delete='delete')
+        res = handle_event(event, secret, client, environ)
 
         assert res == {'statusCode': 200, 'body': 'Starting build for branch: dci#84'}
-        assert mock_codebuild.get_builds() == [{
+        assert client['codebuild'].get_cmds() == [{
             'projectName': 'push',
             'sourceVersion': 'dci#84',
             'artifactsOverride': {'type': 'NO_ARTIFACTS'},
@@ -56,14 +62,13 @@ def test_push_event_with_correct_secret(events):
                 'value': '84'
             }]
         }]
+        client['codebuild'].reset()
 
-def test_events_with_signature_mismatch(events):
+def test_events_with_signature_mismatch(events, client, environ):
     for e in ('sample_ping', 'raw_ping', 'sample_push', 'raw_push'):
-        mock_codebuild = MockCodebuild()
-
         event = gen_event(secret, events[e])
 
-        res = handle_event(event, 'WRONGSECRET', mock_codebuild, push='push', delete='delete')
+        res = handle_event(event, 'WRONGSECRET', client, environ)
 
         assert res == {'statusCode': 403, 'body': 'x-hub-signature mismatch'}
-        assert mock_codebuild.get_builds() == []
+        assert client['codebuild'].get_cmds() == []
