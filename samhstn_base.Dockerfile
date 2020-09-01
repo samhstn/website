@@ -2,7 +2,15 @@ FROM debian:buster
 
 # Install essential build packages
 RUN apt-get update 
-RUN apt-get install -y wget git locales curl
+RUN apt-get install -y wget git locales curl \
+    apt-transport-https ca-certificates gnupg-agent software-properties-common
+
+# Install docker, see: https://docs.docker.com/engine/install/debian/
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+RUN apt-key fingerprint 0EBFCD88
+RUN add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+RUN apt-get update
+RUN apt-get install -y docker-ce
 
 # Set locale
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
@@ -15,6 +23,7 @@ ENV HOME=/opt/app
 WORKDIR /opt/app
 
 # Install python3
+RUN apt-update
 RUN apt-get -y install python3 python3-pip
 RUN pip3 install -vU setuptools
 
@@ -23,6 +32,7 @@ RUN pip3 install cfn-lint awscli
 
 # Install nodejs
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
+RUN apt-update
 RUN apt-get install -y nodejs
 
 # Install erlang and elixir
