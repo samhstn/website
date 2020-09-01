@@ -6,8 +6,8 @@ def handler(event, _context): # pragma: no cover
 
     environ = {
         'github_master_branch': os.environ['GITHUB_MASTER_BRANCH'],
-        'build_project': os.environ['BUILD_PROJECT'],
-        'delete_project': os.environ['DELETE_PROJECT']
+        'push': os.environ['BUILD_PROJECT'],
+        'delete': os.environ['DELETE_PROJECT']
     }
 
     client = {
