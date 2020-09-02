@@ -1,6 +1,9 @@
 version: 0.2
 
 phases:
+  pre_build:
+    commands:
+      - aws ecr get-login-password | docker login --username AWS --password-stdin 741557730458.dkr.ecr.eu-west-1.amazonaws.com
   build:
     commands:
       - echo "hello world"
