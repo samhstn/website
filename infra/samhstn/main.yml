@@ -75,6 +75,11 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
+                Action: codebuild:StartBuild
+                Resource:
+                  - !GetAtt BuildProject.Arn
+                  - !GetAtt DeleteProject.Arn
+              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
