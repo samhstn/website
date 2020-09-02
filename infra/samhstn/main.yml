@@ -15,6 +15,10 @@ Parameters:
     Type: String
     Default: master
 
+  EcrRepoImage:
+    Type: String
+    Default: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+
 Resources:
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
@@ -48,8 +52,8 @@ Resources:
       Environment:
         Variables:
           GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
-          BUILD_PROJECT: !Ref BuildProject
-          DELETE_PROJECT: !Ref DeleteProject
+          BUILD_PROJECT: !Ref BuildDynamicProject
+          DELETE_PROJECT: !Ref DeleteDynamicProject
       CodeUri: ../webhook/function
       Events:
         Webhook:
@@ -77,8 +81,8 @@ Resources:
               - Effect: Allow
                 Action: codebuild:StartBuild
                 Resource:
-                  - !GetAtt BuildProject.Arn
-                  - !GetAtt DeleteProject.Arn
+                  - !GetAtt BuildDynamicProject.Arn
+                  - !GetAtt DeleteDynamicProject.Arn
               - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
@@ -92,7 +96,7 @@ Resources:
                 Action: sts:AssumeRole
                 Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/ExecuteWebhook
 
-  BuildProject:
+  BuildDynamicProject:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: build-project
@@ -101,8 +105,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
-        PrivilegedMode: true
+        Image: !Ref EcrRepoImage
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -111,7 +114,7 @@ Resources:
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: ./infra/samhstn/buildspec.yml
 
-  DeleteProject:
+  DeleteDynamicProject:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: delete-project
@@ -120,7 +123,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:latest
+        Image: !Ref EcrRepoImage
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
