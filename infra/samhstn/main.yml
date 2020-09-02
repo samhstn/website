@@ -101,7 +101,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/docker:latest
+        Image: aws/codebuild/standard:4.0
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
