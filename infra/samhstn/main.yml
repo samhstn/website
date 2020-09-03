@@ -15,10 +15,6 @@ Parameters:
     Type: String
     Default: master
 
-  EcrRepoImage:
-    Type: String
-    Default: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
-
 Resources:
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
@@ -105,7 +101,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !Ref EcrRepoImage
+        Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -123,7 +119,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: !Ref EcrRepoImage
+        Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -180,3 +176,7 @@ Outputs:
     Value: !Sub https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/webhook
     Export:
       Name: WebhookEndpoint
+  DeploymentRoleArn:
+    Value: !GetAtt DeploymentRole.Arn
+    Export:
+      Name: DeploymentRoleArn

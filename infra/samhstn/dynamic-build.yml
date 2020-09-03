@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  EC2InstanceType:
+    Type: String
+    Default: t2.micro
+  EC2AMI:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  GithubBranch:
+    Type: String
+
+Resources:
+  DeploymentApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Sub dynamic-${AWS::StackName}
+      ComputePlatform: Server
+
+  DeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      DeploymentGroupName: !Sub dynamic-${AWS::StackName}
+      ApplicationName: !Ref DeploymentApplication
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      ServiceRoleArn: !ImportValue DeploymentRoleArn
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub Internal Security group for ${AWS::StackName}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 4001
+          ToPort: 4001
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy
+      Policies:
+        - PolicyName: ec2DescribeTags
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ec2:DescribeTags
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: InstanceRole
+
+  Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+        Count: 1
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref InstanceLaunchTemplate
+        Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InstanceLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              ruby: []
+              jq: []
+          files:
+            /home/ec2-user/install:
+              source: !Sub https://aws-codedeploy-${AWS::Region}.s3.amazonaws.com/latest/install
+              mode: 000755 # executable
+          commands:
+            00-install-cd-agent:
+              command: ./install auto
+              cwd: /home/ec2-user/
+    Properties:
+      LaunchTemplateName: !Sub LaunchTemplate${AWS::StackName}
+      LaunchTemplateData:
+        ImageId: !Ref EC2AMI
+        InstanceType: !Ref EC2InstanceType
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
+        Monitoring:
+          Enabled: true
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash -xe
+
+            # send script output to /tmp so we can debug boot failures
+            exec > /tmp/userdata.log 2>&1
+
+            # see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/best-practices.html#cfninit
+            yum -y update
+            yum install -y aws-cfn-bootstrap
+
+            echo "RUN DOCKER STUFF HERE"
+
+            mkdir -p /home/ec2-user/app/logs
+
+            # install files and packages from cloudformation metadata
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource InstanceLaunchTemplate
+
+            # Query the EC2 metadata service for this instance's instance-id
+            export INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+
+            export LOGICAL_ID=`aws --region ${AWS::Region} ec2 describe-tags \
+              --filters "Name=resource-id,Values=${!INSTANCE_ID}" \
+                        "Name=key,Values=aws:cloudformation:logical-id" \
+              | jq -r ".Tags[0].Value"`
+
+            # signal to cloudFormation that the instance is ready
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
+
+Outputs:
+  DeploymentGroupName:
+    Value: !Ref DeploymentGroup
+  DeploymentApplication:
+    Value: !Ref DeploymentApplication
