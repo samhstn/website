@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 STACK=$(aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" 2>/dev/null)
 
@@ -8,11 +8,14 @@ if [ $? -eq 0 ]; then
     --template-body file://infra/samhstn/dynamic-build.yml \
     --capabilities CAPABILITY_IAM \
     --parameters "ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION}" 2>&1)
-  if ! [[ $UPDATE_ERR =~ "No updates are to be performed" ]]; then
+  if [ $? -eq 0 ]; then
     aws cloudformation wait stack-update-complete \
       --stack-name "samhstn-${ISSUE_NUMBER}"
-  else
+  elif ! [[ $UPDATE_ERR =~ "No updates are to be performed" ]]; then
     echo "No updates are to be performed"
+  else
+    echo "UPDATE_ERR: $UPDATE_ERR"
+    exit 1
   fi
 else
   aws cloudformation create-stack \
