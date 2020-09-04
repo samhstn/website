@@ -143,6 +143,14 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/PowerUserAccess
+      Policies:
+        - PolicyName: CreateDeleteRoles
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 'iam:*'
+                Resource: '*'
 
   EcrRepo:
     Type: AWS::ECR::Repository

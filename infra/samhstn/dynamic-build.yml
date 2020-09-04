@@ -74,20 +74,6 @@ Resources:
       Roles:
         - Ref: InstanceRole
 
-  Instance:
-    Type: AWS::EC2::Instance
-    CreationPolicy:
-      ResourceSignal:
-        Timeout: PT15M
-        Count: 1
-    Properties:
-      LaunchTemplate:
-        LaunchTemplateId: !Ref InstanceLaunchTemplate
-        Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
   InstanceLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Metadata:
@@ -100,7 +86,7 @@ Resources:
           files:
             /home/ec2-user/install:
               source: !Sub https://aws-codedeploy-${AWS::Region}.s3.amazonaws.com/latest/install
-              mode: 000755 # executable
+              mode: '000755' # executable
           commands:
             00-install-cd-agent:
               command: ./install auto
