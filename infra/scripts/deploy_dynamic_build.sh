@@ -11,7 +11,7 @@ if [ $? -eq 0 ]; then
   if [ $? -eq 0 ]; then
     aws cloudformation wait stack-update-complete \
       --stack-name "samhstn-${ISSUE_NUMBER}"
-  elif ! [[ $UPDATE_ERR =~ "No updates are to be performed" ]]; then
+  elif [[ $UPDATE_ERR =~ "No updates are to be performed" ]]; then
     echo "No updates are to be performed"
   else
     echo "UPDATE_ERR: $UPDATE_ERR"
@@ -30,4 +30,4 @@ fi
 aws deploy create-deployment \
   --application-name "dynamic-samhstn-${ISSUE_NUMBER}" \
   --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}" \
-  --revision 'revisionType=GitHub,gitHubLocation={repository=samhstn/samhstn,commitId=$CODEBUILD_RESOLVED_SOURCE_VERSION}'
+  --revision "revisionType=GitHub,gitHubLocation={repository=samhstn/samhstn,commitId=$CODEBUILD_RESOLVED_SOURCE_VERSION}"

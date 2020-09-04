@@ -22,7 +22,7 @@ Resources:
     Properties:
       DeploymentGroupName: !Sub dynamic-${AWS::StackName}
       AutoScalingGroups:
-        - !GetAtt ScalingGroup
+        - !Ref ScalingGroup
       ApplicationName: !Ref DeploymentApplication
       DeploymentConfigName: CodeDeployDefault.AllAtOnce
       ServiceRoleArn: !ImportValue DeploymentRoleArn
@@ -34,8 +34,6 @@ Resources:
       Scheme: internet-facing
       SecurityGroups:
         - !GetAtt SecurityGroup.GroupId
-      Subnets:
-        - !Ref SubnetAZ1
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
