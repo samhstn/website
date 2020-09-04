@@ -12,4 +12,4 @@ phases:
       - echo "CODEBUILD_RESOLVED_SOURCE_VERSION ${CODEBUILD_RESOLVED_SOURCE_VERSION}"
       - echo "CODEBUILD_SOURCE_VERSION ${CODEBUILD_SOURCE_VERSION}"
       - echo "ISSUE NUMBER ${ISSUE_NUMBER}"
-      - aws cloudformation deploy --stack-name samhstn-${ISSUE_NUMBER} --template-file ./infra/samhstn/dynamic-build.yml --capabilities CAPABILITY_IAM --parameter-overrides "GithubBranch=${CODEBUILD_SOURCE_VERSION}"
+      - ./infra/scripts/deploy_dynamic_build.sh
