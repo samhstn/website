@@ -34,6 +34,11 @@ if [[ -z $TEMP_PASSWORD ]]; then
   echo "TEMP_PASSWORD=$TEMP_PASSWORD" >> $ENV_FILE
 fi
 
+if [[ -z $CERTIFICATE ]]; then
+  CERTIFICATE=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn|[0]" --output text)
+  echo "CERTIFICATE=$CERTIFICATE" >> $ENV_FILE
+fi
+
 if ! [ -d infra/venv ]; then
   echo "creating new venv"
   python3 -m venv infra/venv

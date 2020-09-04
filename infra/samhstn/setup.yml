@@ -4,6 +4,10 @@ Description: >
   Sets up s3 buckets and other resources which are difficult to tear down and spin up programatically.
 
 Parameters:
+  Certificate:
+    Type: String
+    Description: An existing ACM certificate ARN for our domain
+
   CloudformationBucket:
     Type: String
     Description: S3 bucket for storing our cloudformation templates and other referenced files.
@@ -29,3 +33,7 @@ Outputs:
     Value: !Ref CloudformationS3Bucket
     Export:
       Name: CloudformationBucketName
+  Certificate:
+    Value: !Ref Certificate
+    Export:
+      Name: Certificate

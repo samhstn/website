@@ -21,9 +21,85 @@ Resources:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       DeploymentGroupName: !Sub dynamic-${AWS::StackName}
+      AutoScalingGroups:
+        - !GetAtt ScalingGroup
       ApplicationName: !Ref DeploymentApplication
       DeploymentConfigName: CodeDeployDefault.AllAtOnce
       ServiceRoleArn: !ImportValue DeploymentRoleArn
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !GetAtt SecurityGroup.GroupId
+      Subnets:
+        - !Ref SubnetAZ1
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  HTTPSLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HTTPSLoadBalancerTargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Certificates:
+        - CertificateArn: !ImportValue Certificate
+      Port: 443
+      Protocol: HTTPS
+
+  HTTPSLoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      TargetType: instance
+      Port: 8443
+      Protocol: HTTPS
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTPS
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  ScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: "1"
+        MaxBatchSize: "1"
+        PauseTime: "PT15M"
+        WaitOnResourceSignals: "true"
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
+    Properties:
+      AutoScalingGroupName: !Sub 'ASG_${AWS::StackName}'
+      AvailabilityZones:
+        - !Select [0, !GetAZs '']
+      MinSize: 1
+      MaxSize: 2
+      HealthCheckGracePeriod: 0
+      HealthCheckType: ELB
+      LaunchTemplate:
+        LaunchTemplateId: !Ref InstanceLaunchTemplate
+        Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs:
+        - !Ref HTTPSLoadBalancerTargetGroup
+      MetricsCollection:
+        - Granularity: "1Minute"
+          Metrics:
+            - "GroupMaxSize"
+            - "GroupInServiceInstances"
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+          PropagateAtLaunch: "true"
 
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup

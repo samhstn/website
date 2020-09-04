@@ -18,7 +18,8 @@ aws cloudformation deploy \
   --template-file ./infra/samhstn/setup.yml \
   --no-fail-on-empty-changeset \
   --parameter-overrides \
-    CloudformationBucket=samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+    CloudformationBucket=samhstn-cfn-$AWS_ADMIN_ACCOUNT_ID \
+    Certificate=$CERTIFICATE | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 mkdir -p infra/cfn_output/samhstn
 
