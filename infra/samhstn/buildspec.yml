@@ -6,9 +6,11 @@ phases:
       - mix deps.get
   pre_build:
     commands:
+      - MIX_ENV=test mix compile
       - mix test
   build:
     commands:
+      - MIX_ENV=prod mix compile
       - MIX_ENV=prod mix release
       - echo $S3_CODEBUILD_BUCKET_NAME
       - # aws s3 cp release stuff and appspec, {start,stop}-service.sh
