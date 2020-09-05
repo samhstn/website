@@ -1,9 +1,0 @@
-version: '3'
-
-services:
-  web:
-    build: .
-    environment:
-      - SECRET_KEY_BASE=zkCSmQ5ENQv5q8ZHgH7aHOdvMx5aGYDJTXf8y8gy2H/ZEigR0d7i+29UurvJCqfT
-    ports:
-      - "4001:4001"

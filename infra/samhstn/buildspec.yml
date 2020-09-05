@@ -4,9 +4,15 @@ phases:
   install:
     commands:
       - mix deps.get
+  pre_build:
+    commands:
+      - mix test
   build:
     commands:
-      - # mix test
+      - MIX_ENV=prod mix release
+      - echo $S3_CODEBUILD_BUCKET_NAME
+      - # aws s3 cp release stuff and appspec, {start,stop}-service.sh
+      - # cp to codebuild bucket
   post_build:
     commands:
       - echo "CODEBUILD_RESOLVED_SOURCE_VERSION ${CODEBUILD_RESOLVED_SOURCE_VERSION}"

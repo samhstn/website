@@ -102,6 +102,9 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+        EnvironmentVariables:
+          - Name: S3_CODEBUILD_BUCKET_NAME
+            Value: !ImportValue CodeBuildBucketName
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -120,6 +123,9 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+        EnvironmentVariables:
+          - Name: CODE_BUILD_BUCKET_NAME
+            Value: !ImportValue CodeBuildBucketName
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB

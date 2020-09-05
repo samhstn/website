@@ -43,7 +43,7 @@ git clone git@github.com:samhstn/samhstn.git && cd samhstn
 
 ```bash
 # build the base image
-docker build -t samhstn_base -f samhstn_base.Dockerfile .
+docker build -t samhstn_base -f infra/Dockerfile .
 
 # start our container
 docker-compose up --build

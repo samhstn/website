@@ -23,7 +23,7 @@ ENV HOME=/opt/app
 WORKDIR /opt/app
 
 # Install python3
-RUN apt-update
+RUN apt-get update
 RUN apt-get -y install python3 python3-pip
 RUN pip3 install -vU setuptools
 
@@ -32,7 +32,7 @@ RUN pip3 install cfn-lint awscli
 
 # Install nodejs
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
-RUN apt-update
+RUN apt-get update
 RUN apt-get install -y nodejs
 
 # Install erlang and elixir
@@ -47,5 +47,3 @@ RUN mix do local.hex --force, local.rebar --force
 
 # Install phoenix
 RUN mix archive.install hex phx_new 1.5.4 --force
-
-ENV MIX_ENV prod

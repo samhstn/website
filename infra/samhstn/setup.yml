@@ -6,11 +6,19 @@ Description: >
 Parameters:
   Certificate:
     Type: String
-    Description: An existing ACM certificate ARN for our domain
+    Description: An existing ACM certificate ARN for our domain.
 
   CloudformationBucket:
     Type: String
     Description: S3 bucket for storing our cloudformation templates and other referenced files.
+
+  CodeBuildBucket:
+    Type: String
+    Description: S3 bucket for codebuild artifacts.
+
+  CodePipelineBucket:
+    Type: String
+    Description: S3 bucket for codepipelien artifacts.
 
 Resources:
   CloudformationS3Bucket:
@@ -28,12 +36,54 @@ Resources:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
 
+  CodeBuildS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref CodeBuildBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  CodePipelineS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref CodePipelineBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+
 Outputs:
-  CloudformationBucketName:
-    Value: !Ref CloudformationS3Bucket
-    Export:
-      Name: CloudformationBucketName
   Certificate:
     Value: !Ref Certificate
     Export:
       Name: Certificate
+
+  CloudformationBucketName:
+    Value: !Ref CloudformationS3Bucket
+    Export:
+      Name: CloudformationBucketName
+
+  CodeBuildBucketName:
+    Value: !Ref CodeBuildS3Bucket
+    Export:
+      Name: CodeBuildBucketName
+
+  CodePipelineBucketName:
+    Value: !Ref CodePipelineS3Bucket
+    Export:
+      Name: CodePipelineBucketName

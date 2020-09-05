@@ -12,10 +12,10 @@ permissions:
     group: ec2-user
 hooks:
   ApplicationStart:
-    - location: ./infra/samhstn/start-service.sh
+    - location: ./start-service.sh
       timeout: 300
       runas: ec2-user
   ApplicationStop:
-    - location: ./infra/samhstn/stop-service.sh
+    - location: ./stop-service.sh
       timeout: 300
       runas: ec2-user

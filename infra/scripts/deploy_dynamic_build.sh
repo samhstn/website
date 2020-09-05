@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 STACK=$(aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" 2>/dev/null)
 
@@ -30,4 +30,4 @@ fi
 aws deploy create-deployment \
   --application-name "dynamic-samhstn-${ISSUE_NUMBER}" \
   --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}" \
-  --revision "revisionType=GitHub,gitHubLocation={repository=samhstn/samhstn,commitId=$CODEBUILD_RESOLVED_SOURCE_VERSION}"
+  --revision "revisionType=S3,s3Location={bucket=${CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip"
