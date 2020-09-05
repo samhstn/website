@@ -30,4 +30,4 @@ fi
 aws deploy create-deployment \
   --application-name "dynamic-samhstn-${ISSUE_NUMBER}" \
   --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}" \
-  --revision "revisionType=S3,s3Location={bucket=${CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip"
+  --revision "revisionType=S3,s3Location={bucket=${CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip}"
