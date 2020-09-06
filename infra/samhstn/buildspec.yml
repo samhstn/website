@@ -13,11 +13,11 @@ phases:
       - MIX_ENV=prod mix compile
       - MIX_ENV=prod mix release
       - echo $S3_CODEBUILD_BUCKET_NAME
-      - zip -j "${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip" \
-          infra/samhstn/{appspec.yml,{start,stop}-service.sh} \
+      - zip -j ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip
+          infra/samhstn/{appspec.yml,{start,stop}-service.sh}
           _build/prod/rel/samhstn/bin/samhstn
-      - aws s3 cp "${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip" \
-          "s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+      - aws s3 cp ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip
+          s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION}
   post_build:
     commands:
       - ./infra/scripts/deploy_dynamic_build.sh
