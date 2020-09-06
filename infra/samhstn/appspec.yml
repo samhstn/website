@@ -12,10 +12,10 @@ permissions:
     group: ec2-user
 hooks:
   ApplicationStart:
-    - location: /home/ec2-user/app/release/start-service.sh
+    - location: start-service.sh
       timeout: 300
       runas: ec2-user
   ApplicationStop:
-    - location: /home/ec2-user/app/release/stop-service.sh
+    - location: stop-service.sh
       timeout: 300
       runas: ec2-user
