@@ -1,10 +1,10 @@
 #!/bin/bash -xe
 source /home/ec2-user/.bash_profile
-cd /home/ec2-user/app/release
+cd /home/ec2-user/release
 
 export SECRET_KEY_BASE=$(mix phx.gen.secret)
 export PORT=8443
-export CERT_DIR=/home/ev2-user/app/keys
+export CERT_DIR=/home/ev2-user/keys
 
 # Query the EC2 metadata service for this instance's region
 REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r`
@@ -18,4 +18,4 @@ export STACK_NAME=`aws --region $REGION ec2 describe-tags \
             "Name=key,Values=aws:cloudformation:stack-name" \
   | jq -r ".Tags[0].Value"`
 
-./samhstn daemon
+_build/prod/rel/samhstn/bin/samhstn daemon
