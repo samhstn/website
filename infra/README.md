@@ -126,3 +126,12 @@ docker tag <image_id> <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhst
 
 docker push <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhstn
 ```
+
+### Ssm sessions
+
+We can start an ssm session with an ec2 instance with:
+
+```bash
+aws ssm start-session --target <instance_id>
+$ sudo su ec2-user
+```

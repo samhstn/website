@@ -386,7 +386,7 @@ Resources:
           - !GetAtt SecurityGroup.GroupId
         UserData:
           Fn::Base64: !Sub |
-            #!/bin/bash -xe
+            #!/bin/bash
 
             # send script output to /tmp so we can debug boot failures
             exec > /tmp/userdata.log 2>&1
@@ -404,8 +404,6 @@ Resources:
             cd /home/ec2-user/app/keys
             openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
                         -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
-
-            echo "start release here"
 
             # Query the EC2 metadata service for this instance's instance-id
             export INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`

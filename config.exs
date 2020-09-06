@@ -17,7 +17,8 @@ case Mix.env() do
   :dev ->
     config :samhstn, SamhstnWeb.Endpoint,
       http: [port: 4000],
-      debug_errors: true
+      debug_errors: true,
+      server: true
 
     config :logger, :console, format: "[$level] $message\n"
 
@@ -30,7 +31,8 @@ case Mix.env() do
   :prod ->
     config :samhstn, SamhstnWeb.Endpoint,
       force_ssl: [rewrite_on: [:x_forwarded_proto]],
-      load_from_system_env: true
+      load_from_system_env: true,
+      server: true
 
     config :logger, level: :info
 end
