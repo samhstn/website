@@ -312,7 +312,8 @@ Resources:
       AvailabilityZones:
         - !Select [0, !GetAZs '']
         - !Select [1, !GetAZs '']
-      MinSize: 2
+      DesiredCapacity: 1
+      MinSize: 1
       MaxSize: 6
       HealthCheckGracePeriod: 0
       HealthCheckType: ELB
