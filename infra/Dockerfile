@@ -2,7 +2,7 @@ FROM debian:buster
 
 # Install essential build packages
 RUN apt-get update 
-RUN apt-get install -y wget git locales curl \
+RUN apt-get install -y wget git locales curl zip \
     apt-transport-https ca-certificates gnupg-agent software-properties-common
 
 # Install docker, see: https://docs.docker.com/engine/install/debian/

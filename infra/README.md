@@ -113,3 +113,16 @@ We can now look to deploy our entire stack by running:
 # .py scripts should be run with:
 infra/venv/bin/python ./infra/scripts/get_webhook_logs.py
 ```
+
+### Docker upload
+
+We can upload our docker base image to ecr with:
+
+```bash
+# build the base image
+docker build -t samhstn_base -f infra/Dockerfile .
+
+docker tag <image_id> <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhstn
+
+docker push <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhstn
+```

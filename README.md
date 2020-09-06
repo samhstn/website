@@ -39,16 +39,6 @@ git clone git@github.com:samhstn/samhstn.git && cd samhstn
 ./bootstrap.sh
 ```
 
-### Running Docker
-
-```bash
-# build the base image
-docker build -t samhstn_base -f infra/Dockerfile .
-
-# start our container
-docker-compose up --build
-```
-
 ### AWS Setup
 
 Checkout the [infra](./infra) documentation for guidance.
