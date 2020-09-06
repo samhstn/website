@@ -399,8 +399,8 @@ Resources:
             # install files and packages from cloudformation metadata
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource InstanceLaunchTemplate
 
-            mkdir -p /home/ec2-user/keys
-            cd /home/ec2-user/keys
+            mkdir -p /home/ec2-user/app/keys
+            cd /home/ec2-user/app/keys
             openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
                         -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
 
