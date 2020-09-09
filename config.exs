@@ -30,7 +30,8 @@ case Mix.env() do
   :prod ->
     config :samhstn, SamhstnWeb.Endpoint,
       force_ssl: [rewrite_on: [:x_forwarded_proto]],
-      load_from_system_env: true
+      load_from_system_env: true,
+      server: true
 
     config :logger, level: :info
 end

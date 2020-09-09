@@ -8,3 +8,4 @@ infra/venv/
 __pycache__/
 .coverage
 htmlcov/
+priv/static
