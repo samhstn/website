@@ -13,7 +13,7 @@ phases:
       - MIX_ENV=prod mix release
       - echo $S3_CODEBUILD_BUCKET_NAME
       - zip -r ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip priv
-      - zip -r ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip _build/prod/rel/samhstn
+      - zip -qr ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip _build/prod/rel/samhstn
       - zip -j ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip
           infra/samhstn/appspec.yml
           infra/samhstn/start-service.sh
