@@ -2,7 +2,7 @@
 source /home/ec2-user/.bash_profile
 cd /home/ec2-user/app/release
 
-export SECRET_KEY_BASE=$(mix phx.gen.secret)
+export SECRET_KEY_BASE='secretExampleQrzdplBPdbHHhr2bpELjiGVGVqmjvFl2JEXdkyla8l6+b2CCcvs'
 export PORT=8443
 export CERT_DIR=/home/ev2-user/app/keys
 

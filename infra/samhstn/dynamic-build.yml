@@ -3,7 +3,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   EC2InstanceType:
     Type: String
-    Default: t2.micro
+    Default: t2.nano
   EC2AMI:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
@@ -387,7 +387,7 @@ Resources:
           - !GetAtt SecurityGroup.GroupId
         UserData:
           Fn::Base64: !Sub |
-            #!/bin/bash
+            #!/bin/bash -xe
 
             # send script output to /tmp so we can debug boot failures
             exec > /tmp/userdata.log 2>&1
@@ -399,10 +399,15 @@ Resources:
             # install files and packages from cloudformation metadata
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource InstanceLaunchTemplate
 
-            mkdir -p /home/ec2-user/app/keys
-            cd /home/ec2-user/app/keys
-            openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
-                        -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
+            cat > /tmp/install_script.sh << EOF
+              mkdir -p /home/ec2-user/app/keys
+              cd /home/ec2-user/app/keys
+              openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+                          -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
+            EOF
+
+            chown ec2-user:ec2-user /tmp/install_script.sh && chmod a+x /tmp/install_script.sh
+            sleep 1; su - ec2-user -c "/tmp/install_script.sh"
 
             # Query the EC2 metadata service for this instance's instance-id
             export INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`

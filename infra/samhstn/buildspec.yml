@@ -6,11 +6,10 @@ phases:
       - mix deps.get
   pre_build:
     commands:
-      - MIX_ENV=test mix compile
       - mix test
   build:
     commands:
-      - MIX_ENV=prod mix compile
+      - mix phx.digest
       - MIX_ENV=prod mix release
       - echo $S3_CODEBUILD_BUCKET_NAME
       - zip -r ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip assets

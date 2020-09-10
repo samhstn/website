@@ -119,12 +119,19 @@ infra/venv/bin/python ./infra/scripts/get_webhook_logs.py
 We can upload our docker base image to ecr with:
 
 ```bash
+ACCOUNT_ID=$(aws sts get-caller-identity --profile samhstn-admin --query Account --output text)
+
+# log in to ecr
+aws ecr get-login-password | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com
+
 # build the base image
 docker build -t samhstn_base -f infra/Dockerfile .
 
-docker tag <image_id> <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhstn
+IMAGE_ID=$(docker image ls | grep samhstn_base | awk '{ print $3 }')
 
-docker push <aws_account_id>.dkr.ecr.<aws_region>.amazonaws.com/samhstn
+docker tag $IMAGE_ID $ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/samhstn
+
+docker push $ACCOUNT_ID.dkr.ecr.eu-west-1.amazonaws.com/samhstn
 ```
 
 ### Ssm sessions
