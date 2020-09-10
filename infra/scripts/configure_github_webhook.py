@@ -1,9 +1,4 @@
-import dotenv
-import jmespath
-import os
-import boto3
-import requests
-import json
+import dotenv, jmespath, os, boto3, requests, json
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
