@@ -9,7 +9,10 @@ ENV LC_ALL="en_US.UTF-8"
 RUN yum install -y epel-release
 RUN yum install -y gcc gcc-c++ glibc-devel make ncurses-devel openssl-devel \
                    autoconf java-1.8.0-openjdk-devel git wget wxBase.x86_64 \
-                   zip openssl11
+                   zip openssl11 python3
+
+RUN pip3 install awscli
+ENV PATH="$HOME/.local/bin:${PATH}"
 
 WORKDIR /opt
 
