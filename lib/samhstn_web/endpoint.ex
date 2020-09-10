@@ -9,7 +9,8 @@ defmodule SamhstnWeb.Endpoint do
 
   plug Plug.Static,
     at: "/",
-    from: "assets"
+    from: "priv/static",
+    gzip: Mix.env() == :prod
 
   plug Plug.RequestId
 

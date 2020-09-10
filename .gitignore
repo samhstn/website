@@ -8,4 +8,7 @@ infra/venv/
 __pycache__/
 .coverage
 htmlcov/
-priv/static
+priv/static/*
+!priv/static/favicon.svg
+!priv/static/script.js
+!priv/static/style.css
