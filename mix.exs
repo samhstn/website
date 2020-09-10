@@ -12,7 +12,6 @@ defmodule Samhstn.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
-      config_path: "config.exs",
       deps: deps()
     ]
   end
