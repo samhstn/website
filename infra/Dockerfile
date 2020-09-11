@@ -11,6 +11,9 @@ RUN yum install -y gcc gcc-c++ glibc-devel make ncurses-devel openssl-devel \
                    autoconf java-1.8.0-openjdk-devel git wget wxBase.x86_64 \
                    zip openssl11 python3
 
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash -
+RUN yum install -y nodejs
+
 RUN pip3 install awscli
 ENV PATH="$HOME/.local/bin:${PATH}"
 
