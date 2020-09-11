@@ -27,7 +27,6 @@ defmodule SamhstnWeb.Endpoint do
   def init(_key, config) do
     if config[:load_from_system_env] do
       port = System.fetch_env!("PORT")
-      cert_dir = System.fetch_env!("CERT_DIR")
       secret_key_base = System.fetch_env!("SECRET_KEY_BASE")
 
       url = [
@@ -38,8 +37,8 @@ defmodule SamhstnWeb.Endpoint do
 
       https = [
         port: port,
-        keyfile: "#{cert_dir}/key.pem",
-        certfile: "#{cert_dir}/cert.pem"
+        keyfile: "../../../../../../priv/keys/key.pem",
+        certfile: "../../../../../../priv/keys/cert.pem"
       ]
 
       config =
