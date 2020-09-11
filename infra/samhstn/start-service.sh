@@ -5,7 +5,8 @@ cd /home/ec2-user/app/release
 cp -r ../keys priv/
 
 export SECRET_KEY_BASE='secretExampleQrzdplBPdbHHhr2bpELjiGVGVqmjvFl2JEXdkyla8l6+b2CCcvs'
-export PORT=8443
+export SAMHSTN_PORT=8443
+export SAMHSTN_HOST=$(hostname)
 
 # Query the EC2 metadata service for this instance's region
 REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r`

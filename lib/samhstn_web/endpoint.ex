@@ -26,12 +26,13 @@ defmodule SamhstnWeb.Endpoint do
 
   def init(_key, config) do
     if config[:load_from_system_env] do
-      port = System.fetch_env!("PORT")
+      port = System.fetch_env!("SAMHSTN_PORT")
+      host = System.fetch_env!("SAMHSTN_HOST")
       secret_key_base = System.fetch_env!("SECRET_KEY_BASE")
 
       url = [
         scheme: "https",
-        host: "localhost",
+        host: host,
         port: port
       ]
 
