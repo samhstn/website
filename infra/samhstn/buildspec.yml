@@ -22,9 +22,8 @@ phases:
           s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION}
   post_build:
     commands:
-      - aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" &>/dev/null
       - |
-        if [ $? -eq 0 ]; then
+        if aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" &>/dev/null; then
           UPDATE_ERR=$(aws cloudformation update-stack \
             --stack-name "samhstn-${ISSUE_NUMBER}" \
             --template-body file://infra/samhstn/dynamic-build.yml \
