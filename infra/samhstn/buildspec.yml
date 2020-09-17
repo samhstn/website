@@ -27,8 +27,7 @@ phases:
           UPDATE_ERR=$(aws cloudformation update-stack \
             --stack-name "samhstn-${ISSUE_NUMBER}" \
             --template-body file://infra/samhstn/dynamic-build.yml \
-            --capabilities CAPABILITY_IAM \
-            --parameters "ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION}" 2>&1)
+            --capabilities CAPABILITY_IAM 2>&1)
           if [ $? -eq 0 ]; then
             aws cloudformation wait stack-update-complete \
               --stack-name "samhstn-${ISSUE_NUMBER}"
@@ -42,8 +41,7 @@ phases:
           aws cloudformation create-stack \
             --stack-name "samhstn-${ISSUE_NUMBER}" \
             --template-body file://infra/samhstn/dynamic-build.yml \
-            --capabilities CAPABILITY_IAM \
-            --parameters "ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION}"
+            --capabilities CAPABILITY_IAM
           aws cloudformation wait stack-create-complete \
             --stack-name "samhstn-${ISSUE_NUMBER}"
         fi
