@@ -49,3 +49,7 @@ phases:
           --application-name "dynamic-samhstn-${ISSUE_NUMBER}"
           --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}"
           --revision "revisionType=S3,s3Location={bucket=${S3_CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip}"
+cache:
+  paths:
+    - _build
+    - deps

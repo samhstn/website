@@ -112,6 +112,10 @@ Resources:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: ./infra/samhstn/buildspec.yml
+      Cache:
+        Type: LOCAL
+        MODES:
+          - LOCAL_CUSTOM_CACHE
 
   DeleteDynamicProject:
     Type: AWS::CodeBuild::Project
