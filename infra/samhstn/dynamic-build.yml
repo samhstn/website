@@ -339,3 +339,15 @@ Resources:
 
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
+
+Outputs:
+  VPC:
+    Value: !Ref VPC
+  SubnetAZ1:
+    Value: !Ref SubnetAZ1
+  SubnetAZ2:
+    Value: !Ref SubnetAZ2
+  PrivateSubnetAZ1:
+    Value: !Ref PrivateSubnetAZ1
+  PrivateSubnetAZ2:
+    Value: !Ref PrivateSubnetAZ2

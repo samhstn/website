@@ -45,6 +45,14 @@ phases:
           aws cloudformation wait stack-create-complete \
             --stack-name "samhstn-${ISSUE_NUMBER}"
         fi
+      - |
+        aws cloudformation create-stack \
+          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
+          --template-body file://infra/samhstn/nat-gateway.yml \
+          --parameters $(aws cloudformation describe-stacks \
+            --stack-name "samhstn-${ISSUE_NUMBER}" \
+            --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
+            --output text)
       - aws deploy create-deployment
           --application-name "dynamic-samhstn-${ISSUE_NUMBER}"
           --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}"
