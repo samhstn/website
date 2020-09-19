@@ -16,6 +16,8 @@ Parameters:
     Type: String
   PrivateSubnetAZ2:
     Type: String
+  StackName:
+    Type: String
 
 Resources:
   EIPAZ1:
@@ -35,7 +37,7 @@ Resources:
       SubnetId: !Ref SubnetAZ1
       Tags:
         - Key: Name
-          Value: !Ref AWS::StackName
+          Value: !Ref StackName
         - Key: AZ
           Value: !Select [0, !GetAZs '']
 
@@ -46,7 +48,7 @@ Resources:
       SubnetId: !Ref SubnetAZ2
       Tags:
         - Key: Name
-          Value: !Ref AWS::StackName
+          Value: !Ref StackName
         - Key: AZ
           Value: !Select [1, !GetAZs '']
 
@@ -56,7 +58,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Ref AWS::StackName
+          Value: !Ref StackName
         - Key: AZ
           Value: !Select [0, !GetAZs '']
 
@@ -66,7 +68,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Ref AWS::StackName
+          Value: !Ref StackName
         - Key: AZ
           Value: !Select [1, !GetAZs '']
 

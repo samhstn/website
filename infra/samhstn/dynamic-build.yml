@@ -351,3 +351,5 @@ Outputs:
     Value: !Ref PrivateSubnetAZ1
   PrivateSubnetAZ2:
     Value: !Ref PrivateSubnetAZ2
+  StackName:
+    Value: !Ref AWS::StackName
