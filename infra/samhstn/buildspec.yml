@@ -6,6 +6,7 @@ phases:
       - mix deps.get
   pre_build:
     commands:
+      - MIX_ENV=test mix compile
       - mix test
   build:
     commands:
@@ -27,6 +28,7 @@ phases:
           UPDATE_ERR=$(aws cloudformation update-stack \
             --stack-name "samhstn-${ISSUE_NUMBER}" \
             --template-body file://infra/samhstn/dynamic-build.yml \
+            --parameters ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
             --capabilities CAPABILITY_IAM 2>&1)
           if [ $? -eq 0 ]; then
             aws cloudformation wait stack-update-complete \
@@ -41,23 +43,12 @@ phases:
           aws cloudformation create-stack \
             --stack-name "samhstn-${ISSUE_NUMBER}" \
             --template-body file://infra/samhstn/dynamic-build.yml \
+            --parameters ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
             --capabilities CAPABILITY_IAM
           aws cloudformation wait stack-create-complete \
             --stack-name "samhstn-${ISSUE_NUMBER}"
         fi
-      - |
-        aws cloudformation create-stack \
-          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
-          --template-body file://infra/samhstn/nat-gateway.yml \
-          --parameters $(aws cloudformation describe-stacks \
-            --stack-name "samhstn-${ISSUE_NUMBER}" \
-            --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
-            --output text)
       - aws deploy create-deployment
           --application-name "dynamic-samhstn-${ISSUE_NUMBER}"
           --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}"
           --revision "revisionType=S3,s3Location={bucket=${S3_CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip}"
-cache:
-  paths:
-    - _build
-    - deps

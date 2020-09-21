@@ -7,6 +7,8 @@ Parameters:
   EC2AMI:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  GithubBranch:
+    Type: String
 
 Resources:
   VPC:
@@ -211,6 +213,115 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
+  AutoScalingTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !GetAtt AutoScalingLambda.Arn
+          Protocol: lambda
+
+  AutoScalingLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: index.handler
+      Role: !GetAtt AutoScalingLambdaRole.Arn
+      Runtime: python3.7
+      Environment:
+        Variables:
+          GITHUB_BRANCH: !Ref GithubBranch
+      Code:
+        ZipFile: |
+          import boto3, json, os
+
+          codebuild = boto3.client('codebuild')
+          GITHUB_BRANCH = os.environ['GITHUB_BRANCH']
+
+          def handler(event, _context):
+              if len(event['Records']) != 1:
+                  print(event)
+                  raise Exception("expected list of one in Records")
+
+              message = json.loads(event['Records'][0]['Sns']['Message'])
+
+              if message.get('Event') == 'autoscaling:TEST_NOTIFICATION':
+                  return True
+
+              codebuild.start_build(
+                  projectName='autoscale',
+                  sourceVersion=GITHUB_BRANCH,
+                  environmentVariablesOverride=[
+                      {
+                          'name': 'ISSUE_NUMBER',
+                          'value': GITHUB_BRANCH.split('#')[-1],
+                          'type': 'PLAINTEXT'
+                      },
+                      {
+                          'name': 'LIFECYCLE_HOOK_NAME',
+                          'value': message['LifecycleHookName'],
+                          'type': 'PLAINTEXT'
+                      },
+                      {
+                          'name': 'AUTOSCALING_GROUP_NAME',
+                          'value': message['AutoScalingGroupName'],
+                          'type': 'PLAINTEXT'
+                      },
+                      {
+                          'name': 'LIFECYCLE_ACTION_TOKEN',
+                          'value': message['LifecycleActionToken'],
+                          'type': 'PLAINTEXT'
+                      }
+                  ]
+              )
+
+              return True
+
+  AutoScalingLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: autoscaling-lambda
+          PolicyDocument:
+            Statement:
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:GetLogEvents
+                - logs:PutLogEvents
+                - codebuild:StartBuild
+              Resource: '*'
+              Effect: Allow
+      AssumeRolePolicyDocument:
+        Statement:
+          Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+
+  AutoScalingLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref AutoScalingTopic
+      FunctionName: !GetAtt AutoScalingLambda.Arn
+
+  AutoScalingPublishRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: autoscaling-lambda
+          PolicyDocument:
+            Statement:
+              Action: '*'
+              Resource: '*'
+              Effect: Allow
+      AssumeRolePolicyDocument:
+        Statement:
+          Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: autoscaling.amazonaws.com
+
   ScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
@@ -235,6 +346,12 @@ Resources:
       MaxSize: 6
       HealthCheckGracePeriod: 0
       HealthCheckType: ELB
+      LifecycleHookSpecificationList:
+        - DefaultResult: ABANDON
+          LifecycleHookName: !Ref AWS::StackName
+          LifecycleTransition: autoscaling:EC2_INSTANCE_LAUNCHING
+          NotificationTargetARN: !Ref AutoScalingTopic
+          RoleARN: !GetAtt AutoScalingPublishRole.Arn
       LaunchTemplate:
         LaunchTemplateId: !Ref InstanceLaunchTemplate
         Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
