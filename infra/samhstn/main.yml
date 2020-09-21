@@ -114,7 +114,7 @@ Resources:
         BuildSpec: ./infra/samhstn/buildspec.yml
       Cache:
         Type: LOCAL
-        MODES:
+        Modes:
           - LOCAL_CUSTOM_CACHE
 
   DeleteDynamicProject:
