@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - |
+        STACK_STATUS=$(aws cloudformation describe-stack \
+          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
+          --query 'Stacks[0].StackStatus' \
+          --output text)
+        if [ $? -ne 0 ]; then
+          echo "CREATING_STACK"
+          aws cloudformation create-stack --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
+            --template-body file://infra/samhstn/nat-gateway.yml
+          aws cloudformation wait stack-create-complete \
+            --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
+        elif [ "$STACK_STATUS" = "CREATE_IN_PROGRESS" ]; then
+          echo "CREATE_IN_PROGRESS"
+          aws cloudformation wait stack-create-complete \
+            --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
+        elif [ "$STACK_STATUS" = "CREATE_COMPLETE" ]; then
+          echo "CREATE_COMPLETE"
+        else
+          echo "UNKNOWN STACK_STATUS $STACK_STATUS"
+          exit 1
+        fi
+      - aws autoscaling complete-lifecycle-action
+          --lifecycle-hook-name "${LIFECYCLE_HOOK_NAME}"
+          --autoscaling-group-name "${AUTOSCALING_GROUP_NAME}"
+          --lifecycle-action-token "${LIFECYCLE_ACTION_TOKEN}"
+          --lifecycle-action-result CONTINUE
