@@ -19,6 +19,8 @@ Parameters:
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
   GithubBranch:
     Type: String
+  CodeBuildBucketKey:
+    Type: String
 
 Resources:
   LoadBalancer:
@@ -298,6 +300,13 @@ Resources:
       ApplicationName: !Ref DeploymentApplication
       DeploymentConfigName: CodeDeployDefault.AllAtOnce
       ServiceRoleArn: !ImportValue DeploymentRoleArn
+      Deployment:
+        Revision:
+          RevisionType: S3
+          S3Location:
+            Bucket: !ImportValue CodeBuildBucketName
+            BundleType: zip
+            Key: !Ref CodeBuildBucketKey
 
   InstanceLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate

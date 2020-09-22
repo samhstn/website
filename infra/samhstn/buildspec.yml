@@ -38,6 +38,7 @@ phases:
             --template-body file://infra/samhstn/dynamic-build.yml \
             --parameters \
               ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
+              ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
               $(aws cloudformation describe-stacks \
                 --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
                 --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
@@ -58,7 +59,7 @@ phases:
             --template-body file://infra/samhstn/dynamic-build.yml \
             --parameters \
               ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
-              ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
+              ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
               $(aws cloudformation describe-stacks \
                 --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
                 --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
@@ -67,7 +68,3 @@ phases:
           aws cloudformation wait stack-create-complete \
             --stack-name "samhstn-${ISSUE_NUMBER}"
         fi
-      - aws deploy create-deployment
-          --application-name "dynamic-samhstn-${ISSUE_NUMBER}"
-          --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}"
-          --revision "revisionType=S3,s3Location={bucket=${S3_CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip}"
