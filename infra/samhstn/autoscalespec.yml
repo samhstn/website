@@ -4,11 +4,10 @@ phases:
   build:
     commands:
       - |
-        STACK_STATUS=$(aws cloudformation describe-stack \
+        if ! STACK_STATUS=$(aws cloudformation describe-stacks \
           --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
           --query 'Stacks[0].StackStatus' \
-          --output text)
-        if [ $? -ne 0 ]; then
+          --output text); then
           echo "CREATING_STACK"
           aws cloudformation create-stack --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
             --template-body file://infra/samhstn/nat-gateway.yml \
