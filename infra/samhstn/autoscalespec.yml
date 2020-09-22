@@ -29,6 +29,6 @@ phases:
         fi
       - aws autoscaling complete-lifecycle-action
           --lifecycle-hook-name "${LIFECYCLE_HOOK_NAME}"
-          --autoscaling-group-name "${AUTOSCALING_GROUP_NAME}"
+          --auto-scaling-group-name "${AUTOSCALING_GROUP_NAME}"
           --lifecycle-action-token "${LIFECYCLE_ACTION_TOKEN}"
           --lifecycle-action-result CONTINUE

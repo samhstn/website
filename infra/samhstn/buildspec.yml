@@ -26,7 +26,8 @@ phases:
       - |
         if ! aws cloudformation describe-stacks --stack-name "samhstn-vpc-${ISSUE_NUMBER}" &>/dev/null; then
           aws cloudformation create-stack \
-            --stack-name "samhstn-vpc-${ISSUE_NUMBER}"
+            --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
+            --template-body file://infra/samhstn/vpc.yml
         fi
 
         aws cloudformation wait stack-create-complete --stack-name "samhstn-vpc-${ISSUE_NUMBER}"
