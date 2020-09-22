@@ -12,7 +12,7 @@ phases:
           aws cloudformation create-stack --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
             --template-body file://infra/samhstn/nat-gateway.yml \
             --parameters $(aws cloudformation describe-stacks \
-              --stack-name "samhstn-${ISSUE_NUMBER}" \
+              --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
               --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
               --output text)
           aws cloudformation wait stack-create-complete \

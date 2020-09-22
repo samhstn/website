@@ -1,6 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
+  VPC:
+    Type: String
+  SubnetAZ1:
+    Type: String
+  SubnetAZ2:
+    Type: String
+  PrivateSubnetAZ1:
+    Type: String
+  PrivateSubnetAZ2:
+    Type: String
   EC2InstanceType:
     Type: String
     Default: t2.micro
@@ -11,68 +21,6 @@ Parameters:
     Type: String
 
 Resources:
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 10.0.0.0/16
-      EnableDnsSupport: true
-      EnableDnsHostnames: true
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  PrivateSubnetAZ1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs '']
-      CidrBlock:  10.0.128.0/18
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [0, !GetAZs '']
-
-  PrivateSubnetAZ2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs '']
-      CidrBlock:  10.0.192.0/18
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [1, !GetAZs '']
-
-  SubnetAZ1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs '']
-      CidrBlock:  10.0.0.0/18
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [0, !GetAZs '']
-
-  SubnetAZ2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs '']
-      CidrBlock:  10.0.64.0/18
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [1, !GetAZs '']
-
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
@@ -456,17 +404,3 @@ Resources:
 
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
-
-Outputs:
-  VPC:
-    Value: !Ref VPC
-  SubnetAZ1:
-    Value: !Ref SubnetAZ1
-  SubnetAZ2:
-    Value: !Ref SubnetAZ2
-  PrivateSubnetAZ1:
-    Value: !Ref PrivateSubnetAZ1
-  PrivateSubnetAZ2:
-    Value: !Ref PrivateSubnetAZ2
-  StackName:
-    Value: !Ref AWS::StackName
