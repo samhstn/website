@@ -2,8 +2,6 @@ import boto3, hmac, hashlib, json, re, os
 from botocore.exceptions import ClientError
 
 def handler(event, _context): # pragma: no cover
-    print('event', event)
-
     environ = {
         'github_master_branch': os.environ['GITHUB_MASTER_BRANCH'],
         'push': os.environ['BUILD_PROJECT'],
