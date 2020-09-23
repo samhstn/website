@@ -116,8 +116,11 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: ec2:DescribeTags
+                Action: 'ec2:*'
                 Resource: '*'
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt RemoveNatGatewayLambda.Arn
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
@@ -129,9 +132,54 @@ Resources:
         - Endpoint: !GetAtt AutoScalingLambda.Arn
           Protocol: lambda
 
+  RemoveNatGatewayLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub RemoveNatGateway-${AWS::StackName}
+      Handler: index.handler
+      Role: !GetAtt RemoveNatGatewayLambdaRole.Arn
+      Runtime: python3.7
+      Environment:
+        Variables:
+          NAT_GATEWAY_STACK_NAME: !Sub ${AWS::StackName}-nat-gateway
+      Code:
+        ZipFile: |
+          import boto3, os
+
+          cloudformation = boto3.client('cloudformation')
+          NAT_GATEWAY_STACK_NAME = os.environ['NAT_GATEWAY_STACK_NAME']
+
+          def handler(_event, _context):
+              cloudformation.delete_stack(StackName=NAT_GATEWAY_STACK_NAME)
+
+  RemoveNatGatewayLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: remove-nat-gateway-lambda
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:GetLogEvents
+                  - logs:PutLogEvents
+                Resource: '*'
+                Effect: Allow
+              - Action: cloudformation:DeleteStack
+                Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}-nat-gateway/*'
+                Effect: Allow
+      AssumeRolePolicyDocument:
+        Statement:
+          Action: sts:AssumeRole
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+
   AutoScalingLambda:
     Type: AWS::Lambda::Function
     Properties:
+      FunctionName: !Sub AutoScale-${AWS::StackName}
       Handler: index.handler
       Role: !GetAtt AutoScalingLambdaRole.Arn
       Runtime: python3.7
@@ -372,3 +420,5 @@ Resources:
 
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
+
+            aws --region ${AWS::Region} lambda invoke --function-name ${RemoveNatGatewayLambda} /tmp/autoscale-lambda-output.json

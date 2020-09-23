@@ -34,6 +34,9 @@ Resources:
 
   DefaultPublicRoute:
     Type: AWS::EC2::Route
+    DependsOn:
+      - InternetGateway
+      - InternetGatewayAttachment
     Properties:
       RouteTableId: !Ref RouteTable
       DestinationCidrBlock: 0.0.0.0/0

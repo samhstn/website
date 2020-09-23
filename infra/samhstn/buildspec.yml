@@ -24,13 +24,13 @@ phases:
   post_build:
     commands:
       - |
-        if ! aws cloudformation describe-stacks --stack-name "samhstn-vpc-${ISSUE_NUMBER}" &>/dev/null; then
+        if ! aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}-vpc" &>/dev/null; then
           aws cloudformation create-stack \
-            --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
+            --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
             --template-body file://infra/samhstn/vpc.yml
         fi
 
-        aws cloudformation wait stack-create-complete --stack-name "samhstn-vpc-${ISSUE_NUMBER}"
+        aws cloudformation wait stack-create-complete --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
 
         if aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" &>/dev/null; then
           UPDATE_ERR=$(aws cloudformation update-stack \
@@ -40,7 +40,7 @@ phases:
               ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
               ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
               $(aws cloudformation describe-stacks \
-                --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
+                --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
                 --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
                 --output text) \
             --capabilities CAPABILITY_IAM 2>&1)
@@ -61,7 +61,7 @@ phases:
               ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
               ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
               $(aws cloudformation describe-stacks \
-                --stack-name "samhstn-vpc-${ISSUE_NUMBER}" \
+                --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
                 --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
                 --output text) \
             --capabilities CAPABILITY_IAM
