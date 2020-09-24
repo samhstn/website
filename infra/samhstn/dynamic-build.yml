@@ -111,12 +111,12 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
       Policies:
-        - PolicyName: ec2DescribeTags
+        - PolicyName: ec2InstancePolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: 'ec2:*'
+                Action: ec2:DescribeTags
                 Resource: '*'
               - Effect: Allow
                 Action: lambda:InvokeFunction
@@ -164,6 +164,9 @@ Resources:
                   - logs:CreateLogStream
                   - logs:GetLogEvents
                   - logs:PutLogEvents
+                Resource: '*'
+                Effect: Allow
+              - Action: 'ec2:*'
                 Resource: '*'
                 Effect: Allow
               - Action: cloudformation:DeleteStack
