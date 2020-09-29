@@ -27,12 +27,15 @@ phases:
           --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
           --template-file infra/samhstn/vpc.yml
           --no-fail-on-empty-changeset
-          # - aws cloudformation deploy
-          #     --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
-          #     --template-file infra/samhstn/nat-gateway.yml
-          #     --no-fail-on-empty-changeset
-          #     --parameter-overrides
-          #       
+      - aws cloudformation deploy
+          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
+          --template-file infra/samhstn/nat-gateway.yml
+          --no-fail-on-empty-changeset
+          --parameter-overrides
+            $(aws cloudformation describe-stacks
+              --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
+              --query "Stacks[0].Outputs[*].[join('=', [OutputKey, OutputValue])] | join(' ', [])"
+              --output text)
 
           # - |
           #   if ! VPC_STACK_STATUS=$(aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}-vpc"); then
