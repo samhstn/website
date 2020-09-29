@@ -36,49 +36,15 @@ phases:
               --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
               --query "Stacks[0].Outputs[*].[join('=', [OutputKey, OutputValue])] | join(' ', [])"
               --output text)
-
-          # - |
-          #   if ! VPC_STACK_STATUS=$(aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}-vpc"); then
-          #     aws cloudformation create-stack \
-          #       --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
-          #       --template-body file://infra/samhstn/vpc.yml
-          #   fi
-
-          #   aws cloudformation wait stack-create-complete --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
-
-          #   if aws cloudformation describe-stacks --stack-name "samhstn-${ISSUE_NUMBER}" &>/dev/null; then
-          #     UPDATE_ERR=$(aws cloudformation update-stack \
-          #       --stack-name "samhstn-${ISSUE_NUMBER}" \
-          #       --template-body file://infra/samhstn/dynamic-build.yml \
-          #       --parameters \
-          #         ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
-          #         ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
-          #         $(aws cloudformation describe-stacks \
-          #           --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
-          #           --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
-          #           --output text) \
-          #       --capabilities CAPABILITY_IAM 2>&1)
-          #     if [ $? -eq 0 ]; then
-          #       aws cloudformation wait stack-update-complete \
-          #         --stack-name "samhstn-${ISSUE_NUMBER}"
-          #     elif [[ $UPDATE_ERR =~ "No updates are to be performed" ]]; then
-          #       echo "No updates are to be performed"
-          #     else
-          #       echo "UPDATE_ERR: $UPDATE_ERR"
-          #       exit 1
-          #     fi
-          #   else
-          #     aws cloudformation create-stack \
-          #       --stack-name "samhstn-${ISSUE_NUMBER}" \
-          #       --template-body file://infra/samhstn/dynamic-build.yml \
-          #       --parameters \
-          #         ParameterKey=GithubBranch,ParameterValue=${CODEBUILD_SOURCE_VERSION} \
-          #         ParameterKey=CodeBuildBucketKey,ParameterValue=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION} \
-          #         $(aws cloudformation describe-stacks \
-          #           --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
-          #           --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
-          #           --output text) \
-          #       --capabilities CAPABILITY_IAM
-          #     aws cloudformation wait stack-create-complete \
-          #       --stack-name "samhstn-${ISSUE_NUMBER}"
-          #   fi
+      - aws cloudformation deploy
+          --stack-name "samhstn-${ISSUE_NUMBER}"
+          --template-file infra/samhstn/dynamic-build.yml
+          --no-fail-on-empty-changeset
+          --capabilities CAPABILITY_IAM
+          --parameter-overrides
+            "GithubBranch=${CODEBUILD_SOURCE_VERSION}"
+            "CodeBuildBucketKey=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION}"
+            $(aws cloudformation describe-stacks
+              --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
+              --query "Stacks[0].Outputs[*].[join('=', [OutputKey, OutputValue])] | join(' ', [])"
+              --output text)
