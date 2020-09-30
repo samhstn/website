@@ -424,4 +424,6 @@ Resources:
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
 
+            sleep 3
+
             aws --region ${AWS::Region} lambda invoke --function-name ${RemoveNatGatewayLambda} /tmp/autoscale-lambda-output.json
