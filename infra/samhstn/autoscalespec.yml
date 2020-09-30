@@ -3,40 +3,17 @@ version: 0.2
 phases:
   build:
     commands:
-      - |
-        if ! STACK_STATUS=$(aws cloudformation describe-stacks \
-          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
-          --query 'Stacks[0].StackStatus' \
-          --output text); then
-          echo "CREATING_STACK"
-          aws cloudformation create-stack --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway" \
-            --template-body file://infra/samhstn/nat-gateway.yml \
-            --parameters $(aws cloudformation describe-stacks \
-              --stack-name "samhstn-${ISSUE_NUMBER}-vpc" \
-              --query "Stacks[0].Outputs[*].[join(',', [join('=',['ParameterKey', OutputKey]), join('=',['ParameterValue', OutputValue])])] | join(' ', [])" \
+      - aws cloudformation deploy
+          --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
+          --template-file infra/samhstn/nat-gateway.yml
+          --no-fail-on-empty-changeset
+          --parameter-overrides
+            $(aws cloudformation describe-stacks
+              --stack-name "samhstn-${ISSUE_NUMBER}-vpc"
+              --query "Stacks[0].Outputs[*].[join('=', [OutputKey, OutputValue])] | join(' ', [])"
               --output text)
-        fi
-      - |
-        if [ -z "${STACK_STATUS}" ] || [ "${STACK_STATUS}" = "CREATE_IN_PROGRESS" ]; then
-          aws cloudformation wait stack-create-complete \
-            --stack-name "samhstn-${ISSUE_NUMBER}-nat-gateway"
-          aws autoscaling complete-lifecycle-action \
-            --lifecycle-hook-name "${LIFECYCLE_HOOK_NAME}" \
-            --auto-scaling-group-name "${AUTOSCALING_GROUP_NAME}" \
-            --lifecycle-action-token "${LIFECYCLE_ACTION_TOKEN}" \
-            --lifecycle-action-result ABANDON
-          aws deploy create-deployment \
-            --application-name "dynamic-samhstn-${ISSUE_NUMBER}" \
-            --deployment-group-name "dynamic-samhstn-${ISSUE_NUMBER}" \
-            --revision "revisionType=S3,s3Location={bucket=${S3_CODEBUILD_BUCKET_NAME},key=${ISSUE_NUMBER}/${CODEBUILD_RESOLVED_SOURCE_VERSION},bundleType=zip}"
-        elif [ "$STACK_STATUS" = "CREATE_COMPLETE" ]; then
-          echo "CREATE_COMPLETE"
-          aws autoscaling complete-lifecycle-action \
-            --lifecycle-hook-name "${LIFECYCLE_HOOK_NAME}" \
-            --auto-scaling-group-name "${AUTOSCALING_GROUP_NAME}" \
-            --lifecycle-action-token "${LIFECYCLE_ACTION_TOKEN}" \
-            --lifecycle-action-result CONTINUE
-        else
-          echo "UNKNOWN STACK_STATUS $STACK_STATUS"
-          exit 1
-        fi
+      - aws autoscaling complete-lifecycle-action \
+          --lifecycle-hook-name "${LIFECYCLE_HOOK_NAME}" \
+          --auto-scaling-group-name "${AUTOSCALING_GROUP_NAME}" \
+          --lifecycle-action-token "${LIFECYCLE_ACTION_TOKEN}" \
+          --lifecycle-action-result CONTINUE
