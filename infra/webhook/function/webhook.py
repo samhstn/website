@@ -10,7 +10,8 @@ def handler(event, _context): # pragma: no cover
 
     client = {
         'codepipeline': boto3.client('codepipeline'),
-        'codebuild': boto3.client('codebuild')
+        'codebuild': boto3.client('codebuild'),
+        'sqs': boto3.client('sqs')
     }
 
     secretsmanager = boto3.client('secretsmanager')
@@ -43,6 +44,29 @@ def handle_event(event, secret, client, environ):
         if '#' not in branch:
             return response(200, 'Not buildable branch: %s' % branch)
 
+        queue_url = None
+        thirty_mins = '1800'
+        ISSUE_NUMBER = branch.split('#')[-1]
+
+        try:
+            sqs_response = client['sqs'].create_queue(
+                QueueName='samhstn-%d' % ISSUE_NUMBER,
+                Attributes={
+                    'ContentBasedDeduplication': 'false',
+                    'FifoQueue': 'true',
+                    'MessageRetentionPeriod': thirty_mins
+                }
+            )
+            queue_url = sqs_response['QueueUrl']
+            client['sqs'].send_message(
+                QueueUrl=queue_url,
+                MessageBody=body['head_commit']['id'],
+                MessageGroupId='samhstn-%d' % ISSUE_NUMBER,
+                MessageDeduplicationId=str(uuid.uuid4())
+            )
+        except ClientError as err:
+            return response(500, 'Error creating queue for branch %s. Err: %s' % (branch, err))
+
         try:
             client['codebuild'].start_build(
                 projectName=environ[github_event],
@@ -52,6 +76,11 @@ def handle_event(event, secret, client, environ):
                     {
                         'name': 'ISSUE_NUMBER',
                         'value': branch.split('#')[-1],
+                        'type': 'PLAINTEXT'
+                    },
+                    {
+                        'name': 'QUEUE_URL',
+                        'value': queue_url,
                         'type': 'PLAINTEXT'
                     }
                 ]
