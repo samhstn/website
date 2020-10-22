@@ -13,7 +13,7 @@ def handler(event, _context):
     github_secret = SECRETSMANAGER.get_secret_value(SecretId='/GithubSecret')['SecretString']
     github_event = event['headers']['x-github-event']
 
-    sha1 = hmac.new(secret.encode(), event['body'].encode(), hashlib.sha1).hexdigest()
+    sha1 = hmac.new(github_secret.encode(), event['body'].encode(), hashlib.sha1).hexdigest()
 
     if not hmac.compare_digest('sha1=%s' % sha1, event['headers']['x-hub-signature']):
         return response(403, 'x-hub-signature mismatch')

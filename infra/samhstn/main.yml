@@ -44,13 +44,13 @@ Resources:
       FunctionName: Webhook
       Runtime: python3.8
       Role: !GetAtt WebhookRole.Arn
-      Handler: webhook.handler
+      Handler: index.handler
       Environment:
         Variables:
           GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
           BUILD_PROJECT: !Ref BuildDynamicProject
           DELETE_PROJECT: !Ref DeleteDynamicProject
-      CodeUri: ../webhook/function
+      CodeUri: webhook
       Events:
         Webhook:
           Type: HttpApi
@@ -137,38 +137,6 @@ Resources:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: ./infra/samhstn/deletespec.yml
-
-  AutoScaleProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: autoscale
-      Artifacts:
-        Type: NO_ARTIFACTS
-      Environment:
-        Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:4.0
-      ServiceRole: !Ref AutoScaleRole
-      Source:
-        Type: GITHUB
-        Auth:
-          Type: OAUTH
-        Location: https://github.com/samhstn/samhstn.git
-        BuildSpec: ./infra/samhstn/autoscalespec.yml
-
-  AutoScaleRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          Effect: Allow
-          Principal:
-            Service:
-               - codebuild.amazonaws.com
-          Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/PowerUserAccess
 
   DeploymentRole:
     Type: AWS::IAM::Role

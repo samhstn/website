@@ -1,16 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  VPC:
-    Type: String
-  SubnetAZ1:
-    Type: String
-  SubnetAZ2:
-    Type: String
-  PrivateSubnetAZ1:
-    Type: String
-  PrivateSubnetAZ2:
-    Type: String
   EC2InstanceType:
     Type: String
     Default: t2.micro
@@ -23,6 +13,85 @@ Parameters:
     Type: String
 
 Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Ref AWS::StackName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - InternetGateway
+      - InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ1
+
+  SubnetRouteTableAssociationAZ2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ2
+
+  SubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock:  10.0.0.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: AZ
+          Value: !Select [0, !GetAZs '']
+
+  SubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock:  10.0.64.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: AZ
+          Value: !Select [1, !GetAZs '']
+
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
@@ -62,24 +131,6 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
-  PrivateSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: !Sub Internal Security group for ${AWS::StackName}
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 8443
-          ToPort: 8443
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -89,6 +140,14 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
@@ -118,169 +177,9 @@ Resources:
               - Effect: Allow
                 Action: ec2:DescribeTags
                 Resource: '*'
-              - Effect: Allow
-                Action: lambda:InvokeFunction
-                Resource: !GetAtt RemoveNatGatewayLambda.Arn
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
-
-  AutoScalingTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-        - Endpoint: !GetAtt AutoScalingLambda.Arn
-          Protocol: lambda
-
-  RemoveNatGatewayLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Sub RemoveNatGateway-${AWS::StackName}
-      Handler: index.handler
-      Role: !GetAtt RemoveNatGatewayLambdaRole.Arn
-      Runtime: python3.7
-      Environment:
-        Variables:
-          NAT_GATEWAY_STACK_NAME: !Sub ${AWS::StackName}-nat-gateway
-      Code:
-        ZipFile: |
-          import boto3, os
-
-          cloudformation = boto3.client('cloudformation')
-          NAT_GATEWAY_STACK_NAME = os.environ['NAT_GATEWAY_STACK_NAME']
-
-          def handler(_event, _context):
-              cloudformation.delete_stack(StackName=NAT_GATEWAY_STACK_NAME)
-
-  RemoveNatGatewayLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyName: remove-nat-gateway-lambda
-          PolicyDocument:
-            Statement:
-              - Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:GetLogEvents
-                  - logs:PutLogEvents
-                Resource: '*'
-                Effect: Allow
-              - Action: 'ec2:*'
-                Resource: '*'
-                Effect: Allow
-              - Action: cloudformation:DeleteStack
-                Resource: !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}-nat-gateway/*'
-                Effect: Allow
-      AssumeRolePolicyDocument:
-        Statement:
-          Action: sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-
-  AutoScalingLambda:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: !Sub AutoScale-${AWS::StackName}
-      Handler: index.handler
-      Role: !GetAtt AutoScalingLambdaRole.Arn
-      Runtime: python3.7
-      Environment:
-        Variables:
-          GITHUB_BRANCH: !Ref GithubBranch
-      Code:
-        ZipFile: |
-          import boto3, json, os
-
-          codebuild = boto3.client('codebuild')
-          GITHUB_BRANCH = os.environ['GITHUB_BRANCH']
-
-          def handler(event, _context):
-              if len(event['Records']) != 1:
-                  print(event)
-                  raise Exception("expected list of one in Records")
-
-              message = json.loads(event['Records'][0]['Sns']['Message'])
-
-              if message.get('Event') == 'autoscaling:TEST_NOTIFICATION':
-                  return True
-
-              codebuild.start_build(
-                  projectName='autoscale',
-                  sourceVersion=GITHUB_BRANCH,
-                  environmentVariablesOverride=[
-                      {
-                          'name': 'ISSUE_NUMBER',
-                          'value': GITHUB_BRANCH.split('#')[-1],
-                          'type': 'PLAINTEXT'
-                      },
-                      {
-                          'name': 'LIFECYCLE_HOOK_NAME',
-                          'value': message['LifecycleHookName'],
-                          'type': 'PLAINTEXT'
-                      },
-                      {
-                          'name': 'AUTOSCALING_GROUP_NAME',
-                          'value': message['AutoScalingGroupName'],
-                          'type': 'PLAINTEXT'
-                      },
-                      {
-                          'name': 'LIFECYCLE_ACTION_TOKEN',
-                          'value': message['LifecycleActionToken'],
-                          'type': 'PLAINTEXT'
-                      }
-                  ]
-              )
-
-              return True
-
-  AutoScalingLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyName: autoscaling-lambda
-          PolicyDocument:
-            Statement:
-              Action:
-                - logs:CreateLogGroup
-                - logs:CreateLogStream
-                - logs:GetLogEvents
-                - logs:PutLogEvents
-                - codebuild:StartBuild
-              Resource: '*'
-              Effect: Allow
-      AssumeRolePolicyDocument:
-        Statement:
-          Action: sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-
-  AutoScalingLambdaInvokePermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      Principal: sns.amazonaws.com
-      SourceArn: !Ref AutoScalingTopic
-      FunctionName: !GetAtt AutoScalingLambda.Arn
-
-  AutoScalingPublishRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Policies:
-        - PolicyName: autoscaling-lambda
-          PolicyDocument:
-            Statement:
-              Action: '*'
-              Resource: '*'
-              Effect: Allow
-      AssumeRolePolicyDocument:
-        Statement:
-          Action: sts:AssumeRole
-          Effect: Allow
-          Principal:
-            Service: autoscaling.amazonaws.com
 
   ScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -306,12 +205,6 @@ Resources:
       MaxSize: 6
       HealthCheckGracePeriod: 0
       HealthCheckType: ELB
-      LifecycleHookSpecificationList:
-        - DefaultResult: ABANDON
-          LifecycleHookName: !Ref AWS::StackName
-          LifecycleTransition: autoscaling:EC2_INSTANCE_LAUNCHING
-          NotificationTargetARN: !Ref AutoScalingTopic
-          RoleARN: !GetAtt AutoScalingPublishRole.Arn
       LaunchTemplate:
         LaunchTemplateId: !Ref InstanceLaunchTemplate
         Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
@@ -323,8 +216,8 @@ Resources:
             - "GroupMaxSize"
             - "GroupInServiceInstances"
       VPCZoneIdentifier:
-        - !Ref PrivateSubnetAZ1
-        - !Ref PrivateSubnetAZ2
+        - !Ref SubnetAZ1
+        - !Ref SubnetAZ2
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
@@ -386,7 +279,7 @@ Resources:
         Monitoring:
           Enabled: true
         SecurityGroupIds:
-          - !GetAtt PrivateSecurityGroup.GroupId
+          - !GetAtt SecurityGroup.GroupId
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash -xe
@@ -423,7 +316,3 @@ Resources:
 
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
-
-            sleep 3
-
-            aws --region ${AWS::Region} lambda invoke --function-name ${RemoveNatGatewayLambda} /tmp/autoscale-lambda-output.json
