@@ -1,9 +1,0 @@
-{
-  "sample": true,
-  "headers": {
-    "x-github-event": "ping"
-  },
-  "body": {
-    "zen": "Practicality+beats+purity."
-  }
-}
