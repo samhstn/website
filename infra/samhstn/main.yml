@@ -35,6 +35,18 @@ Resources:
       LogGroupName: /aws/lambda/Webhook
       RetentionInDays: 14
 
+  BuildProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/BuildProject
+      RetentionInDays: 14
+
+  DeleteProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/DeleteProject
+      RetentionInDays: 14
+
   WebhookFunction:
     Type: AWS::Serverless::Function
     DependsOn:
@@ -95,7 +107,7 @@ Resources:
   BuildDynamicProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: build-project
+      Name: BuildProject
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -120,7 +132,7 @@ Resources:
   DeleteDynamicProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: delete-project
+      Name: DeleteProject
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -151,15 +163,24 @@ Resources:
                - codedeploy.amazonaws.com
                - codebuild.amazonaws.com
           Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/PowerUserAccess
       Policies:
-        - PolicyName: CreateDeleteRoles
+        - PolicyName: DeploymentPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action: 'iam:*'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !GetAtt BuildProjectLogGroup.Arn
+                  - !GetAtt DeleteProjectLogGroup.Arn
+              - Effect: Allow
+                Action: cloudformation:DescribeStacks
                 Resource: '*'
 
   EcrRepo:
