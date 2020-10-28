@@ -15,6 +15,14 @@ Parameters:
     Type: String
     Default: master
 
+  Route53RoleArn:
+    Type: String
+    Default: ''
+    Description: To be updated once role has been created in root account.
+
+Conditions:
+  IsRoute53RoleSet: !Not [ !Equals [!Ref Route53RoleArn, '']]
+
 Resources:
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
@@ -106,6 +114,7 @@ Resources:
 
   BuildDynamicProject:
     Type: AWS::CodeBuild::Project
+    Condition: IsRoute53RoleSet
     Properties:
       Name: BuildProject
       Artifacts:
@@ -117,6 +126,8 @@ Resources:
         EnvironmentVariables:
           - Name: S3_CODEBUILD_BUCKET_NAME
             Value: !ImportValue CodeBuildBucketName
+          - Name: ROUTE_53_ROLE_ARN
+            Value: !Ref Route53RoleArn
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -182,6 +193,13 @@ Resources:
               - Effect: Allow
                 Action: cloudformation:DescribeStacks
                 Resource: '*'
+              - !If
+                - IsRoute53RoleSet
+                - Resource: !Ref Route53RoleArn
+                  Effect: Allow
+                  Action:
+                    - sts:AssumeRole
+                - !Ref AWS::NoValue
 
   EcrRepo:
     Type: AWS::ECR::Repository
