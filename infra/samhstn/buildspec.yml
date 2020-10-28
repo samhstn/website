@@ -7,9 +7,10 @@ phases:
         --stack-name samhstn-123
         --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue|[0]"
         --output text
-      - aws configure list
-        # - aws cloudformation describe-stacks
-        #   --stack-name samhstn
+      - echo "ROUTE_53_ROLE_ARN = $ROUTE_53_ROLE_ARN"
+      - ./infra/samhstn/assume-role.sh $ROUTE_53_ROLE_ARN root
+      - aws route53 --profile root list-hosted-zones
+
   # install:
   #   commands:
   #     - mix deps.get
