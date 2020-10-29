@@ -5,8 +5,6 @@ ENV_FILE='.env'
 touch $ENV_FILE
 source $ENV_FILE
 
-echo '============== set up =============='
-
 if [[ -z "$GITHUB_MASTER_BRANCH" ]]; then
   echo "GITHUB_MASTER_BRANCH=master" >> $ENV_FILE
 fi
@@ -47,8 +45,6 @@ if ! [ -d infra/venv ]; then
   infra/venv/bin/python3 -m pip install --upgrade pip
   infra/venv/bin/pip install -r infra/requirements.txt
 fi
-
-echo '============== deploy root =============='
 
 aws cloudformation deploy \
   --profile samhstn-root \
@@ -100,8 +96,6 @@ if [[ -z $(aws ses --profile samhstn-root describe-active-receipt-rule-set) ]]; 
   aws ses --profile samhstn-root set-active-receipt-rule-set --rule-set-name SamhstnRuleSet
 fi
 
-echo '============== deploy samhstn =============='
-
 aws cloudformation deploy \
   --profile samhstn-admin \
   --stack-name project-iam \
@@ -137,14 +131,58 @@ if ! [[ $PACKAGE_ERR =~ "Successfully packaged artifacts" ]]; then
   exit 1
 fi
 
-aws cloudformation deploy \
-  --profile samhstn-admin \
-  --stack-name main \
-  --template-file ./infra/cfn_output/samhstn/main.yml \
-  --no-fail-on-empty-changeset \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides \
-    GithubPAToken=$SAMHSTN_PA_TOKEN \
-    GithubMasterBranch=$GITHUB_MASTER_BRANCH | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+ROUTE_53_ROLE_ARN="$(aws cloudformation describe-stacks \
+  --profile samhstn-root \
+  --stack-name samhstn-route53 \
+  --query "Stacks[*].Outputs[?OutputKey=='Route53RoleArn'].OutputValue|[0][0]" \
+  --output text 2>&1)"
+
+if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/samhstn-route53" ]];then
+  aws cloudformation deploy \
+    --profile samhstn-admin \
+    --stack-name main \
+    --template-file ./infra/cfn_output/samhstn/main.yml \
+    --no-fail-on-empty-changeset \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides \
+      GithubPAToken=$SAMHSTN_PA_TOKEN \
+      GithubMasterBranch=$GITHUB_MASTER_BRANCH \
+      Route53RoleArn=$ROUTE_53_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+else
+  aws cloudformation deploy \
+    --profile samhstn-admin \
+    --stack-name main \
+    --template-file ./infra/cfn_output/samhstn/main.yml \
+    --no-fail-on-empty-changeset \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides \
+      GithubPAToken=$SAMHSTN_PA_TOKEN \
+      GithubMasterBranch=$GITHUB_MASTER_BRANCH | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+
+  DEPLOYMENT_ROLE_ARN=$(aws cloudformation describe-stacks \
+    --stack-name main \
+    --query "Stacks[*].Outputs[?OutputKey=='DeploymentRoleArn'].OutputValue|[0][0]" \
+    --output text)
+
+  aws cloudformation deploy \
+    --profile samhstn-root \
+    --stack-name samhstn-route53 \
+    --template-file ./infra/root/samhstn-route53.yml \
+    --no-fail-on-empty-changeset \
+    --capabilities CAPABILITY_IAM \
+    --parameter-overrides \
+      DeploymentRoleArn=$DEPLOYMENT_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+
+  aws cloudformation deploy \
+    --profile samhstn-admin \
+    --stack-name main \
+    --template-file ./infra/cfn_output/samhstn/main.yml \
+    --no-fail-on-empty-changeset \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --parameter-overrides \
+      GithubPAToken=$SAMHSTN_PA_TOKEN \
+      GithubMasterBranch=$GITHUB_MASTER_BRANCH \
+      Route53RoleArn=$ROUTE_53_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+fi
 
 ./infra/venv/bin/python ./infra/configure_github_webhook.py
