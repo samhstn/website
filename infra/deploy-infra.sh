@@ -39,6 +39,11 @@ if [[ -z $CERTIFICATE ]]; then
   echo "CERTIFICATE=$CERTIFICATE" >> $ENV_FILE
 fi
 
+if [[ -z $SAMHSTN_HOSTED_ZONE_ID ]];then
+  SAMHSTN_HOSTED_ZONE_ID=$(aws route53 --profile samhstn-root list-hosted-zones --query "HostedZones[?Name=='samhstn.com.'].Id|[0]" --output text | sed 's/^\/hostedzone\///')
+  echo "SAMHSTN_HOSTED_ZONE_ID=$SAMHSTN_HOSTED_ZONE_ID" >> $ENV_FILE
+fi
+
 if ! [ -d infra/venv ]; then
   echo "creating new venv"
   python3 -m venv infra/venv
@@ -147,7 +152,8 @@ if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/samhstn-rout
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
-      Route53RoleArn=$ROUTE_53_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+      Route53RoleArn=$ROUTE_53_ROLE_ARN \
+      SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 else
   aws cloudformation deploy \
     --profile samhstn-admin \
@@ -182,7 +188,8 @@ else
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
-      Route53RoleArn=$ROUTE_53_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+      Route53RoleArn=$ROUTE_53_ROLE_ARN \
+      SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 fi
 
 ./infra/venv/bin/python ./infra/configure_github_webhook.py

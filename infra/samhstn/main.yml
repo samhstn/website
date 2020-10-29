@@ -20,6 +20,9 @@ Parameters:
     Default: ''
     Description: To be updated once role has been created in root account.
 
+  SamhstnHostedZoneId:
+    Type: String
+
 Conditions:
   IsRoute53RoleSet: !Not [ !Equals [!Ref Route53RoleArn, '']]
 
@@ -128,6 +131,8 @@ Resources:
             Value: !ImportValue CodeBuildBucketName
           - Name: ROUTE_53_ROLE_ARN
             Value: !Ref Route53RoleArn
+          - Name: SAMHSTN_HOSTED_ZONE_ID
+            Value: !Ref SamhstnHostedZoneId
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -191,8 +196,14 @@ Resources:
                   - !GetAtt BuildProjectLogGroup.Arn
                   - !GetAtt DeleteProjectLogGroup.Arn
               - Effect: Allow
-                Action: cloudformation:DescribeStacks
+                Action:
+                  - cloudformation:DescribeStacks
                 Resource: '*'
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub
+                  - arn:aws:s3:::${CodeBuildBucketName}
+                  - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
               - !If
                 - IsRoute53RoleSet
                 - Resource: !Ref Route53RoleArn

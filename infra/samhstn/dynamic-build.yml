@@ -320,3 +320,5 @@ Resources:
 Outputs:
   LoadBalancerDNSName:
     Value: !GetAtt LoadBalancer.DNSName
+  LoadBalancerHostedZoneId:
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
