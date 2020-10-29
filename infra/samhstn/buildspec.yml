@@ -8,7 +8,13 @@ phases:
         --query "Stacks[0].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue|[0]"
         --output text
       - echo "ROUTE_53_ROLE_ARN = $ROUTE_53_ROLE_ARN"
-      - ./infra/samhstn/assume-role.sh $ROUTE_53_ROLE_ARN root
+      - ASSUME_ROLE=$(aws sts assume-role
+        --role-arn $ROUTE_53_ROLE_ARN
+        --role-session-name root
+        --duration-seconds 900)
+      - aws configure --profile root set aws_access_key_id $(echo $ASSUME_ROLE | jp -u 'Credentials.AccessKeyId')
+      - aws configure --profile root set aws_secret_access_key $(echo $ASSUME_ROLE | jp -u 'Credentials.SecretAccessKey')
+      - aws configure --profile root set aws_session_token $(echo $ASSUME_ROLE | jp -u 'Credentials.SessionToken')
       - aws route53 --profile root list-hosted-zones
 
   # install:
