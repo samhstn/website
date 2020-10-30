@@ -200,6 +200,7 @@ Resources:
                   - 'ec2:*'
                   - 'codedeploy:*'
                   - 'autoscaling:*'
+                  - 'elasticloadbalancing:DescribeLoadBalancers'
                 Resource: '*'
               - Effect: Allow
                 Action: 's3:*'
