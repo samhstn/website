@@ -185,9 +185,6 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: 'iam:*'
-                Resource: '*'
-              - Effect: Allow
                 Action:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
@@ -197,13 +194,22 @@ Resources:
                   - !GetAtt DeleteProjectLogGroup.Arn
               - Effect: Allow
                 Action:
-                  - cloudformation:DescribeStacks
+                  - 'ssm:GetParameters'
+                  - 'cloudformation:*'
+                  - 'iam:*'
+                  - 'ec2:*'
+                  - 'codedeploy:*'
+                  - 'autoscaling:*'
                 Resource: '*'
               - Effect: Allow
-                Action: s3:PutObject
-                Resource: !Sub
-                  - arn:aws:s3:::${CodeBuildBucketName}
-                  - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                Action: 's3:*'
+                Resource:
+                  - !Sub
+                    - arn:aws:s3:::${CodeBuildBucketName}
+                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                  - !Sub
+                    - arn:aws:s3:::${CodeBuildBucketName}/*
+                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
               - !If
                 - IsRoute53RoleSet
                 - Resource: !Ref Route53RoleArn
