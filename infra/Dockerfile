@@ -17,6 +17,9 @@ RUN yum install -y nodejs
 RUN pip3 install awscli
 ENV PATH="$HOME/.local/bin:${PATH}"
 
+RUN wget https://github.com/jmespath/jp/releases/download/0.1.3/jp-linux-amd64 -O /usr/local/bin/jp
+RUN chmod +x /usr/local/bin/jp
+
 WORKDIR /opt
 
 RUN wget http://packages.erlang-solutions.com/erlang-solutions-1.0-1.noarch.rpm

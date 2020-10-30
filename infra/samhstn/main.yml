@@ -15,6 +15,17 @@ Parameters:
     Type: String
     Default: master
 
+  Route53RoleArn:
+    Type: String
+    Default: ''
+    Description: To be updated once role has been created in root account.
+
+  SamhstnHostedZoneId:
+    Type: String
+
+Conditions:
+  IsRoute53RoleSet: !Not [ !Equals [!Ref Route53RoleArn, '']]
+
 Resources:
   GithubSecretParameter:
     Type: AWS::SecretsManager::Secret
@@ -35,6 +46,18 @@ Resources:
       LogGroupName: /aws/lambda/Webhook
       RetentionInDays: 14
 
+  BuildProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/BuildProject
+      RetentionInDays: 14
+
+  DeleteProjectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/DeleteProject
+      RetentionInDays: 14
+
   WebhookFunction:
     Type: AWS::Serverless::Function
     DependsOn:
@@ -44,13 +67,13 @@ Resources:
       FunctionName: Webhook
       Runtime: python3.8
       Role: !GetAtt WebhookRole.Arn
-      Handler: webhook.handler
+      Handler: index.handler
       Environment:
         Variables:
           GITHUB_MASTER_BRANCH: !Ref GithubMasterBranch
           BUILD_PROJECT: !Ref BuildDynamicProject
           DELETE_PROJECT: !Ref DeleteDynamicProject
-      CodeUri: ../webhook/function
+      CodeUri: webhook
       Events:
         Webhook:
           Type: HttpApi
@@ -94,8 +117,9 @@ Resources:
 
   BuildDynamicProject:
     Type: AWS::CodeBuild::Project
+    Condition: IsRoute53RoleSet
     Properties:
-      Name: build-project
+      Name: BuildProject
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -105,6 +129,10 @@ Resources:
         EnvironmentVariables:
           - Name: S3_CODEBUILD_BUCKET_NAME
             Value: !ImportValue CodeBuildBucketName
+          - Name: ROUTE_53_ROLE_ARN
+            Value: !Ref Route53RoleArn
+          - Name: SAMHSTN_HOSTED_ZONE_ID
+            Value: !Ref SamhstnHostedZoneId
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -112,11 +140,15 @@ Resources:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: ./infra/samhstn/buildspec.yml
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_CUSTOM_CACHE
 
   DeleteDynamicProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: delete-project
+      Name: DeleteProject
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -147,16 +179,47 @@ Resources:
                - codedeploy.amazonaws.com
                - codebuild.amazonaws.com
           Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/PowerUserAccess
       Policies:
-        - PolicyName: CreateDeleteRoles
+        - PolicyName: DeploymentPolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
-                Action: 'iam:*'
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - !GetAtt BuildProjectLogGroup.Arn
+                  - !GetAtt DeleteProjectLogGroup.Arn
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameters'
+                  - 'cloudformation:*'
+                  - 'iam:*'
+                  - 'ec2:*'
+                  - 'codedeploy:*'
+                  - 'autoscaling:*'
+                  - elasticloadbalancing:DescribeLoadBalancers
+                  - elasticloadbalancing:CreateTargetGroup
+                  - elasticloadbalancing:DeleteTargetGroup
                 Resource: '*'
+              - Effect: Allow
+                Action: 's3:*'
+                Resource:
+                  - !Sub
+                    - arn:aws:s3:::${CodeBuildBucketName}
+                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                  - !Sub
+                    - arn:aws:s3:::${CodeBuildBucketName}/*
+                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+              - !If
+                - IsRoute53RoleSet
+                - Resource: !Ref Route53RoleArn
+                  Effect: Allow
+                  Action:
+                    - sts:AssumeRole
+                - !Ref AWS::NoValue
 
   EcrRepo:
     Type: AWS::ECR::Repository

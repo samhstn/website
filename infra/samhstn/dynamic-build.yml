@@ -7,6 +7,10 @@ Parameters:
   EC2AMI:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  GithubBranch:
+    Type: String
+  CodeBuildBucketKey:
+    Type: String
 
 Resources:
   VPC:
@@ -19,31 +23,48 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
-  PrivateSubnetAZ1:
-    Type: AWS::EC2::Subnet
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
     Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [0, !GetAZs '']
-      CidrBlock:  10.0.128.0/18
-      MapPublicIpOnLaunch: false
       Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [0, !GetAZs '']
+      - Key: Name
+        Value: !Ref AWS::StackName
 
-  PrivateSubnetAZ2:
-    Type: AWS::EC2::Subnet
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs '']
-      CidrBlock:  10.0.192.0/18
-      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [1, !GetAZs '']
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - InternetGateway
+      - InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ1
+
+  SubnetRouteTableAssociationAZ2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ2
 
   SubnetAZ1:
     Type: AWS::EC2::Subnet
@@ -70,127 +91,6 @@ Resources:
           Value: !Ref AWS::StackName
         - Key: AZ
           Value: !Select [1, !GetAZs '']
-
-  EIPAZ1:
-    Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      Domain: vpc
-
-  EIPAZ2:
-    Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      Domain: vpc
-
-  NATGatewayAZ1:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt EIPAZ1.AllocationId
-      SubnetId: !Ref SubnetAZ1
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [0, !GetAZs '']
-
-  NATGatewayAZ2:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt EIPAZ2.AllocationId
-      SubnetId: !Ref SubnetAZ2
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [1, !GetAZs '']
-
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-    Properties:
-      Tags:
-      - Key: Name
-        Value: !Ref AWS::StackName
-
-  InternetGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref VPC
-
-  RouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
-  PrivateSubnetRouteTableAZ1:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [0, !GetAZs '']
-
-  PrivateSubnetRouteTableAZ2:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-        - Key: AZ
-          Value: !Select [1, !GetAZs '']
-
-  PrivateRouteAZ1:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateSubnetRouteTableAZ1
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGatewayAZ1
-
-  PrivateRouteAZ2:
-    Type: AWS::EC2::Route
-    Properties:
-      RouteTableId: !Ref PrivateSubnetRouteTableAZ2
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NATGatewayAZ2
-
-  PrivateSubnetRouteTableAssociationAZ1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PrivateSubnetRouteTableAZ1
-      SubnetId: !Ref PrivateSubnetAZ1
-
-  PrivateSubnetRouteTableAssociationAZ2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref PrivateSubnetRouteTableAZ2
-      SubnetId: !Ref PrivateSubnetAZ2
-
-  DefaultPublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      RouteTableId: !Ref RouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-
-  SubnetRouteTableAssociationAZ1:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref RouteTable
-      SubnetId: !Ref SubnetAZ1
-
-  SubnetRouteTableAssociationAZ2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      RouteTableId: !Ref RouteTable
-      SubnetId: !Ref SubnetAZ2
 
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -231,24 +131,6 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
-  PrivateSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      VpcId: !Ref VPC
-      GroupDescription: !Sub Internal Security group for ${AWS::StackName}
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 8443
-          ToPort: 8443
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: !Ref AWS::StackName
-
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -258,6 +140,14 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
@@ -280,7 +170,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
       Policies:
-        - PolicyName: ec2DescribeTags
+        - PolicyName: ec2InstancePolicy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -326,8 +216,8 @@ Resources:
             - "GroupMaxSize"
             - "GroupInServiceInstances"
       VPCZoneIdentifier:
-        - !Ref PrivateSubnetAZ1
-        - !Ref PrivateSubnetAZ2
+        - !Ref SubnetAZ1
+        - !Ref SubnetAZ2
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
@@ -354,6 +244,13 @@ Resources:
       ApplicationName: !Ref DeploymentApplication
       DeploymentConfigName: CodeDeployDefault.AllAtOnce
       ServiceRoleArn: !ImportValue DeploymentRoleArn
+      Deployment:
+        Revision:
+          RevisionType: S3
+          S3Location:
+            Bucket: !ImportValue CodeBuildBucketName
+            BundleType: zip
+            Key: !Ref CodeBuildBucketKey
 
   InstanceLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
@@ -382,7 +279,7 @@ Resources:
         Monitoring:
           Enabled: true
         SecurityGroupIds:
-          - !GetAtt PrivateSecurityGroup.GroupId
+          - !GetAtt SecurityGroup.GroupId
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash -xe
@@ -419,3 +316,9 @@ Resources:
 
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
+
+Outputs:
+  LoadBalancerDNSName:
+    Value: !GetAtt LoadBalancer.DNSName
+  LoadBalancerHostedZoneId:
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
