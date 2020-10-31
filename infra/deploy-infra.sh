@@ -40,7 +40,7 @@ if [[ -z $CERTIFICATE ]]; then
 fi
 
 if [[ -z $GLOBAL_CERTIFICATE ]]; then
-  GLOBAL_CERTIFICATE=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn|[0]" --output text)
+  GLOBAL_CERTIFICATE=$(aws acm list-certificates --region us-east-1 --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn|[0]" --output text)
   echo "GLOBAL_CERTIFICATE=$GLOBAL_CERTIFICATE" >> $ENV_FILE
 fi
 
@@ -147,7 +147,7 @@ ROUTE_53_ROLE_ARN="$(aws cloudformation describe-stacks \
   --query "Stacks[*].Outputs[?OutputKey=='Route53RoleArn'].OutputValue|[0][0]" \
   --output text 2>&1)"
 
-if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/samhstn-route53" ]];then
+if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/Route53Role" ]];then
   aws cloudformation deploy \
     --profile samhstn-admin \
     --stack-name main \
@@ -157,8 +157,8 @@ if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/samhstn-rout
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
-      Route53RoleArn=$ROUTE_53_ROLE_ARN \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
+      Route53RoleArn=$ROUTE_53_ROLE_ARN \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 else
   aws cloudformation deploy \
@@ -169,17 +169,20 @@ else
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
-      GithubMasterBranch=$GITHUB_MASTER_BRANCH | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+      GithubMasterBranch=$GITHUB_MASTER_BRANCH \
+      GlobalCertificate=$GLOBAL_CERTIFICATE \
+      SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
   DEPLOYMENT_ROLE_ARN=$(aws cloudformation describe-stacks \
+    --profile samhstn-admin \
     --stack-name main \
     --query "Stacks[*].Outputs[?OutputKey=='DeploymentRoleArn'].OutputValue|[0][0]" \
     --output text)
 
   aws cloudformation deploy \
     --profile samhstn-root \
-    --stack-name samhstn-route53 \
-    --template-file ./infra/root/samhstn-route53.yml \
+    --stack-name route53role \
+    --template-file ./infra/root/route53role.yml \
     --no-fail-on-empty-changeset \
     --capabilities CAPABILITY_IAM \
     --parameter-overrides \
@@ -194,9 +197,23 @@ else
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
-      Route53RoleArn=$ROUTE_53_ROLE_ARN \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
+      Route53RoleArn=$ROUTE_53_ROLE_ARN \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 fi
+
+CLOUDFRONT_DOMAIN_NAME=$(aws cloudformation describe-stacks \
+  --profile samhstn-admin \
+  --stack-name main \
+  --query "Stacks[*].Outputs[?OutputKey=='CloudFrontDomainName'].OutputValue|[0][0]" \
+  --output text)
+
+aws cloudformation deploy \
+  --profile samhstn-root \
+  --stack-name route53 \
+  --template-file ./infra/root/route53.yml \
+  --no-fail-on-empty-changeset \
+  --parameter-overrides \
+    CloudFrontDomainName=$CLOUDFRONT_DOMAIN_NAME | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 ./infra/venv/bin/python ./infra/configure_github_webhook.py

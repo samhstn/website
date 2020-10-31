@@ -90,7 +90,7 @@ Resources:
   WebhookRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ExecuteWebhook
+      RoleName: !Sub ExecuteWebhook-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -274,6 +274,7 @@ Resources:
   DeploymentRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub DeploymentRole-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -427,3 +428,5 @@ Outputs:
     Value: !GetAtt DeploymentRole.Arn
     Export:
       Name: DeploymentRoleArn
+  CloudFrontDomainName:
+    Value: !GetAtt CloudFront.DomainName
