@@ -5,21 +5,19 @@ Description: >
   + Creates and stores secrets
   + Sets up a lambda webhook for dynamic builds
   + Creates ECR repo
+  + Creates codepipeline
 
 Parameters:
   GithubPAToken:
     Type: String
     NoEcho: true
-
   GithubMasterBranch:
     Type: String
     Default: master
-
   Route53RoleArn:
     Type: String
     Default: ''
     Description: To be updated once role has been created in root account.
-
   SamhstnHostedZoneId:
     Type: String
 
@@ -56,6 +54,12 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: /aws/codebuild/DeleteProject
+      RetentionInDays: 14
+
+  MasterPipelineLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/codebuild/MasterProject
       RetentionInDays: 14
 
   WebhookFunction:
@@ -98,6 +102,9 @@ Resources:
             Version: 2012-10-17
             Statement:
               - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Sub arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${MasterPipeline}
+              - Effect: Allow
                 Action: codebuild:StartBuild
                 Resource:
                   - !GetAtt BuildDynamicProject.Arn
@@ -114,6 +121,102 @@ Resources:
               - Effect: Allow
                 Action: sts:AssumeRole
                 Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/ExecuteWebhook
+
+  MasterPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      Name: master
+      ArtifactStore:
+        Location: !ImportValue CodePipelineBucketName
+        Type: S3
+      RoleArn: !GetAtt DeploymentRole.Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              OutputArtifacts:
+                - Name: Source
+              Configuration:
+                Owner: samhstn
+                Repo: samhstn
+                Branch: !Ref GithubMasterBranch
+                OAuthToken: !Ref GithubPAToken
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: Build
+              Configuration:
+                ProjectName: !Ref MasterBuildProject
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              InputArtifacts:
+                - Name: Build
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CodeDeploy
+              Configuration:
+                ApplicationName: !Ref DeploymentApplication
+                DeploymentGroupName: !Ref DeploymentGroup
+              RunOrder: 1
+
+  MasterBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: MasterProject
+      ServiceRole: !GetAtt DeploymentRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infra/samhstn/masterspec.yml
+
+  DeploymentApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: master
+      ComputePlatform: Server
+
+  DeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      DeploymentGroupName: master
+      AutoScalingGroups:
+        - !GetAtt Master.Outputs.ScalingGroup
+      ApplicationName: !Ref DeploymentApplication
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      ServiceRoleArn: !GetAtt DeploymentRole.Arn
+
+  Master:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: deploy.yml
+      TimeoutInMinutes: 30
+      Parameters:
+        Environment: prod
+        CodeBuildBucketKey: ''
 
   BuildDynamicProject:
     Type: AWS::CodeBuild::Project
@@ -139,7 +242,7 @@ Resources:
         Auth:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
-        BuildSpec: ./infra/samhstn/buildspec.yml
+        BuildSpec: infra/samhstn/buildspec.yml
       Cache:
         Type: LOCAL
         Modes:
@@ -164,7 +267,7 @@ Resources:
         Auth:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
-        BuildSpec: ./infra/samhstn/deletespec.yml
+        BuildSpec: infra/samhstn/deletespec.yml
 
   DeploymentRole:
     Type: AWS::IAM::Role
@@ -192,6 +295,7 @@ Resources:
                 Resource:
                   - !GetAtt BuildProjectLogGroup.Arn
                   - !GetAtt DeleteProjectLogGroup.Arn
+                  - !GetAtt MasterPipelineLogGroup.Arn
               - Effect: Allow
                 Action:
                   - 'ssm:GetParameters'
@@ -200,9 +304,13 @@ Resources:
                   - 'ec2:*'
                   - 'codedeploy:*'
                   - 'autoscaling:*'
+                  - codebuild:StartBuild
+                  - codebuild:BatchGetBuilds
                   - elasticloadbalancing:DescribeLoadBalancers
+                  - elasticloadbalancing:DescribeTargetGroups
                   - elasticloadbalancing:CreateTargetGroup
                   - elasticloadbalancing:DeleteTargetGroup
+                  - elasticloadbalancing:AddTags
                 Resource: '*'
               - Effect: Allow
                 Action: 's3:*'
@@ -213,6 +321,12 @@ Resources:
                   - !Sub
                     - arn:aws:s3:::${CodeBuildBucketName}/*
                     - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                  - !Sub
+                    - arn:aws:s3:::${CodePipelineBucketName}
+                    - { CodePipelineBucketName: !ImportValue CodePipelineBucketName}
+                  - !Sub
+                    - arn:aws:s3:::${CodePipelineBucketName}/*
+                    - { CodePipelineBucketName: !ImportValue CodePipelineBucketName}
               - !If
                 - IsRoute53RoleSet
                 - Resource: !Ref Route53RoleArn

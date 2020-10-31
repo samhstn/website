@@ -25,7 +25,7 @@ phases:
     commands:
       - aws cloudformation deploy
           --stack-name "samhstn-${ISSUE_NUMBER}"
-          --template-file infra/samhstn/dynamic-build.yml
+          --template-file infra/samhstn/deploy.yml
           --no-fail-on-empty-changeset
           --capabilities CAPABILITY_IAM
           --parameter-overrides

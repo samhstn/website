@@ -7,10 +7,17 @@ Parameters:
   EC2AMI:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
-  GithubBranch:
-    Type: String
   CodeBuildBucketKey:
     Type: String
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prod
+      - dev
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
 
 Resources:
   VPC:
@@ -231,12 +238,14 @@ Resources:
 
   DeploymentApplication:
     Type: AWS::CodeDeploy::Application
+    Condition: IsDev
     Properties:
       ApplicationName: !Sub dynamic-${AWS::StackName}
       ComputePlatform: Server
 
   DeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
+    Condition: IsDev
     Properties:
       DeploymentGroupName: !Sub dynamic-${AWS::StackName}
       AutoScalingGroups:
@@ -322,3 +331,5 @@ Outputs:
     Value: !GetAtt LoadBalancer.DNSName
   LoadBalancerHostedZoneId:
     Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+  ScalingGroup:
+    Value: !Ref ScalingGroup

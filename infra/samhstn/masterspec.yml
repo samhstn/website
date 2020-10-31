@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - mix deps.get
+  pre_build:
+    commands:
+      - MIX_ENV=test mix compile
+      - mix test
+  build:
+    commands:
+      - mix phx.digest
+      - MIX_ENV=prod mix release
+      - mv infra/samhstn/{appspec.yml,start-service.sh,stop-service.sh} .
+
+artifacts:
+  files:
+    - start-service.sh
+    - stop-service.sh
+    - appspec.yml
+    - 'priv/**/*'
+    - '_build/prod/rel/samhstn/**/*'

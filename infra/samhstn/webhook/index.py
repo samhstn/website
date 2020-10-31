@@ -2,6 +2,7 @@ import boto3, hmac, hashlib, json, re, os
 from botocore.exceptions import ClientError
 
 CODEBUILD = boto3.client('codebuild')
+CODEPIPELINE = boto3.client('codepipeline')
 SECRETSMANAGER = boto3.client('secretsmanager')
 
 def handler(event, _context):
@@ -26,7 +27,7 @@ def handler(event, _context):
     branch = re.sub('^refs/heads/', '', body['ref'])
 
     if github_event == 'push' and branch == os.environ['GITHUB_MASTER_BRANCH']:
-        # boto3.client('codepipeline').start_pipeline_execution(name=branch)
+        CODEPIPELINE.start_pipeline_execution(name='master')
         return response(200, 'Running codepipeline')
 
     if github_event in ['push', 'delete']:
