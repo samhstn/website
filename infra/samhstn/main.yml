@@ -20,6 +20,8 @@ Parameters:
     Description: To be updated once role has been created in root account.
   SamhstnHostedZoneId:
     Type: String
+  GlobalCertificate:
+    Type: String
 
 Conditions:
   IsRoute53RoleSet: !Not [ !Equals [!Ref Route53RoleArn, '']]
@@ -334,6 +336,60 @@ Resources:
                   Action:
                     - sts:AssumeRole
                 - !Ref AWS::NoValue
+
+  CloudFront:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - samhstn.com
+        CacheBehaviors:
+          - DefaultTTL: 31622400
+            MaxTTL: 31622400
+            MinTTL: 31622400
+            PathPattern: '/static/*'
+            ForwardedValues:
+              QueryString: false
+              Headers:
+                - Host
+            CachedMethods:
+              - GET
+              - HEAD
+            AllowedMethods:
+              - GET
+              - HEAD
+            ViewerProtocolPolicy: allow-all
+            Compress: true
+            TargetOriginId: LoadBalancerOrigin
+        Origins:
+          - DomainName: !GetAtt Master.Outputs.LoadBalancerDNSName
+            Id: LoadBalancerOrigin
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - PATCH
+            - POST
+            - DELETE
+          ForwardedValues:
+            QueryString: true
+            Headers:
+              - Host
+            Cookies:
+              Forward: all
+          Compress: true
+          ViewerProtocolPolicy: redirect-to-https
+          TargetOriginId: LoadBalancerOrigin
+        Enabled: true
+        PriceClass: PriceClass_All
+        ViewerCertificate:
+          AcmCertificateArn: !Ref GlobalCertificate
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.1_2016
 
   EcrRepo:
     Type: AWS::ECR::Repository

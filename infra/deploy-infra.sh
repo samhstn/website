@@ -39,6 +39,11 @@ if [[ -z $CERTIFICATE ]]; then
   echo "CERTIFICATE=$CERTIFICATE" >> $ENV_FILE
 fi
 
+if [[ -z $GLOBAL_CERTIFICATE ]]; then
+  GLOBAL_CERTIFICATE=$(aws acm list-certificates --query "CertificateSummaryList[?DomainName=='samhstn.com'].CertificateArn|[0]" --output text)
+  echo "GLOBAL_CERTIFICATE=$GLOBAL_CERTIFICATE" >> $ENV_FILE
+fi
+
 if [[ -z $SAMHSTN_HOSTED_ZONE_ID ]];then
   SAMHSTN_HOSTED_ZONE_ID=$(aws route53 --profile samhstn-root list-hosted-zones --query "HostedZones[?Name=='samhstn.com.'].Id|[0]" --output text | sed 's/^\/hostedzone\///')
   echo "SAMHSTN_HOSTED_ZONE_ID=$SAMHSTN_HOSTED_ZONE_ID" >> $ENV_FILE
@@ -153,6 +158,7 @@ if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/samhstn-rout
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \
+      GlobalCertificate=$GLOBAL_CERTIFICATE \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 else
   aws cloudformation deploy \
@@ -189,6 +195,7 @@ else
       GithubPAToken=$SAMHSTN_PA_TOKEN \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \
+      GlobalCertificate=$GLOBAL_CERTIFICATE \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 fi
 
