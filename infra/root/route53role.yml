@@ -8,7 +8,7 @@ Resources:
   Route53Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: Route53Role-${AWS::Region}
+      RoleName: !Sub Route53Role-${AWS::Region}
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:

@@ -143,7 +143,7 @@ fi
 
 ROUTE_53_ROLE_ARN="$(aws cloudformation describe-stacks \
   --profile samhstn-root \
-  --stack-name samhstn-route53 \
+  --stack-name route53role \
   --query "Stacks[*].Outputs[?OutputKey=='Route53RoleArn'].OutputValue|[0][0]" \
   --output text 2>&1)"
 
@@ -184,7 +184,7 @@ else
     --stack-name route53role \
     --template-file ./infra/root/route53role.yml \
     --no-fail-on-empty-changeset \
-    --capabilities CAPABILITY_IAM \
+    --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       DeploymentRoleArn=$DEPLOYMENT_ROLE_ARN | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 

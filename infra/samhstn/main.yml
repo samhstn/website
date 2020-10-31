@@ -222,7 +222,6 @@ Resources:
 
   BuildDynamicProject:
     Type: AWS::CodeBuild::Project
-    Condition: IsRoute53RoleSet
     Properties:
       Name: BuildProject
       Artifacts:
