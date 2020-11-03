@@ -308,6 +308,7 @@ Resources:
                   - 'autoscaling:*'
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
+                  - elasticloadbalancing:CreateLoadBalancer
                   - elasticloadbalancing:DescribeLoadBalancers
                   - elasticloadbalancing:DescribeTargetGroups
                   - elasticloadbalancing:CreateTargetGroup
