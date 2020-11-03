@@ -260,8 +260,8 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
         EnvironmentVariables:
-          - Name: CODE_BUILD_BUCKET_NAME
-            Value: !ImportValue CodeBuildBucketName
+          - Name: SAMHSTN_HOSTED_ZONE_ID
+            Value: !Ref SamhstnHostedZoneId
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
