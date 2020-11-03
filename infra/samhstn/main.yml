@@ -244,6 +244,7 @@ Resources:
           Type: OAUTH
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: infra/samhstn/buildspec.yml
+        ReportBuildStatus: true
       Cache:
         Type: LOCAL
         Modes:
