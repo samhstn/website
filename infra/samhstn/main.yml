@@ -229,7 +229,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
         EnvironmentVariables:
           - Name: S3_CODEBUILD_BUCKET_NAME
             Value: !ImportValue CodeBuildBucketName
@@ -258,7 +258,7 @@ Resources:
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
-        Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+        Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
         EnvironmentVariables:
           - Name: CODE_BUILD_BUCKET_NAME
             Value: !ImportValue CodeBuildBucketName
@@ -300,7 +300,7 @@ Resources:
                   - !GetAtt MasterPipelineLogGroup.Arn
               - Effect: Allow
                 Action:
-                  - 'ssm:GetParameters'
+                  - ssm:GetParameters
                   - 'cloudformation:*'
                   - 'iam:*'
                   - 'ec2:*'

@@ -6,11 +6,6 @@ CODEPIPELINE = boto3.client('codepipeline')
 SECRETSMANAGER = boto3.client('secretsmanager')
 
 def handler(event, _context):
-    environ = {
-        'push': os.environ['BUILD_PROJECT'],
-        'delete': os.environ['DELETE_PROJECT']
-    }
-
     github_secret = SECRETSMANAGER.get_secret_value(SecretId='/GithubSecret')['SecretString']
     github_event = event['headers']['x-github-event']
 
@@ -30,13 +25,13 @@ def handler(event, _context):
         CODEPIPELINE.start_pipeline_execution(name='master')
         return response(200, 'Running codepipeline')
 
-    if github_event in ['push', 'delete']:
-        if '#' not in branch:
-            return response(200, 'Not buildable branch: %s' % branch)
+    if '#' not in branch:
+        return response(200, 'Not buildable branch: %s' % branch)
 
-        try:
+    try:
+        if github_event == 'push':
             boto3.client('codebuild').start_build(
-                projectName=environ[github_event],
+                projectName=os.environ['BUILD_PROJECT'],
                 sourceVersion=branch,
                 artifactsOverride={'type': 'NO_ARTIFACTS'},
                 environmentVariablesOverride=[
@@ -47,12 +42,28 @@ def handler(event, _context):
                     }
                 ]
             )
-        except ClientError as err:
-            return response(500, 'Build failed for branch %s. Err: %s' % (branch, err))
+            return response(200, 'Starting build project for branch: %s' % branch)
 
-        return response(200, 'Starting build for branch: %s' % branch)
-    else:
-        return response(500, 'Unknown github_event: %s' % github_event)
+        elif github_event == 'delete':
+            boto3.client('codebuild').start_build(
+                projectName=os.environ['DELETE_PROJECT'],
+                sourceVersion=os.environ['GITHUB_MASTER_BRANCH'],
+                artifactsOverride={'type': 'NO_ARTIFACTS'},
+                environmentVariablesOverride=[
+                    {
+                        'name': 'ISSUE_NUMBER',
+                        'value': branch.split('#')[-1],
+                        'type': 'PLAINTEXT'
+                    }
+                ]
+            )
+            return response(200, 'Starting delete project for branch: %s' % branch)
+
+        else:
+            return response(500, 'Unknown github_event: %s' % github_event)
+
+    except ClientError as err:
+        return response(500, 'Build failed for branch %s. Err: %s' % (branch, err))
 
 def response(statusCode, body):
     return {'statusCode': statusCode, 'body': body}
