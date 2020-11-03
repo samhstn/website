@@ -29,7 +29,7 @@ def handler(event, _context):
         return response(200, 'Not buildable branch: %s' % branch)
 
     try:
-        if github_event == 'push':
+        if github_event == 'push' and not body['deleted']:
             boto3.client('codebuild').start_build(
                 projectName=os.environ['BUILD_PROJECT'],
                 sourceVersion=branch,
