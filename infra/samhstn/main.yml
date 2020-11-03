@@ -308,6 +308,7 @@ Resources:
                   - 'autoscaling:*'
                   - codebuild:StartBuild
                   - codebuild:BatchGetBuilds
+                  - elasticloadbalancing:DescribeListeners
                   - elasticloadbalancing:CreateLoadBalancer
                   - elasticloadbalancing:CreateListener
                   - elasticloadbalancing:DescribeLoadBalancers
@@ -315,6 +316,7 @@ Resources:
                   - elasticloadbalancing:CreateTargetGroup
                   - elasticloadbalancing:DeleteTargetGroup
                   - elasticloadbalancing:DeleteLoadBalancer
+                  - elasticloadbalancing:DeleteListener
                   - elasticloadbalancing:AddTags
                 Resource: '*'
               - Effect: Allow
