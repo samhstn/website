@@ -262,6 +262,8 @@ Resources:
         EnvironmentVariables:
           - Name: SAMHSTN_HOSTED_ZONE_ID
             Value: !Ref SamhstnHostedZoneId
+          - Name: ROUTE_53_ROLE_ARN
+            Value: !Ref Route53RoleArn
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
