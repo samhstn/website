@@ -31,12 +31,19 @@ defmodule Samhstn.MixProject do
 
   defp deps do
     [
+      {:httpoison, "~> 1.7"},
       {:phoenix, "~> 1.5.4"},
       {:phoenix_html, "~> 2.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:sobelow, "~> 0.10.5", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
+      {:poison, "~> 3.0"},
+      {:ex_aws, "~> 2.1"},
+      {:ex_aws_s3, github: "ex-aws/ex_aws_s3", ref: "master"},
+      {:ex_aws_sts, "~> 2.0"},
+      {:sweet_xml, "~> 0.6"},
+      {:configparser_ex, "~> 4.0"}
     ]
   end
 end

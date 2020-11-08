@@ -15,5 +15,6 @@ defmodule SamhstnWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/:path", PageController, :routes
   end
 end

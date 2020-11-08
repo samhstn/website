@@ -5,3 +5,5 @@ config :samhstn, SamhstnWeb.Endpoint,
   server: false
 
 config :logger, level: :warn
+
+config :samhstn, :routes, SamhstnWeb.Routes.InMemory

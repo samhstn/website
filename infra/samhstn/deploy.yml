@@ -187,6 +187,11 @@ Resources:
               - Effect: Allow
                 Action: secretsmanager:GetSecretValue
                 Resource: !ImportValue SecretKeyBaseParameterArn
+              - Effect: Allow
+                Action:
+                  - s3:List*
+                  - s3:Get*
+                Resource: !Sub arn:aws:s3:::samhstn-assets-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName

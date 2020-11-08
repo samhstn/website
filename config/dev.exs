@@ -11,3 +11,11 @@ config :phoenix, :stacktrace_depth, 20
 
 # initialize plugs at runtime for faster dev compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :samhstn, :routes, SamhstnWeb.Routes.Sandbox
+
+config :ex_aws,
+  secret_access_key: [{:awscli, "samhstn-admin", 30}],
+  access_key_id: [{:awscli, "samhstn-admin", 30}],
+  region: "eu-west-1",
+  awscli_auth_adapter: ExAws.STS.AuthCache.AssumeRoleCredentialsAdapter
