@@ -46,7 +46,14 @@ defmodule SamhstnWeb.Routes.Client do
   """
   alias SamhstnWeb.Routes.{Route, RouteRef}
 
-  defdelegate init(), to: SamhstnWeb.Routes.Sandbox
+  def init() do
+    "samhstn-assets-741557730458"
+    |> ExAws.S3.download_file("routes.json", :memory)
+    |> ExAws.stream!()
+    |> Enum.join()
+    |> Jason.decode!()
+    |> Enum.map(&RouteRef.from_map/1)
+  end
 
   defdelegate get(route_ref), to: Route
 end
