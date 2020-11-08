@@ -132,6 +132,7 @@ aws cloudformation deploy \
     CodeBuildBucket=samhstn-codebuild-$AWS_ADMIN_ACCOUNT_ID \
     CodePipelineBucket=samhstn-codepipeline-$AWS_ADMIN_ACCOUNT_ID \
     MasterBuildCacheBucket=samhstn-master-build-cache-$AWS_ADMIN_ACCOUNT_ID \
+    AssetsBucket=samhstn-assets-$AWS_ADMIN_ACCOUNT_ID \
     Certificate=$CERTIFICATE | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
 
 mkdir -p infra/cfn_output/samhstn

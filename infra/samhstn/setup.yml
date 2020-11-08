@@ -24,6 +24,11 @@ Parameters:
     Type: String
     Description: S3 bucket for storing master codebuild caches.
 
+  AssetsBucket:
+    Type: String
+    Description: S3 bucket to store general assets.
+
+
 Resources:
   CloudformationS3Bucket:
     Type: AWS::S3::Bucket
@@ -75,6 +80,21 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref MasterBuildCacheBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  AssetsS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref AssetsBucket
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -137,3 +157,8 @@ Outputs:
     Value: !Ref MasterBuildCacheS3Bucket
     Export:
       Name: MasterBuildCacheS3BucketName
+
+  AssetsBucketName:
+    Value: !Ref AssetsS3Bucket
+    Export:
+      Name: AssetsBucketName
