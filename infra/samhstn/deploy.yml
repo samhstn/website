@@ -1,0 +1,335 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  EC2InstanceType:
+    Type: String
+    Default: t2.micro
+  EC2AMI:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+  CodeBuildBucketKey:
+    Type: String
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - prod
+      - dev
+
+Conditions:
+  IsDev: !Equals [!Ref Environment, dev]
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Ref AWS::StackName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn:
+      - InternetGateway
+      - InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationAZ1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ1
+
+  SubnetRouteTableAssociationAZ2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref SubnetAZ2
+
+  SubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock:  10.0.0.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: AZ
+          Value: !Select [0, !GetAZs '']
+
+  SubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock:  10.0.64.0/18
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+        - Key: AZ
+          Value: !Select [1, !GetAZs '']
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !GetAtt SecurityGroup.GroupId
+      Subnets:
+        - !Ref SubnetAZ1
+        - !Ref SubnetAZ2
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  HTTPSLoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref HTTPSLoadBalancerTargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Certificates:
+        - CertificateArn: !ImportValue Certificate
+      Port: 443
+      Protocol: HTTPS
+
+  HTTPSLoadBalancerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      TargetType: instance
+      Port: 8443
+      Protocol: HTTPS
+      VpcId: !Ref VPC
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTPS
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: !Sub Internal Security group for ${AWS::StackName}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - ec2.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: ec2InstancePolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: ec2:DescribeTags
+                Resource: '*'
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+
+  ScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: "1"
+        MaxBatchSize: "1"
+        PauseTime: "PT15M"
+        WaitOnResourceSignals: "true"
+        SuspendProcesses:
+          - HealthCheck
+          - ReplaceUnhealthy
+          - AZRebalance
+          - AlarmNotification
+          - ScheduledActions
+    Properties:
+      AutoScalingGroupName: !Sub 'ASG_${AWS::StackName}'
+      AvailabilityZones:
+        - !Select [0, !GetAZs '']
+        - !Select [1, !GetAZs '']
+      DesiredCapacity: 1
+      MinSize: 1
+      MaxSize: 6
+      HealthCheckGracePeriod: 0
+      HealthCheckType: ELB
+      LaunchTemplate:
+        LaunchTemplateId: !Ref InstanceLaunchTemplate
+        Version: !GetAtt InstanceLaunchTemplate.LatestVersionNumber
+      TargetGroupARNs:
+        - !Ref HTTPSLoadBalancerTargetGroup
+      MetricsCollection:
+        - Granularity: "1Minute"
+          Metrics:
+            - "GroupMaxSize"
+            - "GroupInServiceInstances"
+      VPCZoneIdentifier:
+        - !Ref SubnetAZ1
+        - !Ref SubnetAZ2
+      Tags:
+        - Key: Name
+          Value: !Ref AWS::StackName
+          PropagateAtLaunch: "true"
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - Ref: InstanceRole
+
+  DeploymentApplication:
+    Type: AWS::CodeDeploy::Application
+    Condition: IsDev
+    Properties:
+      ApplicationName: !Sub dynamic-${AWS::StackName}
+      ComputePlatform: Server
+
+  DeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Condition: IsDev
+    Properties:
+      DeploymentGroupName: !Sub dynamic-${AWS::StackName}
+      AutoScalingGroups:
+        - !Ref ScalingGroup
+      ApplicationName: !Ref DeploymentApplication
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      ServiceRoleArn: !ImportValue DeploymentRoleArn
+      Deployment:
+        Revision:
+          RevisionType: S3
+          S3Location:
+            Bucket: !ImportValue CodeBuildBucketName
+            BundleType: zip
+            Key: !Ref CodeBuildBucketKey
+
+  InstanceLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Metadata:
+      AWS::CloudFormation::Init:
+        config:
+          packages:
+            yum:
+              ruby: []
+              jq: []
+          files:
+            /home/ec2-user/install:
+              source: !Sub https://aws-codedeploy-${AWS::Region}.s3.amazonaws.com/latest/install
+              mode: '000755' # executable
+          commands:
+            00-install-cd-agent:
+              command: ./install auto
+              cwd: /home/ec2-user/
+    Properties:
+      LaunchTemplateName: !Sub LaunchTemplate${AWS::StackName}
+      LaunchTemplateData:
+        ImageId: !Ref EC2AMI
+        InstanceType: !Ref EC2InstanceType
+        IamInstanceProfile:
+          Arn: !GetAtt InstanceProfile.Arn
+        Monitoring:
+          Enabled: true
+        SecurityGroupIds:
+          - !GetAtt SecurityGroup.GroupId
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash -xe
+
+            # send script output to /tmp so we can debug boot failures
+            exec > /tmp/userdata.log 2>&1
+
+            # see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/best-practices.html#cfninit
+            yum -y update
+            yum install -y aws-cfn-bootstrap
+
+            # install files and packages from cloudformation metadata
+            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource InstanceLaunchTemplate
+
+            ln -s /usr/lib64/libtinfo.so.{6,5}
+
+            cat > /tmp/install_script.sh << EOF
+              mkdir -p /home/ec2-user/app/keys
+              cd /home/ec2-user/app/keys
+              openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+                          -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
+            EOF
+
+            chown ec2-user:ec2-user /tmp/install_script.sh && chmod a+x /tmp/install_script.sh
+            sleep 1; su - ec2-user -c "/tmp/install_script.sh"
+
+            # Query the EC2 metadata service for this instance's instance-id
+            export INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
+
+            export LOGICAL_ID=`aws --region ${AWS::Region} ec2 describe-tags \
+              --filters "Name=resource-id,Values=${!INSTANCE_ID}" \
+                        "Name=key,Values=aws:cloudformation:logical-id" \
+              | jq -r ".Tags[0].Value"`
+
+            # signal to cloudFormation that the instance is ready
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
+
+Outputs:
+  LoadBalancerDNSName:
+    Value: !GetAtt LoadBalancer.DNSName
+  LoadBalancerHostedZoneId:
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+  ScalingGroup:
+    Value: !Ref ScalingGroup

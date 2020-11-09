@@ -1,2 +1,14 @@
-node_modules
-badge.svg
+/_build/
+/deps/
+**/node_modules/
+erl_crash.dump
+**/.env
+infra/cfn_output
+infra/venv/
+__pycache__/
+.coverage
+htmlcov/
+priv/static/*
+!priv/static/favicon.svg
+!priv/static/script.js
+!priv/static/style.css

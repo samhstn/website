@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Sets up s3 buckets and other resources which are difficult to tear down and spin up programatically.
+
+Parameters:
+  EmailBucket:
+    Type: String
+    Description: S3 bucket for storing @samhstn.com emails.
+  CloudformationBucket:
+    Type: String
+    Description: S3 bucket for storing our cloudformation templates and other referenced files.
+
+Resources:
+  EmailRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: SamhstnRuleSet
+
+  EmailS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref EmailBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  CloudformationS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref CloudformationBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+Outputs:
+  EmailBucketName:
+    Value: !Ref EmailS3Bucket
+    Export:
+      Name: EmailBucketName
+
+  CloudformationBucketName:
+    Value: !Ref CloudformationS3Bucket
+    Export:
+      Name: CloudformationBucketName
+
+  EmailRuleSetName:
+    Value: !Ref EmailRuleSet
+    Export:
+      Name: EmailRuleSetName

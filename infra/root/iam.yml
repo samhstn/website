@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >
+  Creates a cross account, root access role for a project admin to assume.
+  Specifies the resources for this role to access in our root (master billing) account.
+
+Parameters:
+  Project:
+    Type: String
+    Description: "Project name in pascal case, e.g. Samhstn"
+  AccountId:
+    Type: String
+    Description: "Account to grant root access"
+
+Resources:
+  RootPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref RootRole
+      PolicyName: RootPolicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Resource: '*'
+            Action:
+              - route53:*
+              - s3:*
+              - cloudformation:*
+              - ses:*
+              - iam:*
+              - acm:*
+              - lambda:*
+
+  RootRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Project}Root
+      MaxSessionDuration: 43200
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AccountId}:user/admin
+            Action: sts:AssumeRole
