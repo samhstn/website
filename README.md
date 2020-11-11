@@ -42,3 +42,11 @@ git clone git@github.com:samhstn/samhstn.git && cd samhstn
 ### AWS Setup
 
 Checkout the [infra](./infra/README.md) documentation for guidance.
+
+### Pre-commit hook
+
+To configure the pre-commit hook to run on every commit, run:
+
+```bash
+./pre-commit-hook
+```

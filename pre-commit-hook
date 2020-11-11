@@ -1,0 +1,6 @@
+#!/bin/bash
+
+cp pre-commit-hook .git/hooks/pre-commit
+
+MIX_ENV=test mix format --check-formatted
+mix test
