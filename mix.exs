@@ -12,6 +12,9 @@ defmodule Samhstn.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+      ],
       deps: deps()
     ]
   end
@@ -32,7 +35,8 @@ defmodule Samhstn.MixProject do
       {:phoenix_html, "~> 2.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:sobelow, "~> 0.10.5", only: [:dev, :test], runtime: false}
+      {:sobelow, "~> 0.10.5", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 end

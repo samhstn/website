@@ -12,3 +12,6 @@ priv/static/*
 !priv/static/favicon.svg
 !priv/static/script.js
 !priv/static/style.css
+# for plts info, see: https://github.com/jeremyjh/dialyxir#continuous-integration
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
