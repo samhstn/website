@@ -24,7 +24,9 @@ defmodule SamhstnWeb.Routes.Route do
   end
 
   def get(%RouteRef{source: "s3"} = route_ref) do
-    {bucket, path} = from_arn(route_ref.ref)
+    "arn:aws:s3:::" <> rest = route_ref.ref
+
+    [bucket, path] = String.split(rest, "/")
 
     body =
       ExAws.S3.download_file(bucket, path, :memory)
@@ -32,10 +34,6 @@ defmodule SamhstnWeb.Routes.Route do
       |> Enum.join()
 
     {:ok, %Route{path: route_ref.path, type: route_ref.type, body: body}}
-  end
-
-  defp from_arn("arn:aws:s3:::" <> rest) do
-    rest |> String.split("/") |> List.to_tuple()
   end
 end
 
@@ -60,7 +58,8 @@ end
 
 defmodule SamhstnWeb.Routes.Sandbox do
   @moduledoc """
-  Provides simple routing for simple urls according to content of priv/routes.json
+  Provides simple routing for urls according the content of priv/assets,
+  behaves as if priv/assets was our s3 bucket.
   """
   alias SamhstnWeb.Routes.{Route, RouteRef, InMemory}
 
@@ -84,9 +83,9 @@ defmodule SamhstnWeb.Routes.Sandbox do
   def get(%RouteRef{source: "url"} = route_ref), do: Route.get(route_ref)
 
   def get(%RouteRef{source: "s3"} = route_ref) do
+    with path <- Path.join(File.cwd!(), "priv/assets/")
     SamhstnWeb.Routes.Route.get(route_ref)
   end
-  # defdelegate get(route), to: SamhstnWeb.Routes.InMemory
 end
 
 defmodule SamhstnWeb.Routes.InMemory do
