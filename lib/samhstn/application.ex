@@ -3,7 +3,7 @@ defmodule Samhstn.Application do
 
   def start(_type, _args) do
     Supervisor.start_link(
-      [SamhstnWeb.Endpoint, SamhstnWeb.Routes],
+      [SamhstnWeb.Endpoint, Samhstn.Routes],
       [strategy: :one_for_one, name: Samhstn.Supervisor]
     )
   end

@@ -1,7 +1,7 @@
 defmodule SamhstnWeb.PageController do
   use SamhstnWeb, :controller
 
-  alias SamhstnWeb.Routes.Route
+  alias Samhstn.Routes.Route
 
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, _params) do
@@ -9,7 +9,7 @@ defmodule SamhstnWeb.PageController do
   end
 
   def routes(conn, %{"path" => path}) do
-    case SamhstnWeb.Routes.get(path) do
+    case Samhstn.Routes.get(path) do
       {:ok, %Route{type: "json", body: body}} ->
         json(conn, body)
 
