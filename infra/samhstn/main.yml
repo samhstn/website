@@ -194,6 +194,11 @@ Resources:
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/samhstn/masterspec.yml
+      Cache:
+        Type: S3
+        Location: !ImportValue MasterBuildCacheS3BucketName
+        Modes:
+          - LOCAL_CUSTOM_CACHE
 
   DeploymentApplication:
     Type: AWS::CodeDeploy::Application

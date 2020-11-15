@@ -20,5 +20,11 @@ artifacts:
     - start-service.sh
     - stop-service.sh
     - appspec.yml
-    - 'priv/**/*'
+    - 'priv/static/**/*'
     - '_build/prod/rel/samhstn/**/*'
+
+cache:
+  paths:
+    - _build
+    - deps
+    - priv/plts

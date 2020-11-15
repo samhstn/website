@@ -69,3 +69,8 @@ phases:
           --profile root \
           --hosted-zone-id $SAMHSTN_HOSTED_ZONE_ID \
           --change-batch file://change-batch.json
+
+cache:
+  paths:
+    - _build
+    - priv/plts

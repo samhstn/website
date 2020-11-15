@@ -18,7 +18,11 @@ Parameters:
 
   CodePipelineBucket:
     Type: String
-    Description: S3 bucket for codepipelien artifacts.
+    Description: S3 bucket for codepipeline artifacts.
+
+  MasterBuildCacheBucket:
+    Type: String
+    Description: S3 bucket for storing master codebuild caches.
 
 Resources:
   CloudformationS3Bucket:
@@ -56,6 +60,21 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref CodePipelineBucket
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  MasterBuildCacheS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref MasterBuildCacheBucket
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -113,3 +132,8 @@ Outputs:
     Value: !Ref CodePipelineS3Bucket
     Export:
       Name: CodePipelineBucketName
+
+  MasterBuildCacheS3BucketName:
+    Value: !Ref MasterBuildCacheS3Bucket
+    Export:
+      Name: MasterBuildCacheS3BucketName
