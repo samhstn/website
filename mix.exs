@@ -31,7 +31,8 @@ defmodule Samhstn.MixProject do
       {:phoenix, "~> 1.5.4"},
       {:phoenix_html, "~> 2.11"},
       {:jason, "~> 1.0"},
-      {:plug_cowboy, "~> 2.0"}
+      {:plug_cowboy, "~> 2.0"},
+      {:sobelow, "~> 0.10.5", only: [:dev, :test], runtime: false}
     ]
   end
 end
