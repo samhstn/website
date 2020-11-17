@@ -4,6 +4,10 @@ phases:
   install:
     commands:
       - mix deps.get
+      - ls -alL _build
+      - ls -alL _build/test/lib/phoenix/
+      - ls -alL _build/test/lib/phoenix/ebin
+      - # cat _build/test/lib/phoenix/ebin/Elixir.Phoenix.ActionClauseError.beam
   pre_build:
     commands:
       - MIX_ENV=test mix compile
@@ -72,5 +76,7 @@ phases:
 
 cache:
   paths:
-    - _build
-    - priv/plts
+    - '_build/test/lib/phoenix/**/*'
+    - _build/test/lib/phoenix
+    - _build/test/lib/phoenix/ebin
+    - _build/test/lib/phoenix/ebin/*
