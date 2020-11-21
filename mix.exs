@@ -32,7 +32,7 @@ defmodule Samhstn.MixProject do
       {:phoenix_html, "~> 2.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:cowlib, "~> 2.8.0"}
+      {:sobelow, "~> 0.10.5", only: [:dev, :test], runtime: false}
     ]
   end
 end
