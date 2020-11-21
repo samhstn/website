@@ -1,8 +1,13 @@
 version: 0.2
 
+env:
+  shell: bash
+
 phases:
   install:
     commands:
+      - aws s3 cp --recursive s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build _build
+      - aws s3 cp --recursive s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps deps
       - mix deps.get
   pre_build:
     commands:
@@ -14,6 +19,10 @@ phases:
       - mix phx.digest
       - MIX_ENV=prod mix release
       - mv infra/samhstn/{appspec.yml,start-service.sh,stop-service.sh} .
+  post_build:
+    commands:
+      - aws s3 sync --delete _build s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build
+      - aws s3 sync --delete deps s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps
 
 artifacts:
   files:
@@ -22,9 +31,3 @@ artifacts:
     - appspec.yml
     - 'priv/static/**/*'
     - '_build/prod/rel/samhstn/**/*'
-
-cache:
-  paths:
-    - _build
-    - deps
-    - priv/plts

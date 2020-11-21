@@ -191,14 +191,12 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image:  !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/samhstn:latest
+        EnvironmentVariables:
+          - Name: MASTER_BUILD_CACHE_BUCKET_NAME
+            Value: !ImportValue MasterBuildCacheS3BucketName
       Source:
         Type: CODEPIPELINE
         BuildSpec: infra/samhstn/masterspec.yml
-      Cache:
-        Type: S3
-        Location: !ImportValue MasterBuildCacheS3BucketName
-        Modes:
-          - LOCAL_CUSTOM_CACHE
 
   DeploymentApplication:
     Type: AWS::CodeDeploy::Application
@@ -242,6 +240,8 @@ Resources:
             Value: !Ref Route53RoleArn
           - Name: SAMHSTN_HOSTED_ZONE_ID
             Value: !Ref SamhstnHostedZoneId
+          - Name: MASTER_BUILD_CACHE_BUCKET_NAME
+            Value: !ImportValue MasterBuildCacheS3BucketName
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB
@@ -250,10 +250,6 @@ Resources:
         Location: https://github.com/samhstn/samhstn.git
         BuildSpec: infra/samhstn/buildspec.yml
         ReportBuildStatus: true
-      Cache:
-        Type: LOCAL
-        Modes:
-          - LOCAL_CUSTOM_CACHE
 
   DeleteDynamicProject:
     Type: AWS::CodeBuild::Project
@@ -332,16 +328,22 @@ Resources:
                 Resource:
                   - !Sub
                     - arn:aws:s3:::${CodeBuildBucketName}
-                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                    - {CodeBuildBucketName: !ImportValue CodeBuildBucketName}
                   - !Sub
                     - arn:aws:s3:::${CodeBuildBucketName}/*
-                    - { CodeBuildBucketName: !ImportValue CodeBuildBucketName}
+                    - {CodeBuildBucketName: !ImportValue CodeBuildBucketName}
                   - !Sub
                     - arn:aws:s3:::${CodePipelineBucketName}
-                    - { CodePipelineBucketName: !ImportValue CodePipelineBucketName}
+                    - {CodePipelineBucketName: !ImportValue CodePipelineBucketName}
                   - !Sub
                     - arn:aws:s3:::${CodePipelineBucketName}/*
-                    - { CodePipelineBucketName: !ImportValue CodePipelineBucketName}
+                    - {CodePipelineBucketName: !ImportValue CodePipelineBucketName}
+                  - !Sub
+                    - arn:aws:s3:::${MasterBuildCacheS3BucketName}
+                    - {MasterBuildCacheS3BucketName: !ImportValue MasterBuildCacheS3BucketName}
+                  - !Sub
+                    - arn:aws:s3:::${MasterBuildCacheS3BucketName}/*
+                    - {MasterBuildCacheS3BucketName: !ImportValue MasterBuildCacheS3BucketName}
               - !If
                 - IsRoute53RoleSet
                 - Resource: !Ref Route53RoleArn
