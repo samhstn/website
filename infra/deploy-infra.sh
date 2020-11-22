@@ -49,6 +49,12 @@ if [[ -z $SAMHSTN_HOSTED_ZONE_ID ]];then
   echo "SAMHSTN_HOSTED_ZONE_ID=$SAMHSTN_HOSTED_ZONE_ID" >> $ENV_FILE
 fi
 
+if [[ -z $SECRET_KEY_BASE ]];then
+  bash -c 'mix do deps.get, compile'
+  SECRET_KEY_BASE=$(mix phx.gen.secret)
+  echo "SECRET_KEY_BASE=$SECRET_KEY_BASE" >> $ENV_FILE
+fi
+
 if ! [ -d infra/venv ]; then
   echo "creating new venv"
   python3 -m venv infra/venv
@@ -157,6 +163,7 @@ if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/Route53Role"
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
+      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \
@@ -170,6 +177,7 @@ else
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
+      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
@@ -197,6 +205,7 @@ else
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
+      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \

@@ -184,6 +184,9 @@ Resources:
               - Effect: Allow
                 Action: ec2:DescribeTags
                 Resource: '*'
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !ImportValue SecretKeyBaseParameterArn
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
@@ -310,6 +313,9 @@ Resources:
               cd /home/ec2-user/app/keys
               openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
                           -subj "/C=/ST=/L=/O=/CN=localhost" -keyout key.pem -out cert.pem
+
+              echo "export SECRET_KEY_BASE=`aws --region ${AWS::Region} secretsmanager get-secret-value \
+                --secret-id '/SecretKeyBase' --query SecretString --output text`" >> /home/ec2-user/.bashrc
             EOF
 
             chown ec2-user:ec2-user /tmp/install_script.sh && chmod a+x /tmp/install_script.sh
