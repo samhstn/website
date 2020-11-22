@@ -6,8 +6,8 @@ env:
 phases:
   install:
     commands:
-      - aws s3 cp --recursive s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build _build
-      - aws s3 cp --recursive s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps deps
+      - aws s3 cp --recursive --quiet s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build _build || true
+      - aws s3 cp --recursive --quiet s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps deps || true
       - mix deps.get
   pre_build:
     commands:
@@ -17,13 +17,14 @@ phases:
       - mix test
   build:
     commands:
-      - mix phx.digest
+      - MIX_ENV=prod mix phx.digest
       - MIX_ENV=prod mix release
       - mv infra/samhstn/{appspec.yml,start-service.sh,stop-service.sh} .
   post_build:
     commands:
-      - aws s3 sync --delete _build s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build
-      - aws s3 sync --delete deps s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps
+      - aws s3 sync --delete --quiet _build/prod/lib s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build/prod/lib
+      - aws s3 sync --delete --quiet _build/test s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/_build/test
+      - aws s3 sync --delete --quiet deps s3://${MASTER_BUILD_CACHE_BUCKET_NAME}/deps
 
 artifacts:
   files:
