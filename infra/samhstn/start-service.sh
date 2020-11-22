@@ -7,6 +7,8 @@ cp -r ../keys priv/
 export SAMHSTN_PORT=8443
 export SAMHSTN_HOST=$(hostname)
 
+echo $SECRET_KEY_BASE
+
 # Query the EC2 metadata service for this instance's region
 REGION=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq .region -r`
 

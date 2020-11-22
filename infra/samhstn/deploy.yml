@@ -334,6 +334,10 @@ Resources:
                         "Name=key,Values=aws:cloudformation:logical-id" \
               | jq -r ".Tags[0].Value"`
 
+
+            export SECRET_KEY_BASE=`aws --region ${AWS::Region} secretsmanager get-secret-value \
+              --secret-id '/SecretKeyBase' --query SecretString --output text`
+
             # signal to cloudFormation that the instance is ready
             /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource ${!LOGICAL_ID}
 
