@@ -1,8 +1,21 @@
 version: 0.2
 
+env:
+  shell: bash
+
 phases:
   install:
     commands:
+      - |
+        if aws s3 ls s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache &> /dev/null;then
+          echo "Using branch specific cache."
+          aws s3 cp --quiet --recursive s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache/_build _build
+          aws s3 cp --quiet --recursive s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache/deps deps
+        else
+          echo "Branch specific cache doesn't exist, using cache from master if it exists."
+          aws s3 cp --quiet --recursive s3://$MASTER_BUILD_CACHE_BUCKET_NAME/_build _build || true
+          aws s3 cp --quiet --recursive s3://$MASTER_BUILD_CACHE_BUCKET_NAME/deps deps || true
+        fi
       - mix deps.get
   pre_build:
     commands:
@@ -12,9 +25,8 @@ phases:
       - mix test
   build:
     commands:
-      - mix phx.digest
+      - MIX_ENV=prod mix phx.digest
       - MIX_ENV=prod mix release
-      - echo $S3_CODEBUILD_BUCKET_NAME
       - zip -r ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip priv
       - zip -qr ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip _build/prod/rel/samhstn
       - zip -j ${CODEBUILD_RESOLVED_SOURCE_VERSION}.zip
@@ -44,7 +56,6 @@ phases:
       - aws configure --profile root set aws_secret_access_key $(echo $ASSUME_ROLE | jp -u 'Credentials.SecretAccessKey')
       - aws configure --profile root set aws_session_token $(echo $ASSUME_ROLE | jp -u 'Credentials.SessionToken')
       - |
-        #!/bin/bash
         set -e
 
         cat <<EOF > change-batch.json
@@ -70,3 +81,6 @@ phases:
           --profile root \
           --hosted-zone-id $SAMHSTN_HOSTED_ZONE_ID \
           --change-batch file://change-batch.json
+      - aws s3 sync --quiet --delete _build/prod/lib s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache/_build/prod/lib
+      - aws s3 sync --quiet --delete _build/test s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache/_build/test
+      - aws s3 sync --quiet --delete deps s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}/cache/deps
