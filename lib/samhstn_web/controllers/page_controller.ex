@@ -8,15 +8,16 @@ defmodule SamhstnWeb.PageController do
     render(conn, "index.html")
   end
 
+  @spec routes(Plug.Conn.t(), map) :: Plug.Conn.t()
   def routes(conn, %{"path" => path}) do
     case Samhstn.Routes.get(path) do
-      {:ok, %Route{type: "json", body: body}} ->
+      {:ok, %Route{type: :json, body: body}} ->
         json(conn, body)
 
-      {:ok, %Route{type: "text", body: body}} ->
+      {:ok, %Route{type: :text, body: body}} ->
         text(conn, body)
 
-      {:ok, %Route{type: "html", body: body}} ->
+      {:ok, %Route{type: :html, body: body}} ->
         html(conn, body)
 
       {:error, :not_found} ->

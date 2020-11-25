@@ -1,29 +1,19 @@
 defmodule Samhstn.Routes.Route do
+  @enforce_keys [:path, :type, :body]
   defstruct [:path, :type, :body]
 
-  alias Samhstn.Routes.{Route, RouteRef}
+  @type t :: %__MODULE__{
+          path: String.t(),
+          type: :text | :html | :json,
+          body: String.t()
+        }
 
-  def get(%RouteRef{source: "url"} = route_ref) do
-    case HTTPoison.get(route_ref.ref) do
-      {:ok, %HTTPoison.Response{body: body}} ->
-        {:ok, %Route{path: route_ref.path, type: route_ref.type, body: body}}
+  @type error :: String.t()
 
-      {:error, error} ->
-        {:error, error}
-    end
-  end
+  @spec parse_s3_ref(String.t()) :: map
+  def parse_s3_ref("arn:aws:s3:::" <> rest) do
+    [bucket | path] = String.split(rest, "/")
 
-  def get(%RouteRef{source: "s3"} = route_ref) do
-    "arn:aws:s3:::" <> rest = route_ref.ref
-
-    [bucket, path] = String.split(rest, "/")
-
-    body =
-      ExAws.S3.download_file(bucket, path, :memory)
-      |> ExAws.stream!()
-      |> Enum.join()
-
-    {:ok, %Route{path: route_ref.path, type: route_ref.type, body: body}}
+    %{bucket: bucket, object: Enum.join(path, "/")}
   end
 end
-
