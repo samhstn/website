@@ -28,7 +28,6 @@ Parameters:
     Type: String
     Description: S3 bucket to store general assets.
 
-
 Resources:
   CloudformationS3Bucket:
     Type: AWS::S3::Bucket
