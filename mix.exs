@@ -10,6 +10,7 @@ defmodule Samhstn.MixProject do
       version: @version,
       elixir: "~> #{@elixir_version}",
       elixirc_paths: elixirc_paths(Mix.env()),
+      elixirc_options: [warnings_as_errors: true],
       compilers: [:phoenix] ++ Mix.compilers(),
       start_permanent: Mix.env() == :prod,
       dialyzer: [
