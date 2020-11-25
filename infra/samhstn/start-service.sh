@@ -4,7 +4,6 @@ cd /home/ec2-user/app/release
 
 cp -r ../keys priv/
 
-export SECRET_KEY_BASE='secretExampleQrzdplBPdbHHhr2bpELjiGVGVqmjvFl2JEXdkyla8l6+b2CCcvs'
 export SAMHSTN_PORT=8443
 export SAMHSTN_HOST=$(hostname)
 
