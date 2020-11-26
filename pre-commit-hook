@@ -1,7 +1,10 @@
 #!/bin/bash
 
+set -e
+
 cp pre-commit-hook .git/hooks/pre-commit
 
+MIX_ENV=test mix compile --force
 MIX_ENV=test mix dialyzer
 MIX_ENV=test mix format --check-formatted
 mix test

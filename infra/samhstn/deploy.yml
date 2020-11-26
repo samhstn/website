@@ -187,6 +187,11 @@ Resources:
               - Effect: Allow
                 Action: secretsmanager:GetSecretValue
                 Resource: !ImportValue SecretKeyBaseParameterArn
+              - Effect: Allow
+                Action:
+                  - s3:List*
+                  - s3:Get*
+                Resource: !Sub arn:aws:s3:::samhstn-assets-${AWS::AccountId}
       Tags:
         - Key: Name
           Value: !Ref AWS::StackName
@@ -316,6 +321,8 @@ Resources:
 
               echo "export SECRET_KEY_BASE=`aws --region ${AWS::Region} secretsmanager get-secret-value \
                 --secret-id '/SecretKeyBase' --query SecretString --output text`" >> /home/ec2-user/.bashrc
+
+              echo "export SAMHSTN_ASSETS_BUCKET=samhstn-assets-${AWS::AccountId}" >> /home/ec2-user/.bashrc
             EOF
 
             chown ec2-user:ec2-user /tmp/install_script.sh && chmod a+x /tmp/install_script.sh

@@ -10,6 +10,7 @@ phases:
       - LOAD_BALANCER_DNS_NAME=$(echo $DYNAMIC_BUILD | jp -u "Stacks[*].Outputs[?OutputKey=='LoadBalancerDNSName'].OutputValue|[0][0]")
       - LOAD_BALANCER_HOSTED_ZONE_ID=$(echo $DYNAMIC_BUILD | jp -u "Stacks[*].Outputs[?OutputKey=='LoadBalancerHostedZoneId'].OutputValue|[0][0]")
       - aws cloudformation delete-stack --stack-name samhstn-${ISSUE_NUMBER}
+      - aws s3 rm --recursive s3://${S3_CODEBUILD_BUCKET_NAME}/${ISSUE_NUMBER}
       - ASSUME_ROLE=$(aws sts assume-role
           --role-arn $ROUTE_53_ROLE_ARN
           --role-session-name root

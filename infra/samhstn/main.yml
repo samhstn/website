@@ -275,6 +275,8 @@ Resources:
             Value: !Ref SamhstnHostedZoneId
           - Name: ROUTE_53_ROLE_ARN
             Value: !Ref Route53RoleArn
+          - Name: S3_CODEBUILD_BUCKET_NAME
+            Value: !ImportValue CodeBuildBucketName
       ServiceRole: !Ref DeploymentRole
       Source:
         Type: GITHUB

@@ -7,3 +7,7 @@ config :samhstn, SamhstnWeb.Endpoint,
   server: true
 
 config :logger, level: :info
+
+config :samhstn, :routes, Samhstn.Routes.Client
+
+config :ex_aws, region: "eu-west-1"

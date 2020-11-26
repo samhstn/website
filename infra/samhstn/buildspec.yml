@@ -21,7 +21,7 @@ phases:
       - mix deps.get
   pre_build:
     commands:
-      - MIX_ENV=test mix compile
+      - MIX_ENV=test mix compile --force
       - MIX_ENV=test mix dialyzer
       - MIX_ENV=test mix format --check-formatted
       - MIX_ENV=test mix sobelow --router lib/samhstn_web/router.ex
