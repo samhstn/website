@@ -9,6 +9,9 @@ defmodule SamhstnWeb.PageController do
   end
 
   @spec routes(Plug.Conn.t(), map) :: Plug.Conn.t()
+  # marked as a false positive as we trust the
+  # html data coming through from our routes.json file.
+  # sobelow_skip ["XSS.HTML"]
   def routes(conn, %{"path" => path}) do
     case Samhstn.Routes.get(path) do
       {:ok, %Route{type: :json, body: body}} ->

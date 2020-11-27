@@ -8,6 +8,8 @@ defmodule Samhstn.Routes.Sandbox do
   require Logger
 
   @spec init() :: [RouteRef.t()]
+  # marked as a false positive as the sandbox is only used in development
+  # sobelow_skip ["Traversal.FileModule"]
   def init() do
     with path <- Path.join(File.cwd!(), "priv/assets/routes.json"),
          {:ok, json} <- File.read(path),
@@ -29,6 +31,8 @@ defmodule Samhstn.Routes.Sandbox do
   @spec get(RouteRef.t()) :: {:ok, Route.t()} | {:error, Route.error()}
   def get(%RouteRef{source: "url"} = route_ref), do: Client.get(route_ref)
 
+  # marked as a false positive as the sandbox is only used in development
+  # sobelow_skip ["Traversal.FileModule"]
   def get(%RouteRef{source: "s3"} = route_ref) do
     with %{object: object} <- Route.parse_s3_ref(route_ref.ref),
          {:ok, body} <- File.read(Path.join([File.cwd!(), "priv/assets", object])) do
