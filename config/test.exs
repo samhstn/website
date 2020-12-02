@@ -7,3 +7,5 @@ config :samhstn, SamhstnWeb.Endpoint,
 config :logger, level: :warn
 
 config :samhstn, :routes, Samhstn.Routes.InMemory
+
+config :samhstn, :children, [SamhstnWeb.Endpoint]
