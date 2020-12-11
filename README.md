@@ -35,8 +35,15 @@ Phoenix v1.5.4
 # clone repository
 git clone git@github.com:samhstn/samhstn.git && cd samhstn
 
-# install dependencies, run tests and start the dev server
-./bootstrap.sh
+# install dependencies and run our tests and checks
+MIX_ENV=test mix compile --force
+MIX_ENV=test mix dialyzer
+MIX_ENV=test mix sobelow --router lib/samhstn_web/router.ex --exit --skip
+MIX_ENV=test mix format --check-formatted
+mix test
+
+# start the dev server
+mix do compile, phx.server
 ```
 
 ### AWS Setup
