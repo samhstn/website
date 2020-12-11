@@ -3,7 +3,7 @@ defmodule Samhstn.Routes.Sandbox do
   Provides simple routing for urls according the content of priv/assets,
   behaves as if priv/assets was our s3 bucket.
   """
-  alias Samhstn.Routes.{Route, RouteRef, InMemory, Client}
+  alias Samhstn.Routes.{RouteRef, InMemory, Client}
 
   require Logger
 
@@ -28,15 +28,15 @@ defmodule Samhstn.Routes.Sandbox do
     end
   end
 
-  @spec get(RouteRef.t()) :: {:ok, Route.t()} | {:error, Route.error()}
-  def get(%RouteRef{source: "url"} = route_ref), do: Client.get(route_ref)
+  @spec get(RouteRef.t()) :: {:ok, RouteRef.t()} | {:error, RouteRef.error()}
+  def get(%{source: "url"} = route_ref), do: Client.get(route_ref)
 
   # marked as a false positive as the sandbox is only used in development
   # sobelow_skip ["Traversal.FileModule"]
-  def get(%RouteRef{source: "s3"} = route_ref) do
-    with %{object: object} <- Route.parse_s3_ref(route_ref.ref),
+  def get(%{source: "s3"} = route_ref) do
+    with %{object: object} <- RouteRef.parse_s3_ref(route_ref.ref),
          {:ok, body} <- File.read(Path.join([File.cwd!(), "priv/assets", object])) do
-      {:ok, %Route{body: body, path: route_ref.path, type: route_ref.type}}
+      {:ok, %{route_ref | body: body}}
     else
       {:error, :enoent} ->
         {:error, "file does not exist"}

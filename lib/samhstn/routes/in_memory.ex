@@ -3,7 +3,7 @@ defmodule Samhstn.Routes.InMemory do
   In memory implementation for fetching routes data.
   We don't read from files or send http requests here.
   """
-  alias Samhstn.Routes.{Route, RouteRef}
+  alias Samhstn.Routes.RouteRef
 
   @spec init() :: [RouteRef.t()]
   def init() do
@@ -17,7 +17,7 @@ defmodule Samhstn.Routes.InMemory do
     ]
   end
 
-  @spec get(RouteRef.t()) :: {:ok, Route.t()} | {:error, Route.error()}
+  @spec get(RouteRef.t()) :: {:ok, RouteRef.t()} | {:error, RouteRef.error()}
   def get(%RouteRef{path: "vimrc"} = route_ref) do
     body = """
     syntax enable
@@ -25,10 +25,10 @@ defmodule Samhstn.Routes.InMemory do
     set number ignorecase smartcase incsearch autoindent
     """
 
-    {:ok, %Route{path: "vimrc", type: route_ref.type, body: body}}
+    {:ok, %{route_ref |  body: body}}
   end
 
-  def get(%RouteRef{path: "dead_link"} = _route_ref) do
+  def get(%{path: "dead_link"} = _route_ref) do
     {:error, "dead_link"}
   end
 end

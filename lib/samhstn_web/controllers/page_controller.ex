@@ -1,6 +1,7 @@
 defmodule SamhstnWeb.PageController do
   use SamhstnWeb, :controller
 
+  alias Samhstn.Routes
   alias Samhstn.Routes.Route
 
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
@@ -13,7 +14,7 @@ defmodule SamhstnWeb.PageController do
   # html data coming through from our routes.json file.
   # sobelow_skip ["XSS.HTML"]
   def routes(conn, %{"path" => path}) do
-    case Samhstn.Routes.get(path) do
+    case Routes.get(path) do
       {:ok, %Route{type: :json, body: body}} ->
         json(conn, body)
 

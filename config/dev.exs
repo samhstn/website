@@ -14,6 +14,11 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :samhstn, :routes, Samhstn.Routes.Sandbox
 
+config :samhstn, :routes_backoff,
+  min: :timer.seconds(10),
+  max: :timer.hours(10),
+  multiplier: 2
+
 config :ex_aws,
   secret_access_key: [{:awscli, "samhstn-admin", 30}],
   access_key_id: [{:awscli, "samhstn-admin", 30}],

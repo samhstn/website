@@ -2,7 +2,7 @@ defmodule Samhstn.RoutesTest do
   use ExUnit.Case, async: true
 
   alias Samhstn.Routes
-  alias Samhstn.Routes.{Route, RouteRef}
+  alias Samhstn.Routes.RouteRef
 
   describe "Samhstn.Routes" do
     setup do
@@ -12,7 +12,7 @@ defmodule Samhstn.RoutesTest do
     end
 
     test "get/1 returns data" do
-      assert {:ok, %Route{body: body, path: "vimrc", type: :text}} = Routes.get("vimrc")
+      assert {:ok, %RouteRef{body: body, path: "vimrc", type: :text}} = Routes.get("vimrc")
       assert body =~ "syntax enable"
     end
 
@@ -28,7 +28,7 @@ defmodule Samhstn.RoutesTest do
       assert {[^route_ref], []} = :sys.get_state(pid)
       assert {:ok, _} = Routes.get("vimrc")
 
-      assert {[^route_ref], [%Route{body: body, path: "vimrc", type: :text}]} =
+      assert {[^route_ref], [%RouteRef{body: body, path: "vimrc", type: :text}]} =
                :sys.get_state(pid)
 
       assert body =~ "syntax enable"
