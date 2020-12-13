@@ -7,7 +7,7 @@ defmodule Samhstn.Routes.Sandbox do
 
   require Logger
 
-  @spec init() :: [RouteRef.t()]
+  @spec init() :: Route.state()
   # marked as a false positive as the sandbox is only used in development
   # sobelow_skip ["Traversal.FileModule"]
   def init() do

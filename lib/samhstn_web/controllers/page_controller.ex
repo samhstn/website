@@ -1,27 +1,26 @@
 defmodule SamhstnWeb.PageController do
   use SamhstnWeb, :controller
 
-  alias Samhstn.Routes
-  alias Samhstn.Routes.Route
+  alias Samhstn.Route
 
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, _params) do
     render(conn, "index.html")
   end
 
-  @spec routes(Plug.Conn.t(), map) :: Plug.Conn.t()
+  @spec route(Plug.Conn.t(), map) :: Plug.Conn.t()
   # marked as a false positive as we trust the
   # html data coming through from our routes.json file.
   # sobelow_skip ["XSS.HTML"]
   def routes(conn, %{"path" => path}) do
-    case Routes.get(path) do
-      {:ok, %Route{type: :json, body: body}} ->
+    case Route.get(path) do
+      {:ok, %Route{type: :json, data: %{body: body}}} ->
         json(conn, body)
 
-      {:ok, %Route{type: :text, body: body}} ->
+      {:ok, %Route{type: :text, data: %{body: body}}} ->
         text(conn, body)
 
-      {:ok, %Route{type: :html, body: body}} ->
+      {:ok, %Route{type: :html, data: %{body: body}}} ->
         html(conn, body)
 
       {:error, :not_found} ->

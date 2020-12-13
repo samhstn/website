@@ -12,11 +12,11 @@ config :phoenix, :stacktrace_depth, 20
 # initialize plugs at runtime for faster dev compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :samhstn, :routes, Samhstn.Routes.Sandbox
+config :samhstn, :route, Samhstn.Route.Sandbox
 
-config :samhstn, :routes_backoff,
-  min: :timer.seconds(10),
-  max: :timer.hours(10),
+config :samhstn, :route_backoff,
+  min: :timer.seconds(3),
+  max: :timer.seconds(30),
   multiplier: 2
 
 config :ex_aws,
