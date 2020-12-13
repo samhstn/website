@@ -1,18 +1,18 @@
 defmodule Samhstn.Routes.RouteRef do
   @enforce_keys [:path, :type, :source, :ref]
-  defstruct [:path, :type, :source, :ref, :cache]
+  defstruct [:path, :type, :source, :ref, :data]
 
   alias Samhstn.Routes.{Route, RouteRef}
-  alias Samhstn.Routes.RouteRef.Cache
+  alias Samhstn.Routes.RouteRef.Data
 
+  @type source() :: :s3 | :url
   @type t() :: %__MODULE__{
-          cache: Cache.t(),
+          data: Data.t(),
           path: String.t(),
           ref: String.t(),
-          source: String.t(),
+          source: source,
           type: Route.type()
         }
-  @type source() :: :s3 | :url
 
   @spec type_to_atom(String.t()) :: Route.type()
   defp type_to_atom("html"), do: :html
@@ -44,11 +44,11 @@ defmodule Samhstn.Routes.RouteRef do
     %{bucket: bucket, object: object}
   end
 
-  @spec clear_cache(RouteRef.t()) :: RouteRef.t()
-  def clear_cache(route_ref), do: Map.delete(route_ref, :cache)
+  @spec clear_data(RouteRef.t()) :: RouteRef.t()
+  def clear_data(route_ref), do: Map.delete(route_ref, :data)
 
   @spec route(RouteRef.t()) :: Route.t()
-  def to_route(%RouteRef{type: type, cache: %Cache{body: body}}) do
+  def to_route(%RouteRef{type: type, data: %Data{body: body}}) do
     %Route{body: body, type: type}
   end
 end
@@ -65,9 +65,9 @@ defmodule Samhstn.Routes.Route do
   }
 end
 
-defmodule Samhstn.Routes.RouteRef.Cache do
-  @enforce_keys [:body, :updated_at, :requested_at, :timer, :reference]
-  defstruct [:body, :updated_at, :requested_at, :timer, :reference]
+defmodule Samhstn.Routes.RouteRef.Data do
+  @enforce_keys [:body, :updated_at, :requested_at, :next_update_seconds, :reference]
+  defstruct [:body, :updated_at, :requested_at, :next_update_seconds, :reference]
 
   alias Samhstn.Routes
 
@@ -75,14 +75,14 @@ defmodule Samhstn.Routes.RouteRef.Cache do
     body: String.t(),
     updated_at: NaiveDateTime.t(),
     requested_at: NaiveDateTime.t(),
-    timer: pos_integer(),
+    next_update_seconds: pos_integer(),
     reference: reference
   }
 
   @routes Application.get_env(:samhstn, :routes)
 
   @doc """
-  Updates all routes in our cache which are due an update.
+  Updates all necessary routes.
   Configures the frequency of the updates schedule based on the last time routes were visited.
   """
   @spec get_new_cache(Routes.cache) :: Routes.cache

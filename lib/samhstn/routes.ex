@@ -17,7 +17,7 @@ defmodule Samhstn.Routes do
   @routes Application.get_env(:samhstn, :routes)
   @routes_backoff Application.get_env(:samhstn, :routes_backoff)
 
-  @type state :: {RouteRef.Cache.t(), [RouteRef.t()]}
+  @type state :: {RouteRef.Data.t(), [RouteRef.t()]}
 
   @spec get(String.t()) :: {:ok, Route.t()} | {:error, String.t() | :not_found}
   def get(route) do
