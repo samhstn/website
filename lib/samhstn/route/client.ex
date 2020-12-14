@@ -9,7 +9,7 @@ defmodule Samhstn.Routes.Client do
   def init() do
     %RouteRef{
       path: "routes.json",
-      ref: {System.fetch_env!("SAMHSTN_ASSETS_BUCKET"), "routes.json"},
+      ref: {Application.fetch_env!(:samhstn, :assets_bucket), "routes.json"},
       source: :s3,
       type: :json
     }
