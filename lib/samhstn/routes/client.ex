@@ -7,8 +7,8 @@ defmodule Samhstn.Routes.Client do
 
   @spec init() :: [RouteRef.t()]
   def init() do
-    "SAMHSTN_ASSETS_BUCKET"
-    |> System.fetch_env!()
+    :samhstn
+    |> Application.fetch_env!(:assets_bucket)
     |> ExAws.S3.download_file("routes.json", :memory)
     |> ExAws.stream!()
     |> Enum.join()
