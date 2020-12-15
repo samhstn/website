@@ -4,12 +4,14 @@ defmodule Samhstn.Route.Ref do
   @enforce_keys [:path, :type, :source, :ref]
   defstruct [:path, :type, :source, :ref, :data]
 
+  @type path :: String.t()
+  @type ref() :: String.t() | {String.t(), String.t()}
   @type source() :: :s3 | :url
   @type type() :: :html | :json | :text
   @type t() :: %__MODULE__{
           data: Route.Data.t(),
-          path: String.t(),
-          ref: String.t(),
+          path: path,
+          ref: ref,
           source: source,
           type: type
         }

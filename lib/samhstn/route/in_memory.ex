@@ -3,18 +3,9 @@ defmodule Samhstn.Routes.InMemory do
   In memory implementation for fetching routes data.
   We don't read from files or send http requests here.
   """
-  alias Samhstn.Routes.RouteRef
+  use Samhstn.Route.Data
 
-  @spec init() :: [RouteRef.t()]
-  def init() do
-    [
-      %RouteRef{
-        path: "vimrc",
-        type: :text,
-        source: "url",
-        ref: "https://raw.githubusercontent.com/samhstn/my-config/master/.vimrc"
-      }
-    ]
+  def fetch_body(%Route.Ref{path: "vimrc"}) do
   end
 
   @spec get(RouteRef.t()) :: {:ok, RouteRef.t()} | {:error, RouteRef.error()}

@@ -17,8 +17,6 @@ defmodule Samhstn.Routes.Client do
     |> Map.get(:body)
     |> Jason.decode!()
     |> Enum.map(&RouteRef.from_map/1)
-
-
   end
 
   @spec source_and_cache(RouteRef.t()) :: {:ok, RouteRef.t()} | {:error, RouteRef.error()}
@@ -44,7 +42,7 @@ defmodule Samhstn.Routes.Client do
   end
 
   @spec source_and_cache!(RouteRef.t()) :: RouteRef.t()
-  def source_and_cache!(%RouteRef{} = route_ref) do0
+  def source_and_cache!(%RouteRef{} = route_ref) do
     case get(route_ref) do
       {:ok, rr} ->
         rr

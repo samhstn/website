@@ -12,7 +12,6 @@ defmodule Samhstn.Route do
   alias Samhstn.Route
 
   @route Application.get_env(:samhstn, :route)
-  @route_backoff Application.get_env(:samhstn, :routes_backoff)
 
   @type state :: {Route.Data.t(), [Route.Ref.t()]}
 
@@ -31,7 +30,7 @@ defmodule Samhstn.Route do
 
   @impl GenServer
   @callback handle_call({:get, String.t()}, pid, state) ::
-              {:reply, {:ok, Route.t()} | {:error, :not_found | String.t()}, state}
+              {:reply, {:ok, Route.Ref.t()} | {:error, :not_found | String.t()}, state}
   def handle_call({:get, path}, _from, {routes_data, routes} = state) do
     with nil <- Enum.find(routes, fn %Route.Ref{path: p} -> p == path end) do
       {:reply, {:error, :not_found}, state}
@@ -58,22 +57,33 @@ defmodule Samhstn.Route do
     {:noreply, {routes_data, @route.get_new_routes!(routes, route_ref)}}
   end
 
-  def handle_cast(:get_routes_data, {routes_data, routes} = state) do
+  def handle_cast(:get_routes_data, {routes_data, routes}) do
     {:noreply, @route.get_new_routes_data_and_routes!(routes_data, routes)}
   end
 
   @impl GenServer
-  @callback handle_info({:check, Route.Ref.t()}, state) :: {:noreply, state}
-  def handle_info({:check, route_ref}, {routes_data, routes}) do
+  @callback handle_info({:check, Route.Ref.path()}, state) :: {:noreply, state}
+  def handle_info({:check, path}, {routes_data, routes}) do
     # TODO: make route_ref.path uniform length with whitespace padding
     Logger.info("#{route_ref.path}:Checking for updates...")
 
+    route_ref = Enum.find(routes, fn route -> route.path == path end)
     {:noreply, {routes_data, @route.check_new_routes!(routes, route_ref)}}
   end
 
   def handle_info(:check_routes_data, {routes_data, routes}) do
-    Logger.info("#{route_ref.path}:Checking for route json updates...")
+    Logger.info("routes.json:Checking for route json updates...")
 
     {:noreply, @route.check_new_routes_data_and_routes!(routes_data, routes)}
+  end
+
+  @spec schedule_routes_data_check(integer) :: reference
+  def schedule_routes_data_check(ms) do
+    Process.send_after(self(), :check_routes_data, ms)
+  end
+
+  @spec schedule_check(Route.Ref.path(), integer) :: reference
+  def schedule_check(path, ms) do
+    Process.send_after(self(), {:check, path}, ms)
   end
 end
