@@ -10,4 +10,9 @@ config :logger, level: :info
 
 config :samhstn, :route, Samhstn.Route.Client
 
+config :samhstn, :route_backoff,
+  min: :timer.seconds(3),
+  max: :timer.seconds(30),
+  multiplier: 2
+
 config :ex_aws, region: "eu-west-1"

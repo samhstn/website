@@ -8,14 +8,14 @@ defmodule Samhstn.Route do
   """
 
   use GenServer
-  import Logger
+  require Logger
   alias Samhstn.Route
 
   @route Application.get_env(:samhstn, :route)
 
   @type state :: {Route.Data.t(), [Route.Ref.t()]}
 
-  @spec get(String.t()) :: {:ok, Route.Ref.t()} | {:error, String.t() | :not_found}
+  @spec get(Route.Ref.path()) :: {:ok, Route.Ref.t()} | {:error, String.t() | :not_found}
   def get(path) do
     GenServer.cast(__MODULE__, :get_routes_data)
     GenServer.call(__MODULE__, {:get, path})
@@ -25,12 +25,17 @@ defmodule Samhstn.Route do
   def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: __MODULE__)
 
   @impl GenServer
-  @spec init(any()) :: {:ok, state}
-  def init(_opts), do: {:ok, @route.init()}
+  @callback init(any()) :: {:ok, state}
+  def init(_opts) do
+    routes_data = %Route.Data{body: json} = @route.get_routes_data!()
+    routes = json |> Jason.decode!() |> Enum.map(&Route.Ref.from_map/1)
+
+    {:ok, {routes_data, routes}}
+  end
 
   @impl GenServer
-  @callback handle_call({:get, String.t()}, pid, state) ::
-              {:reply, {:ok, Route.Ref.t()} | {:error, :not_found | String.t()}, state}
+  @callback handle_call({:get, Route.Ref.path()}, pid, state) ::
+              {:reply, {:ok, Route.Ref.t()} | {:error, String.t() | :not_found}, state}
   def handle_call({:get, path}, _from, {routes_data, routes} = state) do
     with nil <- Enum.find(routes, fn %Route.Ref{path: p} -> p == path end) do
       {:reply, {:error, :not_found}, state}
@@ -41,13 +46,10 @@ defmodule Samhstn.Route do
         {:reply, {:ok, route_ref}, state}
 
       %Route.Ref{} = route_ref ->
-        case @route.get(route_ref) do
-          {:ok, new_route_ref} ->
-            {:reply, {:ok, route_ref}, {routes_data, @route.new_routes(routes, new_route_ref)}}
+        new_routes = @route.get_new_routes!(route_ref, routes)
+        new_route_ref = Enum.find(new_routes, fn r -> r.path == route_ref.path end)
 
-          {:error, error} ->
-            {:reply, {:error, error}, state}
-        end
+        {:reply, {:ok, new_route_ref}, {routes_data, new_routes}}
     end
   end
 
@@ -64,10 +66,11 @@ defmodule Samhstn.Route do
   @impl GenServer
   @callback handle_info({:check, Route.Ref.path()}, state) :: {:noreply, state}
   def handle_info({:check, path}, {routes_data, routes}) do
-    # TODO: make route_ref.path uniform length with whitespace padding
-    Logger.info("#{route_ref.path}:Checking for updates...")
+    # TODO: make path uniform length with whitespace padding
+    Logger.info("#{path}:Checking for updates...")
 
     route_ref = Enum.find(routes, fn route -> route.path == path end)
+
     {:noreply, {routes_data, @route.check_new_routes!(routes, route_ref)}}
   end
 

@@ -12,15 +12,15 @@ defmodule SamhstnWeb.PageController do
   # marked as a false positive as we trust the
   # html data coming through from our routes.json file.
   # sobelow_skip ["XSS.HTML"]
-  def routes(conn, %{"path" => path}) do
+  def route(conn, %{"path" => path}) do
     case Route.get(path) do
-      {:ok, %Route{type: :json, data: %{body: body}}} ->
+      {:ok, %Route.Ref{type: :json, data: %{body: body}}} ->
         json(conn, body)
 
-      {:ok, %Route{type: :text, data: %{body: body}}} ->
+      {:ok, %Route.Ref{type: :text, data: %{body: body}}} ->
         text(conn, body)
 
-      {:ok, %Route{type: :html, data: %{body: body}}} ->
+      {:ok, %Route.Ref{type: :html, data: %{body: body}}} ->
         html(conn, body)
 
       {:error, :not_found} ->

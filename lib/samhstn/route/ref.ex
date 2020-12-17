@@ -9,7 +9,7 @@ defmodule Samhstn.Route.Ref do
   @type source() :: :s3 | :url
   @type type() :: :html | :json | :text
   @type t() :: %__MODULE__{
-          data: Route.Data.t(),
+          data: Route.Data.t() | nil,
           path: path,
           ref: ref,
           source: source,
@@ -25,11 +25,12 @@ defmodule Samhstn.Route.Ref do
   defp source_to_atom("s3"), do: :s3
   defp source_to_atom("url"), do: :url
 
-  @spec from_map(map) :: __MODULE__.t()
+  @spec from_map(map) :: t
   def from_map(%{"path" => path, "type" => type, "source" => source, "ref" => ref}) do
     %__MODULE__{path: path, type: type_to_atom(type), source: source_to_atom(source), ref: ref}
   end
 
+  # TODO: gracefully handle strings which don't match
   @spec parse_s3_ref(String.t() | {String.t(), String.t()}) :: map
   def parse_s3_ref("arn:aws:s3:::" <> rest) do
     [bucket | path] = String.split(rest, "/")
