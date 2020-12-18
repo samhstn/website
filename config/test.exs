@@ -9,8 +9,8 @@ config :logger, level: :warn
 config :samhstn, :route, Samhstn.Route.InMemory
 
 config :samhstn, :route_backoff,
-  min: 50,
-  max: 1000,
+  min: :timer.seconds(3),
+  max: :timer.seconds(30),
   multiplier: 2
 
 config :samhstn, :children, [SamhstnWeb.Endpoint]

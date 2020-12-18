@@ -3,13 +3,14 @@ defmodule Samhstn.Route.Data do
   Defines a struct and the required functions for fetching our route data.
   These functions have different implementations depending on environment, but the same behaviour.
   """
-  @enforce_keys [:body, :updated_at, :requested_at, :next_update_seconds, :timer]
-  defstruct [:body, :updated_at, :requested_at, :next_update_seconds, :timer]
+  @enforce_keys [:body, :fetched_at, :updated_at, :requested_at, :next_update_seconds, :timer]
+  defstruct [:body, :fetched_at, :updated_at, :requested_at, :next_update_seconds, :timer]
 
   alias Samhstn.Route
 
   @type t() :: %__MODULE__{
           body: String.t(),
+          fetched_at: NaiveDateTime.t(),
           updated_at: NaiveDateTime.t(),
           requested_at: NaiveDateTime.t(),
           next_update_seconds: integer,
@@ -44,10 +45,8 @@ defmodule Samhstn.Route.Data do
       def get_routes_data!(route_data) do
         now = NaiveDateTime.utc_now()
         min = @backoff[:min]
-        update_throttle = @backoff[:update_throttle]
 
-        if not is_nil(route_data) &&
-             NaiveDateTime.diff(now, route_data.updated_at, :millisecond) < update_throttle do
+        if route_data && NaiveDateTime.diff(now, route_data.fetched_at) < min do
           %{route_data | requested_at: now}
         else
           case fetch_body(%Route.Ref{
@@ -66,16 +65,14 @@ defmodule Samhstn.Route.Data do
                   %Route.Data{
                     body: body,
                     updated_at: now,
+                    fetched_at: now,
                     requested_at: now,
                     next_update_seconds: min,
                     timer: Route.schedule_routes_data_check(min)
                   }
 
                 route_data.body == body ->
-                  # TODO: decide how to handle this, I'm unsure what to update and schedule.
-                  # %{route_data | requested_at: now, timer: Route.schedule_routes_data_check(min)}
-
-                  route_data
+                  %{route_data | fetched_at: now, requested_at: now}
               end
 
             {:error, error} ->
@@ -97,14 +94,13 @@ defmodule Samhstn.Route.Data do
           {:ok, body} ->
             cond do
               is_nil(route_ref.data) ->
-                timer = Route.schedule_check(path, min)
-
                 data = %Route.Data{
                   body: body,
                   updated_at: now,
+                  fetched_at: now,
                   requested_at: now,
                   next_update_seconds: min,
-                  timer: timer
+                  timer: Route.schedule_check(path, min)
                 }
 
                 {:ok, %{route_ref | data: data}}
@@ -153,22 +149,41 @@ defmodule Samhstn.Route.Data do
         |> new_routes(routes)
       end
 
-      @spec get_new_routes_data_and_routes!(Route.Ref.t(), [Route.Ref.t()]) :: Route.state()
+      @spec get_new_routes_data_and_routes!(Route.Data.t() | nil, [Route.Ref.t()]) ::
+              Route.state()
       def get_new_routes_data_and_routes!(routes_data, routes) do
-        # get_json(routes_data)
-        {routes_data, routes}
+        new_routes_data = %Route.Data{body: new_body} = get_routes_data!(routes_data)
+
+        if is_nil(routes_data) or routes_data.body == new_body do
+          {new_routes_data, routes}
+        else
+          new_routes =
+            new_body
+            |> Jason.decode!()
+            |> Enum.map(&Route.Ref.from_map/1)
+            |> Enum.map(fn %Route.Ref{path: path, ref: ref, source: source, type: type} =
+                             route_ref ->
+              with %Route.Ref{ref: ^ref, source: ^source, type: ^type} = old_route_ref <-
+                     Enum.find(routes, fn r -> r.path == path end) do
+                old_route_ref
+              else
+                _ -> route_ref
+              end
+            end)
+
+          {new_routes_data, new_routes}
+        end
       end
 
       @spec check_new_routes!(Route.Ref.t(), [Route.Ref.t()]) :: [Route.Ref.t()]
       def check_new_routes!(_route_ref, routes) do
+        # TODO: implement
         routes
-        # route_ref
-        # |> check!()
-        # |> new_routes()
       end
 
       @spec check_new_routes_data_and_routes!(Route.Data.t(), [Route.Ref.t()]) :: Route.state()
       def check_new_routes_data_and_routes!(routes_data, routes) do
+        # TODO: implement
         {routes_data, routes}
       end
     end
