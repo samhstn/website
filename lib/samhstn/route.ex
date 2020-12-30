@@ -80,13 +80,13 @@ defmodule Samhstn.Route do
     {:noreply, @route.check_new_routes_data_and_routes!(routes_data, routes)}
   end
 
-  @spec schedule_routes_data_check(integer) :: reference
-  def schedule_routes_data_check(ms) do
-    Process.send_after(self(), :check_routes_data, ms)
+  @spec schedule_routes_data_check(integer, pid) :: reference
+  def schedule_routes_data_check(ms, pid \\ self()) do
+    Process.send_after(pid, :check_routes_data, ms)
   end
 
   @spec schedule_check(Route.Ref.path(), integer) :: reference
-  def schedule_check(path, ms) do
-    Process.send_after(self(), {:check, path}, ms)
+  def schedule_check(path, ms, pid \\ self()) do
+    Process.send_after(pid, {:check, path}, ms)
   end
 end

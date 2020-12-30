@@ -42,24 +42,24 @@ defmodule Samhstn.Route.Data do
       Fetches the routes data and schedules route updates.
       """
       @spec get_routes_data!(Route.Data.t() | nil) :: Route.Data.t()
-      def get_routes_data!(route_data) do
+      def get_routes_data!(routes_data) do
         now = NaiveDateTime.utc_now()
         min = @backoff[:min]
 
-        if route_data && NaiveDateTime.diff(now, route_data.fetched_at) < min do
-          %{route_data | requested_at: now}
+        if routes_data && NaiveDateTime.diff(now, routes_data.fetched_at) < min do
+          %{routes_data | requested_at: now}
         else
           case fetch_body(%Route.Ref{
                  path: "routes.json",
-                 ref: {Application.fetch_env!(:samhstn, :assets_bucket), "routes.json"},
+                 ref: {@assets_bucket, "routes.json"},
                  source: :s3,
                  type: :json
                }) do
             {:ok, body} ->
               cond do
-                is_nil(route_data) or route_data.body != body ->
-                  if not is_nil(route_data) && route_data.body != body do
-                    Process.cancel_timer(route_data.timer)
+                is_nil(routes_data) or routes_data.body != body ->
+                  if not is_nil(routes_data) && routes_data.body != body do
+                    Process.cancel_timer(routes_data.timer)
                   end
 
                   %Route.Data{
@@ -71,8 +71,8 @@ defmodule Samhstn.Route.Data do
                     timer: Route.schedule_routes_data_check(min)
                   }
 
-                route_data.body == body ->
-                  %{route_data | fetched_at: now, requested_at: now}
+                routes_data.body == body ->
+                  %{routes_data | fetched_at: now, requested_at: now}
               end
 
             {:error, error} ->
@@ -149,6 +149,21 @@ defmodule Samhstn.Route.Data do
         |> new_routes(routes)
       end
 
+      @spec routes_from_body!(String.t(), [Route.Ref.t()]) :: [Route.Ref.t()]
+      defp routes_from_body!(body, routes) do
+        body
+        |> Jason.decode!()
+        |> Enum.map(&Route.Ref.from_map/1)
+        |> Enum.map(fn %Route.Ref{path: path, ref: ref, source: source, type: type} = route_ref ->
+          with %Route.Ref{ref: ^ref, source: ^source, type: ^type} = old_route_ref <-
+                 Enum.find(routes, fn r -> r.path == path end) do
+            old_route_ref
+          else
+            _ -> route_ref
+          end
+        end)
+      end
+
       @spec get_new_routes_data_and_routes!(Route.Data.t() | nil, [Route.Ref.t()]) ::
               Route.state()
       def get_new_routes_data_and_routes!(routes_data, routes) do
@@ -157,34 +172,65 @@ defmodule Samhstn.Route.Data do
         if is_nil(routes_data) or routes_data.body == new_body do
           {new_routes_data, routes}
         else
-          new_routes =
-            new_body
-            |> Jason.decode!()
-            |> Enum.map(&Route.Ref.from_map/1)
-            |> Enum.map(fn %Route.Ref{path: path, ref: ref, source: source, type: type} =
-                             route_ref ->
-              with %Route.Ref{ref: ^ref, source: ^source, type: ^type} = old_route_ref <-
-                     Enum.find(routes, fn r -> r.path == path end) do
-                old_route_ref
-              else
-                _ -> route_ref
-              end
-            end)
+          new_routes = routes_from_body!(new_body, routes)
 
           {new_routes_data, new_routes}
         end
       end
 
-      @spec check_new_routes!(Route.Ref.t(), [Route.Ref.t()]) :: [Route.Ref.t()]
-      def check_new_routes!(_route_ref, routes) do
+      @spec check_new_routes!([Route.Ref.t()], Route.Ref.t()) :: [Route.Ref.t()]
+      def check_new_routes!(routes, _route_ref) do
         # TODO: implement
         routes
       end
 
       @spec check_new_routes_data_and_routes!(Route.Data.t(), [Route.Ref.t()]) :: Route.state()
       def check_new_routes_data_and_routes!(routes_data, routes) do
-        # TODO: implement
-        {routes_data, routes}
+        now = NaiveDateTime.utc_now()
+        min = @backoff[:min]
+
+        if Process.read_timer(routes_data.timer) do
+          Process.cancel_timer(routes_data.timer)
+        end
+
+        case fetch_body(%Route.Ref{
+               path: "routes.json",
+               ref: {@assets_bucket, "routes.json"},
+               source: :s3,
+               type: :json
+             }) do
+          {:ok, body} ->
+            cond do
+              routes_data.body != body ->
+                {
+                  %Route.Data{
+                    body: body,
+                    updated_at: now,
+                    fetched_at: now,
+                    requested_at: routes_data.requested_at,
+                    next_update_seconds: @backoff[:min],
+                    timer: Route.schedule_routes_data_check(min)
+                  },
+                  routes_from_body!(body, routes)
+                }
+
+              routes_data.body == body ->
+                next_update_seconds = routes_data.next_update_seconds * @backoff[:multiplier]
+
+                {
+                  %{
+                    routes_data
+                    | fetched_at: now,
+                      next_update_seconds: next_update_seconds,
+                      timer: Route.schedule_routes_data_check(next_update_seconds)
+                  },
+                  routes
+                }
+            end
+
+          {:error, error} ->
+            throw(error)
+        end
       end
     end
   end

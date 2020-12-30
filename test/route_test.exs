@@ -132,6 +132,7 @@ defmodule Samhstn.RouteTest do
              [%Route.Ref{}]
            } = :sys.get_state(pid)
 
+    refute requested_at == recently
     assert NaiveDateTime.diff(now, requested_at) == 0
   end
 
@@ -179,5 +180,77 @@ defmodule Samhstn.RouteTest do
     assert NaiveDateTime.diff(now, fetched_at) == 0
     assert NaiveDateTime.diff(now, requested_at) == 0
     assert NaiveDateTime.diff(now, updated_at) == 0
+  end
+
+  test "handle_info for :check_routes_data", %{
+    pid: pid,
+    routes: routes,
+    routes_body: routes_body,
+    min: min,
+    multiplier: multiplier,
+    now: now
+  } do
+    assert {
+             %Route.Data{
+               body: ^routes_body,
+               timer: timer,
+               next_update_seconds: ^min
+             },
+             ^routes
+           } = :sys.get_state(pid)
+
+    Route.schedule_routes_data_check(0, pid)
+
+    Process.sleep(100)
+
+    assert {
+             %Route.Data{
+               body: ^routes_body,
+               updated_at: updated_at,
+               fetched_at: fetched_at,
+               requested_at: requested_at,
+               timer: new_timer,
+               next_update_seconds: next_update_seconds
+             },
+             ^routes
+           } = :sys.get_state(pid)
+
+    refute new_timer == timer
+    assert next_update_seconds == min * multiplier
+    assert NaiveDateTime.diff(updated_at, now, :microsecond) < 0
+    assert NaiveDateTime.diff(fetched_at, now, :microsecond) > 0
+    assert NaiveDateTime.diff(requested_at, now, :microsecond) < 0
+  end
+
+  test "handle_info for :check_routes_data with new routes_body", %{
+    pid: pid,
+    routes: routes,
+    routes_body: routes_body,
+    min: min,
+    now: now
+  } do
+    :sys.replace_state(pid, fn {routes_data, routes} ->
+      {%{routes_data | body: "[]"}, routes}
+    end)
+
+    Route.schedule_routes_data_check(0, pid)
+
+    Process.sleep(100)
+
+    assert {
+             %Route.Data{
+               body: ^routes_body,
+               next_update_seconds: next_update_seconds,
+               updated_at: updated_at,
+               fetched_at: fetched_at,
+               requested_at: requested_at
+             },
+             ^routes
+           } = :sys.get_state(pid)
+
+    assert next_update_seconds == min
+    assert NaiveDateTime.diff(updated_at, now, :microsecond) > 0
+    assert NaiveDateTime.diff(fetched_at, now, :microsecond) > 0
+    assert NaiveDateTime.diff(requested_at, now, :microsecond) < 0
   end
 end
