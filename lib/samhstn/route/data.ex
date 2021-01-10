@@ -179,15 +179,60 @@ defmodule Samhstn.Route.Data do
       end
 
       @spec check_new_routes!([Route.Ref.t()], Route.Ref.t()) :: [Route.Ref.t()]
-      def check_new_routes!(routes, _route_ref) do
-        # TODO: implement
-        routes
+      def check_new_routes!(routes, %Route.Ref{data: route_data} = route_ref) do
+        case fetch_body(route_ref) do
+          {:ok, body} ->
+            now = NaiveDateTime.utc_now()
+            min = @backoff[:min]
+            max = @backoff[:max]
+            multiplier = @backoff[:multiplier]
+
+            # TODO: make this a function
+            if Process.read_timer(route_data.timer) do
+              Process.cancel_timer(route_data.timer)
+            end
+
+            new_route_ref_data =
+              if route_data.body == body do
+                next_update_seconds = min(route_data.next_update_seconds * multiplier, max)
+
+                %Route.Data{
+                  body: body,
+                  fetched_at: now,
+                  updated_at: route_data.updated_at,
+                  requested_at: route_data.requested_at,
+                  next_update_seconds: next_update_seconds,
+                  timer: Route.schedule_check(route_ref.path, next_update_seconds)
+                }
+              else
+                %Route.Data{
+                  body: body,
+                  fetched_at: now,
+                  updated_at: now,
+                  requested_at: route_data.requested_at,
+                  next_update_seconds: min,
+                  timer: Route.schedule_check(route_ref.path, min)
+                }
+              end
+
+            Enum.map(routes, fn rr ->
+              if rr.path == route_ref.path do
+                %{rr | data: new_route_ref_data}
+              else
+                rr
+              end
+            end)
+
+          {:error, error} ->
+            throw(error)
+        end
       end
 
       @spec check_new_routes_data_and_routes!(Route.Data.t(), [Route.Ref.t()]) :: Route.state()
       def check_new_routes_data_and_routes!(routes_data, routes) do
         now = NaiveDateTime.utc_now()
         min = @backoff[:min]
+        multiplier = @backoff[:multiplier]
 
         if Process.read_timer(routes_data.timer) do
           Process.cancel_timer(routes_data.timer)
@@ -208,14 +253,14 @@ defmodule Samhstn.Route.Data do
                     updated_at: now,
                     fetched_at: now,
                     requested_at: routes_data.requested_at,
-                    next_update_seconds: @backoff[:min],
+                    next_update_seconds: min,
                     timer: Route.schedule_routes_data_check(min)
                   },
                   routes_from_body!(body, routes)
                 }
 
               routes_data.body == body ->
-                next_update_seconds = routes_data.next_update_seconds * @backoff[:multiplier]
+                next_update_seconds = routes_data.next_update_seconds * multiplier
 
                 {
                   %{

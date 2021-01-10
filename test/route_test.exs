@@ -21,7 +21,7 @@ defmodule Samhstn.RouteTest do
 
     now = NaiveDateTime.utc_now()
     yesterday = now |> NaiveDateTime.add(-:timer.hours(24))
-    recently = now |> NaiveDateTime.add(div(backoff[:min], 2))
+    recently = now |> NaiveDateTime.add(-div(backoff[:min], 2))
 
     [
       pid: pid,
@@ -74,6 +74,7 @@ defmodule Samhstn.RouteTest do
           fetched_at: yesterday,
           updated_at: yesterday,
           requested_at: yesterday,
+          # TODO: check not double max
           next_update_seconds: max,
           timer: timer
         },
@@ -252,5 +253,119 @@ defmodule Samhstn.RouteTest do
     assert NaiveDateTime.diff(updated_at, now, :microsecond) > 0
     assert NaiveDateTime.diff(fetched_at, now, :microsecond) > 0
     assert NaiveDateTime.diff(requested_at, now, :microsecond) < 0
+  end
+
+  test "handle_info for :check", %{pid: pid, max: max, now: now, yesterday: yesterday} do
+    vimrc = """
+    syntax enable
+
+    set number ignorecase smartcase incsearch autoindent
+    """
+
+    initial_timer = Route.schedule_check("vimrc", 1000, pid)
+
+    :sys.replace_state(pid, fn {routes_data, routes} ->
+      new_vimrc_data = %Route.Data{
+        body: vimrc,
+        fetched_at: yesterday,
+        updated_at: yesterday,
+        requested_at: yesterday,
+        next_update_seconds: max,
+        timer: initial_timer
+      }
+
+      new_routes =
+        Enum.map(routes, fn route ->
+          if route.path == "vimrc" do
+            %{route | data: new_vimrc_data}
+          else
+            route
+          end
+        end)
+
+      {routes_data, new_routes}
+    end)
+
+    Route.schedule_check("vimrc", 0, pid)
+
+    Process.sleep(100)
+
+    assert {
+             _route_data,
+             [
+               %Route.Ref{
+                 data: %Route.Data{
+                   body: ^vimrc,
+                   fetched_at: fetched_at,
+                   updated_at: ^yesterday,
+                   requested_at: ^yesterday,
+                   next_update_seconds: ^max,
+                   timer: new_timer
+                 },
+                 path: "vimrc"
+               }
+             ]
+           } = :sys.get_state(pid)
+
+    refute new_timer == initial_timer
+    assert NaiveDateTime.diff(fetched_at, now) == 0
+  end
+
+  test "handle_info for :check with new individual route data", %{
+    yesterday: yesterday,
+    pid: pid,
+    max: max,
+    min: min,
+    now: now
+  } do
+    initial_timer = Route.schedule_check("vimrc", 1000, pid)
+
+    :sys.replace_state(pid, fn {routes_data, routes} ->
+      new_vimrc_data = %Route.Data{
+        body: "syntax disable",
+        fetched_at: yesterday,
+        updated_at: yesterday,
+        requested_at: yesterday,
+        next_update_seconds: max,
+        timer: initial_timer
+      }
+
+      new_routes =
+        Enum.map(routes, fn route ->
+          if route.path == "vimrc" do
+            %{route | data: new_vimrc_data}
+          else
+            route
+          end
+        end)
+
+      {routes_data, new_routes}
+    end)
+
+    Route.schedule_check("vimrc", 0, pid)
+
+    Process.sleep(100)
+
+    assert {
+             _route_data,
+             [
+               %Route.Ref{
+                 data: %Route.Data{
+                   body: vimrc,
+                   fetched_at: fetched_at,
+                   updated_at: updated_at,
+                   requested_at: ^yesterday,
+                   next_update_seconds: ^min,
+                   timer: new_timer
+                 },
+                 path: "vimrc"
+               }
+             ]
+           } = :sys.get_state(pid)
+
+    assert vimrc =~ "syntax enable"
+    refute new_timer == initial_timer
+    assert NaiveDateTime.diff(fetched_at, now) == 0
+    assert NaiveDateTime.diff(updated_at, now) == 0
   end
 end
