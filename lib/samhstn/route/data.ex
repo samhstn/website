@@ -167,9 +167,7 @@ defmodule Samhstn.Route.Data do
         if is_nil(routes_data) or routes_data.body == new_body do
           {new_routes_data, routes}
         else
-          new_routes = routes_from_body!(new_body, routes)
-
-          {new_routes_data, new_routes}
+          {new_routes_data, routes_from_body!(new_body, routes)}
         end
       end
 
@@ -178,26 +176,22 @@ defmodule Samhstn.Route.Data do
         case fetch_body(route_ref) do
           {:ok, body} ->
             now = NaiveDateTime.utc_now()
-            [min: min, max: max, multiplier: multiplier] = @backoff
 
             cancel_timer(route_data)
 
-            next_update_seconds =
-              if route_data.body == body do
-                min(route_data.next_update_seconds * multiplier, max)
-              else
-                min
-              end
-
-            new_route_ref_data =
-              %Route.Data{
-                body: body,
-                fetched_at: now,
-                updated_at: if route_data.body == body do route_data.updated_at else now end,
-                requested_at: route_data.requested_at,
-                next_update_seconds: next_update_seconds,
-                timer: Route.schedule_check(route_ref.path, next_update_seconds)
-              }
+            new_route_ref_data = %Route.Data{
+              body: body,
+              fetched_at: now,
+              updated_at:
+                if route_data.body == body do
+                  route_data.updated_at
+                else
+                  now
+                end,
+              requested_at: route_data.requested_at,
+              next_update_seconds: next_update_seconds(route_data, body),
+              timer: Route.schedule_check(route_ref.path, next_update_seconds(route_data, body))
+            }
 
             Enum.map(routes, fn rr ->
               if rr.path == route_ref.path do
@@ -215,7 +209,6 @@ defmodule Samhstn.Route.Data do
       @spec check_new_routes_data_and_routes!(Route.Data.t(), [Route.Ref.t()]) :: Route.state()
       def check_new_routes_data_and_routes!(routes_data, routes) do
         now = NaiveDateTime.utc_now()
-        [min: min, max: max, multiplier: multiplier] = @backoff
 
         cancel_timer(routes_data)
 
@@ -226,33 +219,28 @@ defmodule Samhstn.Route.Data do
                type: :json
              }) do
           {:ok, body} ->
-            cond do
-              routes_data.body != body ->
-                {
-                  %Route.Data{
-                    body: body,
-                    updated_at: now,
-                    fetched_at: now,
-                    requested_at: routes_data.requested_at,
-                    next_update_seconds: min,
-                    timer: Route.schedule_routes_data_check(min)
-                  },
-                  routes_from_body!(body, routes)
-                }
+            routes =
+              if routes_data.body == body do
+                routes_from_body!(body, routes)
+              else
+                routes
+              end
 
-              routes_data.body == body ->
-                next_update_seconds = min(routes_data.next_update_seconds * multiplier, max)
+            routes_data = %Route.Data{
+              body: body,
+              updated_at:
+                if routes_data.body == body do
+                  routes_data.updated_at
+                else
+                  now
+                end,
+              fetched_at: now,
+              requested_at: routes_data.requested_at,
+              next_update_seconds: next_update_seconds(routes_data, body),
+              timer: Route.schedule_routes_data_check(next_update_seconds(routes_data, body))
+            }
 
-                {
-                  %{
-                    routes_data
-                    | fetched_at: now,
-                      next_update_seconds: next_update_seconds,
-                      timer: Route.schedule_routes_data_check(next_update_seconds)
-                  },
-                  routes
-                }
-            end
+            {routes_data, routes}
 
           {:error, error} ->
             throw(error)
@@ -264,6 +252,16 @@ defmodule Samhstn.Route.Data do
       defp cancel_timer(%Route.Data{timer: timer}) do
         if Process.read_timer(timer) do
           Process.cancel_timer(timer)
+        end
+      end
+
+      defp next_update_seconds(route_data, body) do
+        [min: min, max: max, multiplier: multiplier] = @backoff
+
+        if route_data.body == body do
+          min(route_data.next_update_seconds * multiplier, max)
+        else
+          min
         end
       end
     end
