@@ -74,7 +74,6 @@ defmodule Samhstn.RouteTest do
           fetched_at: yesterday,
           updated_at: yesterday,
           requested_at: yesterday,
-          # TODO: check not double max
           next_update_seconds: max,
           timer: timer
         },
@@ -187,18 +186,27 @@ defmodule Samhstn.RouteTest do
     pid: pid,
     routes: routes,
     routes_body: routes_body,
-    min: min,
-    multiplier: multiplier,
+    max: max,
+    yesterday: yesterday,
     now: now
   } do
-    assert {
-             %Route.Data{
-               body: ^routes_body,
-               timer: timer,
-               next_update_seconds: ^min
-             },
-             ^routes
-           } = :sys.get_state(pid)
+    initial_timer = Route.schedule_routes_data_check(max, pid)
+
+    :sys.replace_state(pid, fn {routes_data, routes} ->
+      Process.cancel_timer(routes_data.timer)
+
+      {
+        %Route.Data{
+          body: routes_body,
+          fetched_at: yesterday,
+          updated_at: yesterday,
+          requested_at: yesterday,
+          next_update_seconds: max,
+          timer: initial_timer
+        },
+        routes
+      }
+    end)
 
     Route.schedule_routes_data_check(0, pid)
 
@@ -216,8 +224,8 @@ defmodule Samhstn.RouteTest do
              ^routes
            } = :sys.get_state(pid)
 
-    refute new_timer == timer
-    assert next_update_seconds == min * multiplier
+    refute new_timer == initial_timer
+    assert next_update_seconds == max
     assert NaiveDateTime.diff(updated_at, now, :microsecond) < 0
     assert NaiveDateTime.diff(fetched_at, now, :microsecond) > 0
     assert NaiveDateTime.diff(requested_at, now, :microsecond) < 0
@@ -318,7 +326,7 @@ defmodule Samhstn.RouteTest do
     min: min,
     now: now
   } do
-    initial_timer = Route.schedule_check("vimrc", 1000, pid)
+    initial_timer = Route.schedule_check("vimrc", max, pid)
 
     :sys.replace_state(pid, fn {routes_data, routes} ->
       new_vimrc_data = %Route.Data{
