@@ -63,11 +63,22 @@ defmodule Samhstn.Route do
     {:noreply, @route.get_new_routes_data_and_routes!(routes_data, routes)}
   end
 
+  defp check_updates_log(path, routes) do
+    longest_path_length =
+      ["routes.json" | Enum.map(routes, & &1.path)]
+      |> Enum.map(&String.length/1)
+      |> Enum.max()
+
+    path = String.pad_trailing(path, longest_path_length)
+    date = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+    Logger.info("#{path}:#{date}:Checking for updates.")
+  end
+
   @impl GenServer
   @callback handle_info({:check, Route.Ref.path()}, state) :: {:noreply, state}
   def handle_info({:check, path}, {routes_data, routes}) do
-    # TODO: make path uniform length with whitespace padding
-    Logger.info("#{path}:Checking for updates...")
+    check_updates_log(path, routes)
 
     route_ref = Enum.find(routes, fn route -> route.path == path end)
 
@@ -75,7 +86,7 @@ defmodule Samhstn.Route do
   end
 
   def handle_info(:check_routes_data, {routes_data, routes}) do
-    Logger.info("routes.json:Checking for route json updates...")
+    check_updates_log("routes.json", routes)
 
     {:noreply, @route.check_new_routes_data_and_routes!(routes_data, routes)}
   end
