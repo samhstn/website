@@ -15,8 +15,8 @@ config :phoenix, :plug_init_mode, :runtime
 config :samhstn, :route, Samhstn.Route.Sandbox
 
 config :samhstn, :route_backoff,
-  min: :timer.seconds(3),
-  max: :timer.seconds(30),
+  min: 100,
+  max: :timer.seconds(20),
   multiplier: 2
 
 config :ex_aws,
