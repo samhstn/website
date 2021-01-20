@@ -7,7 +7,9 @@ defmodule Samhstn.Route.Client do
 
   @spec fetch_body(Route.Ref.t()) :: {:ok, String.t()} | {:error, String.t()}
   def fetch_body(%Route.Ref{source: :url} = route_ref) do
-    case HTTPoison.get(route_ref.ref) do
+    # We allow this insecurely as we are simply rendering the body of the urls we are visiting.
+    # Taken from: https://stackoverflow.com/a/61643949/4699289
+    case HTTPoison.get(route_ref.ref, [], hackney: [:insecure]) do
       {:ok, %HTTPoison.Response{body: body}} ->
         {:ok, body}
 
