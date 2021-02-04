@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ENV_FILE='.env'
+ENV_FILE='.infra.env'
 
 touch $ENV_FILE
 source $ENV_FILE

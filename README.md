@@ -64,8 +64,19 @@ Our app runs in two stages:
 + Building our mix release.
 + Running the binary files from our mix release.
 
-This can be achieved with:
+This can be achieved by setting up a `.env` file with the following contents:
+
+```
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export SECRET_KEY_BASE=g+Li...Fi+trohKSao4VOv5BWkEXAMPLE
+export SAMHSTN_ASSETS_BUCKET=
+```
+
+Where the access key and secret access key is from an IAM user which is part of the `Docker` IAM group.
 
 ```bash
 docker-compose up --build
 ```
+
+Note: These IAM user credentials should be deleted after running Docker locally.
