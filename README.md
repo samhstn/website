@@ -57,3 +57,15 @@ To configure the pre-commit hook to run on every commit, run:
 ```bash
 ./pre-commit-hook
 ```
+
+### Docker
+
+Our app runs in two stages:
++ Building our mix release.
++ Running the binary files from our mix release.
+
+This can be achieved with:
+
+```bash
+docker-compose up --build
+```
