@@ -11,9 +11,6 @@ Parameters:
   GithubPAToken:
     Type: String
     NoEcho: true
-  SecretKeyBase:
-    Type: String
-    NoEcho: true
   GithubMasterBranch:
     Type: String
     Default: master
@@ -42,12 +39,6 @@ Resources:
     Properties:
       Name: /GithubPAToken
       SecretString: !Ref GithubPAToken
-
-  SecretKeyBaseParameter:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: /SecretKeyBase
-      SecretString: !Ref SecretKeyBase
 
   WebhookLogGroup:
     Type: AWS::Logs::LogGroup
@@ -428,7 +419,3 @@ Outputs:
       Name: DeploymentRoleArn
   CloudFrontDomainName:
     Value: !GetAtt CloudFront.DomainName
-  SecretKeyBaseParameterArn:
-    Value: !Ref SecretKeyBaseParameter
-    Export:
-      Name: SecretKeyBaseParameterArn
