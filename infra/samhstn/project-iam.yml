@@ -70,3 +70,35 @@ Resources:
             Principal:
               AWS: !GetAtt AdminUser.Arn
             Action: sts:AssumeRole
+
+  DockerGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: DockerGroup
+
+  DockerPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Groups:
+        - !Ref DockerGroup
+      PolicyName: DockerPloicy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action: secretsmanager:GetSecretValue
+            Resource: !ImportValue SecretKeyBaseParameterArn
+          - Effect: Allow
+            Action:
+              - s3:List*
+              - s3:Get*
+            Resource:
+              - !Sub arn:aws:s3:::samhstn-assets-${AWS::AccountId}
+              - !Sub arn:aws:s3:::samhstn-assets-${AWS::AccountId}/*
+
+  DockerUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: docker
+      Groups:
+        - !Ref DockerGroup
