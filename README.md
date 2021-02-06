@@ -73,7 +73,11 @@ export SECRET_KEY_BASE=g+Li...Fi+trohKSao4VOv5BWkEXAMPLE
 export SAMHSTN_ASSETS_BUCKET=
 ```
 
-Where the access key and secret access key is from an IAM user which is part of the `Docker` IAM group.
+We can generate these access keys for our `docker` IAM user in:
+
+`IAM Console > Security Credentials > Create access key`.
+
+We can now replicate our application running in production with:
 
 ```bash
 docker-compose up --build
