@@ -28,6 +28,10 @@ Parameters:
     Type: String
     Description: S3 bucket to store general assets.
 
+  SecretKeyBase:
+    Type: String
+    NoEcho: true
+
 Resources:
   CloudformationS3Bucket:
     Type: AWS::S3::Bucket
@@ -131,6 +135,12 @@ Resources:
               - ecr:UploadLayerPart
               - ecr:CompleteLayerUpload
 
+  SecretKeyBaseParameter:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: /SecretKeyBase
+      SecretString: !Ref SecretKeyBase
+
 Outputs:
   Certificate:
     Value: !Ref Certificate
@@ -161,3 +171,8 @@ Outputs:
     Value: !Ref AssetsS3Bucket
     Export:
       Name: AssetsBucketName
+
+  SecretKeyBaseParameterArn:
+    Value: !Ref SecretKeyBaseParameter
+    Export:
+      Name: SecretKeyBaseParameterArn

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ENV_FILE='.env'
+ENV_FILE='.infra.env'
 
 touch $ENV_FILE
 source $ENV_FILE
@@ -114,16 +114,6 @@ fi
 
 aws cloudformation deploy \
   --profile samhstn-admin \
-  --stack-name project-iam \
-  --template-file ./infra/samhstn/project-iam.yml \
-  --no-fail-on-empty-changeset \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --parameter-overrides \
-    TempPassword=$TEMP_PASSWORD \
-    RootAccountId=$AWS_ROOT_ACCOUNT_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
-
-aws cloudformation deploy \
-  --profile samhstn-admin \
   --stack-name setup \
   --template-file ./infra/samhstn/setup.yml \
   --no-fail-on-empty-changeset \
@@ -133,7 +123,18 @@ aws cloudformation deploy \
     CodePipelineBucket=samhstn-codepipeline-$AWS_ADMIN_ACCOUNT_ID \
     MasterBuildCacheBucket=samhstn-master-build-cache-$AWS_ADMIN_ACCOUNT_ID \
     AssetsBucket=samhstn-assets-$AWS_ADMIN_ACCOUNT_ID \
+    SecretKeyBase=$SECRET_KEY_BASE \
     Certificate=$CERTIFICATE | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
+
+aws cloudformation deploy \
+  --profile samhstn-admin \
+  --stack-name project-iam \
+  --template-file ./infra/samhstn/project-iam.yml \
+  --no-fail-on-empty-changeset \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides \
+    TempPassword=$TEMP_PASSWORD \
+    RootAccountId=$AWS_ROOT_ACCOUNT_ID
 
 mkdir -p infra/cfn_output/samhstn
 
@@ -164,7 +165,6 @@ if [[ $ROUTE_53_ROLE_ARN =~ "arn:aws:iam::$AWS_ROOT_ACCOUNT_ID:role/Route53Role"
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
-      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \
@@ -178,7 +178,6 @@ else
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
-      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       SamhstnHostedZoneId=$SAMHSTN_HOSTED_ZONE_ID | tr '\n' ' ' | sed 's/^ //' | sed 's/  / /g'
@@ -206,7 +205,6 @@ else
     --capabilities CAPABILITY_NAMED_IAM \
     --parameter-overrides \
       GithubPAToken=$SAMHSTN_PA_TOKEN \
-      SecretKeyBase=$SECRET_KEY_BASE \
       GithubMasterBranch=$GITHUB_MASTER_BRANCH \
       GlobalCertificate=$GLOBAL_CERTIFICATE \
       Route53RoleArn=$ROUTE_53_ROLE_ARN \

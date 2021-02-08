@@ -2,7 +2,7 @@
 /deps/
 **/node_modules/
 erl_crash.dump
-**/.env
+**/*.env
 infra/cfn_output
 infra/venv/
 __pycache__/

@@ -57,3 +57,30 @@ To configure the pre-commit hook to run on every commit, run:
 ```bash
 ./pre-commit-hook
 ```
+
+### Docker
+
+Our app runs in two stages:
++ Building our mix release.
++ Running the binary files from our mix release.
+
+This can be achieved by setting up a `.env` file with the following contents:
+
+```
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export SECRET_KEY_BASE=g+Li...Fi+trohKSao4VOv5BWkEXAMPLE
+export SAMHSTN_ASSETS_BUCKET=
+```
+
+We can generate these access keys for our `docker` IAM user in:
+
+`IAM Console > Security Credentials > Create access key`.
+
+We can now replicate our application running in production with:
+
+```bash
+docker-compose up --build
+```
+
+Note: These IAM user credentials should be deleted after running Docker locally.
