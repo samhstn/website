@@ -3,7 +3,7 @@ Parameters:
   EC2InstanceType:
     Type: String
   EC2AMI:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
 Resources:
   SecurityGroup:
@@ -93,9 +93,9 @@ Resources:
             . /home/ec2-user/.bashrc
 
             # Install NVM, NPM, Node.JS
-            nvm alias default v18.12.1
-            nvm install v18.12.1
-            nvm use v18.12.1
+            nvm alias default v16.18.1
+            nvm install v16.18.1
+            nvm use v16.18.1
 
             # Download latest code, unzip it into /home/ec2-user/app
             wget https://github.com/samhstn/website/archive/hello-world.zip
