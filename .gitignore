@@ -1,18 +1,1 @@
-/_build/
-/deps/
-**/node_modules/
-erl_crash.dump
-**/*.env
-infra/cfn_output
-infra/venv/
-__pycache__/
-.coverage
-htmlcov/
-priv/static/*
-!priv/static/favicon.svg
-!priv/static/script.js
-!priv/static/style.css
-# for plts info, see: https://github.com/jeremyjh/dialyxir#continuous-integration
-/priv/plts/*.plt
-/priv/plts/*.plt.hash
-/priv/assets
+node_modules
