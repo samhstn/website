@@ -16,11 +16,6 @@ jobs:
           cache: npm
           node-version: 16
       - run: npm install
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: artifact
-          path: node_modules/
 
   deploy-infra:
     needs: build
