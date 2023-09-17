@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 EC2_INSTANCE_TYPE=t2.micro
 
 echo -e "\n\n=========== Deploying main.yml ==========="

@@ -1,0 +1,53 @@
+name: deploy
+
+on: push
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          cache: npm
+          node-version: 16
+      - run: npm install
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact
+          path: node_modules/
+
+  deploy-infra:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'hello-world'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.IAMROLE_GITHUB }}
+          role-session-name: GitHub-Action-Role
+          aws-region: eu-west-1
+      - run: |
+          aws cloudformation deploy \
+            --region eu-west-1 \
+            --stack-name website \
+            --template-file main.yml \
+            --no-fail-on-empty-changeset \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --parameter-overrides \
+              EC2InstanceType=t2.micro
+
+  deploy:
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'hello-world'
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo 'hello world'

@@ -5,6 +5,10 @@ Parameters:
   EC2AMI:
     Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
     Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  ThumbprintList:
+    Type: String
+    Default: 6938fd4d98bab03faadb97b34396831e3780aea1
+    Description: A thumbprint of an Open ID Connector is a SHA1 hash of the public certificate of the host
 Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -23,6 +27,49 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
+  IDCProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      ThumbprintList:
+        - !Ref ThumbprintList
+
+  GitHubIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: CodeDeployRoleforGitHub
+      AssumeRolePolicyDocument:
+       Statement:
+         - Effect: Allow
+           Action: sts:AssumeRoleWithWebIdentity
+           Principal:
+             Federated: !Ref IDCProvider
+           Condition:
+             StringLike:
+               token.actions.githubusercontent.com:sub: samhstn/website:*
+      MaxSessionDuration: 3600
+      Description: Github Actions role
+      Policies:
+        - PolicyName: CodeDeployRoleforGitHub-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'codedeploy:Get*'
+                  - 'codedeploy:Batch*'
+                  - 'codedeploy:CreateDeployment'
+                  - 'codedeploy:RegisterApplicationRevision'
+                  - 'codedeploy:List*'
+                Resource:
+                  - !Sub 'arn:${AWS::Partition}:codedeploy:*:${AWS::AccountId}:*'
+              - Effect: Allow
+                Action: 'cloudformation:*'
+                Resource: '*'
+
   InstanceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -36,8 +83,36 @@ Resources:
           Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchFullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy
       Tags:
         - Key: Name
+          Value: !Ref AWS::StackName
+
+  DeploymentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service:
+              - codedeploy.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+
+  DeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: Instance
+    Properties:
+      DeploymentGroupName: website
+      ApplicationName: !Ref DeploymentApplication
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      ServiceRoleArn: !GetAtt DeploymentRole.Arn
+      Ec2TagFilters:
+        - Key: aws:cloudformation:stack-name
+          Type: KEY_AND_VALUE
           Value: !Ref AWS::StackName
 
   InstanceProfile:
@@ -57,8 +132,15 @@ Resources:
         config:
           packages:
             yum:
-              wget: []
-              unzip: []
+              ruby: []
+          files:
+            /home/ec2-user/install:
+              source: !Sub "https://aws-codedeploy-${AWS::Region}.s3.amazonaws.com/latest/install"
+              mode: "000755" # executable
+          commands:
+            00-install-cd-agent:
+              command: "./install auto"
+              cwd: "/home/ec2-user/"
     Properties:
       ImageId: !Ref EC2AMI
       InstanceType: !Ref EC2InstanceType
@@ -80,9 +162,6 @@ Resources:
           # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/bestpractices.html#cfninit
           yum install -y aws-cfn-bootstrap
 
-          # Have CloudFormation install any files and packages from the metadata
-          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource Instance
-
           cat > /tmp/install_script.sh << EOF
             # START
             echo "Setting up NodeJS Environment"
@@ -97,22 +176,15 @@ Resources:
             nvm install v16.18.1
             nvm use v16.18.1
 
-            # Download latest code, unzip it into /home/ec2-user/app
-            wget https://github.com/samhstn/website/archive/hello-world.zip
-            unzip hello-world.zip
-            mv website-hello-world app
-
             # Create log directory
             mkdir -p /home/ec2-user/app/logs
-
-            # Run server
-            cd app
-            npm install
-            npm start
           EOF
 
           chown ec2-user:ec2-user /tmp/install_script.sh && chmod a+x /tmp/install_script.sh
           sleep 1; su - ec2-user -c "/tmp/install_script.sh"
+
+          # Have CloudFormation install any files and packages from the metadata
+          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --region ${AWS::Region} --resource Instance
 
           # Signal to CloudFormation that the instance is ready
           /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --region ${AWS::Region} --resource Instance
@@ -120,9 +192,24 @@ Resources:
         - Key: Name
           Value: !Ref AWS::StackName
 
+  DeploymentApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: !Ref AWS::StackName
+      ComputePlatform: Server
+
 Outputs:
   InstanceEndpoint:
     Description: The DNS name for the created instance
     Value: !Sub "http://${Instance.PublicDnsName}:8080"
     Export:
       Name: InstanceEndpoint
+  GithubIAMRoleArn:
+    Description: IAM role for GitHub
+    Value: !GetAtt GitHubIAMRole.Arn
+  DeploymentGroup:
+    Description: Deployment Group
+    Value: !Ref DeploymentGroup
+  ApplicationName:
+    Description: CodeDeploy Application name
+    Value: !Ref DeploymentApplication
