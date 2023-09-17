@@ -49,7 +49,7 @@ Resources:
              Federated: !Ref IDCProvider
            Condition:
              StringLike:
-               token.actions.githubusercontent.com:sub: samhstn/website:*
+               token.actions.githubusercontent.com:sub: repo:samhstn/website:*
       MaxSessionDuration: 3600
       Description: Github Actions role
       Policies:
