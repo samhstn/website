@@ -2,7 +2,7 @@
 
 EC2_INSTANCE_TYPE=t2.micro
 
-echo -e "\n\n=========== Deploying main.yml ==========="
+echo -e "=========== Deploying main.yml ==========="
 
 aws cloudformation deploy \
   --region eu-west-1 \

@@ -69,7 +69,7 @@ Resources:
                   - !Sub 'arn:${AWS::Partition}:codedeploy:*:${AWS::AccountId}:*'
               - Effect: Allow
                 Action:
-                  - 'cloudformation:*'
+                  - cloudformation:*
                   - sts:AssumeRoleWithWebIdentity
                   - ssm:GetParameters
                 Resource: '*'
