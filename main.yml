@@ -71,6 +71,7 @@ Resources:
                 Action:
                   - 'cloudformation:*'
                   - sts:AssumeRoleWithWebIdentity
+                  - ssm:GetParameters
                 Resource: '*'
 
   InstanceRole:
