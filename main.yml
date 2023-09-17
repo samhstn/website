@@ -33,6 +33,7 @@ Resources:
       Url: https://token.actions.githubusercontent.com
       ClientIdList:
         - sts.amazonaws.com
+        - https://github.com/samhstn/website
       ThumbprintList:
         - !Ref ThumbprintList
 
