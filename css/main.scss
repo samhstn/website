@@ -1,0 +1,46 @@
+@charset "utf-8";
+
+// samhstn custom variables
+$primary: #F06F30;
+$secondary: #30B1F0;
+$white: #F5F5F5;
+$box-link-hover-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.1);
+
+
+// Forward Bulma components
+@forward '../node_modules/bulma/sass/utilities';
+@forward '../node_modules/bulma/sass/base';
+@forward '../node_modules/bulma/sass/elements';
+@forward '../node_modules/bulma/sass/form';
+@forward '../node_modules/bulma/sass/components';
+@forward '../node_modules/bulma/sass/grid';
+@forward '../node_modules/bulma/sass/layout';
+@forward '../node_modules/bulma/sass/base/skeleton';
+@forward '../node_modules/bulma/sass/helpers';
+
+// Import Bulma's CSS variables module
+@use "../node_modules/bulma/sass/utilities/css-variables" as cv;
+
+// Import custom theme files
+@use "../node_modules/bulma/sass/themes/light";
+@use "../node_modules/bulma/sass/themes/setup";
+
+// write my custom css in here
+@use './custom';
+
+// Apply the themes inside :root
+:root {
+  @include light.light-theme;
+  @include setup.setup-theme;
+}
+
+// Apply system-theme for light mode
+@include cv.system-theme("light") {
+  @include light.light-theme;
+}
+
+// Apply Bulma-specific theme for light mode
+@include cv.bulma-theme("light") {
+  @include light.light-theme;
+  @include setup.setup-theme;
+}

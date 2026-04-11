@@ -1,0 +1,47 @@
+<footer class="footer has-background-white p-5">
+  <div class="content has-text-centered has-text-black">
+    <p>© 2024 samhstn</p>
+  </div>
+</footer>
+
+<script>
+  window.addEventListener('load', function () {
+    setTimeout(function () {
+      requestAnimationFrame(() => {
+        document.body.classList.remove('preload');
+      });
+    }, 10);
+  });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Get all "navbar-burger" elements
+  const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+  // Add a click event on each of them
+  $navbarBurgers.forEach( el => {
+    el.addEventListener('click', () => {
+
+      // Get the target from the "data-target" attribute
+      const target = el.dataset.target;
+      const $target = document.getElementById(target);
+
+      // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+      el.classList.toggle('is-active');
+      $target.classList.toggle('is-active');
+
+    });
+  });
+
+});
+</script>
+
+<script defer src="/elm.js"></script>
+<script defer src="/script.js"></script>
+<script defer src="/all.min.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+{
+  "name": "website",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:samhstn/website.git",
+  "author": "samhstn <shouston3@me.com>",
+  "license": "MIT",
+  "packageManager": "yarn@4.5.2",
+  "type": "module",
+  "scripts": {
+    "read": "./sync.sh read",
+    "write": "./sync.sh write",
+    "start": "node server/index.js",
+    "start:watch": "nodemon server/index.js -e js,html",
+    "build-css": "sass -q css/main.scss public/style.css",
+    "build-css:watch": "sass -w css/main.scss public/style.css",
+    "lint": "standard && elm-format --validate src/",
+    "lint:fix": "standard --fix && elm-format --yes src/",
+    "postinstall": "./postinstall.sh"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.699.0",
+    "@fortawesome/fontawesome-free": "^6.7.1",
+    "bulma": "^1.0.2",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "elm": "^0.19.1-6",
+    "express": "^4.21.1",
+    "marked": "^15.0.2",
+    "node-fetch": "^3.3.2",
+    "sass": "^1.81.0"
+  },
+  "devDependencies": {
+    "elm-format": "^0.8.7",
+    "nodemon": "^3.1.7",
+    "standard": "^17.1.2"
+  }
+}
