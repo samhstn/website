@@ -1,86 +1,72 @@
 # samhstn.com
 
 [samhstn.com](http://samhstn.com)
+(Not hosted yet)
 
 ### Requirements
 
+###### fly.io (TODO)
+
+```bash
+$ fly --version
+fly version 0.4.45
+```
+
+###### Docker (TODO)
+
 ```bash
 $ docker --version
-Docker version 19.03.12
+Docker version 29.4.1, build 055a478
+```
 
-$ python3 --version
-Python 3.8.5
+###### AWS (TODO)
 
+```bash
 $ aws --version
-aws-cli/2.0.40 Python/3.8.5
+aws-cli/2.34.41 Python/3.14.4 Darwin/24.6.0 source/arm64
+```
 
-$ node --version
-v14.8.0
+###### BigQuery (TODO)
 
+```bash
+$ bq --version
+```
+
+###### Deno (TODO)
+
+```bash
+$ deno --version
+deno 2.7.14 (stable, release, aarch64-apple-darwin)
+v8 14.7.173.20-rusty
+typescript 5.9.2
+```
+
+###### Elixir + Phoenix (TODO)
+
+```bash
 $ elixir --version
-Erlang/OTP 23 [erts-11.0.3] [source] [64-bit] [smp:12:12] [ds:12:12:10] [async-threads:1] [hipe] [dtrace]
+Erlang/OTP 28 [erts-16.4] [source] [64-bit] [smp:8:8] [ds:8:8:10] [async-threads:1] [jit] [dtrace]
 
-Elixir 1.10.4 (compiled with Erlang/OTP 23)
-
-$ mix --version
-Mix 1.10.4
+Elixir 1.19.5 (compiled with Erlang/OTP 28)
 
 $ mix phx.new --version
-Phoenix v1.5.4
+Phoenix installer v1.8.5
 ```
+
+###### React + Elm (TODO)
 
 ### Local Setup
 
 ```bash
 # clone repository
-git clone git@github.com:samhstn/samhstn.git && cd samhstn
+git clone git@github.com:samhstn/website.git && cd website
 
-# install dependencies and run our tests and checks
-MIX_ENV=test mix compile --force
-MIX_ENV=test mix dialyzer
-MIX_ENV=test mix sobelow --router lib/samhstn_web/router.ex --exit --skip
-MIX_ENV=test mix format --check-formatted
-mix test
-
-# start the dev server
-mix do compile, phx.server
+npx http-server
 ```
 
-### AWS Setup
-
-Checkout the [infra](./infra/README.md) documentation for guidance.
-
-### Pre-commit hook
-
-To configure the pre-commit hook to run on every commit, run:
+### Run the dockerfile
 
 ```bash
-./pre-commit-hook
+docker build -t samhstn-website .
+docker run -p 8080:8080 samhstn-website
 ```
-
-### Docker
-
-Our app runs in two stages:
-+ Building our mix release.
-+ Running the binary files from our mix release.
-
-This can be achieved by setting up a `.env` file with the following contents:
-
-```
-export AWS_ACCESS_KEY_ID=
-export AWS_SECRET_ACCESS_KEY=
-export SECRET_KEY_BASE=g+Li...Fi+trohKSao4VOv5BWkEXAMPLE
-export SAMHSTN_ASSETS_BUCKET=
-```
-
-We can generate these access keys for our `docker` IAM user in:
-
-`IAM Console > Security Credentials > Create access key`.
-
-We can now replicate our application running in production with:
-
-```bash
-docker-compose up --build
-```
-
-Note: These IAM user credentials should be deleted after running Docker locally.

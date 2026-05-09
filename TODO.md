@@ -1,0 +1,3 @@
+- [ ] Write readme
+- [ ] Write basic node server for index.html
+- [ ] Create basic hello world index.html served by phoenix
